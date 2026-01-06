@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture - Tutum Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        function initMermaid(theme) {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: theme || 'neutral',
+                flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+            });
+        }
+        initMermaid('neutral');
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">security</span>
+                </button>
+                <a class="navbar-brand d-flex align-items-center mb-0" href="index.html">
+                    <div>
+                        <div class="fw-bold">Tutum Platform</div>
+                        <small class="d-block" style="font-size: 0.75rem; opacity: 0.9;">X.509 Certificate Management</small>
+                    </div>
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">settings</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">menu_book</span> Documentation</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="index.html"><span class="material-symbols-outlined me-2">home</span>Overview</a></li>
+                <li class="nav-item"><a class="nav-link active d-flex align-items-center" href="architecture.html"><span class="material-symbols-outlined me-2">architecture</span>Architecture</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="engine.html"><span class="material-symbols-outlined me-2">dns</span>tutum-engine</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="netlib.html"><span class="material-symbols-outlined me-2">library_books</span>tutum-netlib</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="settingsMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">settings</span> Settings</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="setting-item mb-4 pb-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">format_textdirection_r_to_l</span>RTL Mode</h6><small class="text-muted">Right-to-left text direction</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="rtlSwitch" onchange="toggleRTL()"></div>
+                </div>
+            </div>
+            <div class="setting-item mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">dark_mode</span>Dark Mode</h6><small class="text-muted">Use dark color scheme</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active">Architecture</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-primary mb-4">
+                <span class="material-symbols-outlined align-middle">architecture</span>
+                Platform Architecture
+            </h1>
+
+            <!-- High-Level Architecture -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">account_tree</span>
+                            High-Level Architecture
+                        </h2>
+                        <p>The Tutum Platform follows a layered microservices architecture with clear separation of concerns:</p>
+
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph TD
+    subgraph containers["Container Orchestration Layer"]
+        direction LR
+        K8S["Kubernetes Pods"]
+        DOCKER["Docker Engine Containers"]
+    end
+
+    subgraph drivers["CSI Driver Layer"]
+        direction LR
+        K8S_DRIVER["tutum-csi-driver-k8s"]
+        DOCKER_DRIVER["tutum-csi-driver-docker"]
+    end
+
+    subgraph netlib["Client Library Layer"]
+        NETLIB["tutum-netlib (.so)<br/>JDBC-like API + gRPC Client"]
+    end
+
+    GRPC_CONN["⬇<br/>gRPC/Protobuf Communication<br/>(mTLS Secured)<br/>⬇"]
+
+    subgraph engine["tutum-engine - Core Certificate Management Service"]
+        direction TB
+
+        subgraph apis["API Layer"]
+            direction LR
+            REST["REST API<br/>(Admin)<br/>Port 8080"]
+            GRPC["gRPC API<br/>(Cert Retrieval)<br/>Port 9090"]
+        end
+
+        subgraph logic["Business Logic Layer"]
+            BL["Certificate Service<br/>Encryption Service<br/>(AES-256-GCM Envelope Encryption)"]
+        end
+
+        subgraph data["Data Persistence Layer"]
+            DB[("PostgreSQL Database<br/>(Encrypted Certificates)")]
+        end
+
+        REST --> BL
+        GRPC --> BL
+        BL --> DB
+    end
+
+    K8S --> K8S_DRIVER
+    DOCKER --> DOCKER_DRIVER
+    K8S_DRIVER --> NETLIB
+    DOCKER_DRIVER --> NETLIB
+    NETLIB --> GRPC_CONN
+    GRPC_CONN --> GRPC
+
+    style containers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+    style drivers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+    style netlib fill:#fff5e6,stroke:#ed8936,stroke-width:2px
+    style engine fill:#e6ffe6,stroke:#48bb78,stroke-width:3px
+    style apis fill:#f0fff4,stroke:#48bb78,stroke-width:2px
+    style logic fill:#f0fff4,stroke:#48bb78,stroke-width:2px
+    style data fill:#f0fff4,stroke:#48bb78,stroke-width:2px
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Architecture -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">api</span>
+                            API Architecture
+                        </h2>
+                        <h3 class="h5 mt-4">Dual API Design</h3>
+                        <p>Tutum implements a dual-API architecture for different use cases:</p>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>API Type</th>
+                                        <th>Protocol</th>
+                                        <th>Port</th>
+                                        <th>Use Case</th>
+                                        <th>Security</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>REST API</strong></td>
+                                        <td>HTTP/JSON</td>
+                                        <td>8080</td>
+                                        <td>Administration & Management</td>
+                                        <td>JWT Authentication</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>gRPC API</strong></td>
+                                        <td>Protobuf v3</td>
+                                        <td>9090</td>
+                                        <td>Certificate Retrieval</td>
+                                        <td>mTLS (recommended)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">REST API Endpoints</h3>
+                        <p>30+ RESTful endpoints for complete certificate lifecycle management:</p>
+                        <ul>
+                            <li><code>POST /api/v1/certificates</code> - Create certificate</li>
+                            <li><code>GET /api/v1/certificates</code> - List certificates with filters</li>
+                            <li><code>GET /api/v1/certificates/:name</code> - Retrieve certificate</li>
+                            <li><code>PUT /api/v1/certificates/:name</code> - Update certificate</li>
+                            <li><code>DELETE /api/v1/certificates/:name</code> - Delete certificate</li>
+                            <li><code>GET /api/v1/certificates/expiring</code> - Find expiring certificates</li>
+                            <li><code>POST /api/v1/groups</code> - Create certificate group</li>
+                            <li><code>POST /api/v1/namespaces</code> - Create namespace</li>
+                            <li><code>POST /api/v1/channels</code> - Create distribution channel</li>
+                            <li><code>POST /api/v1/channels/:id/tokens</code> - Create access token</li>
+                        </ul>
+
+                        <h3 class="h5 mt-4">gRPC Services</h3>
+                        <p>Protocol Buffer-defined services for efficient certificate retrieval:</p>
+                        <ul>
+                            <li><strong>CertificateService</strong> - GetCertificate, ListCertificates, WatchCertificate, GetCertificateMetadata</li>
+                            <li><strong>GroupService</strong> - CreateGroup, GetGroup, ListGroups, UpdateGroup, DeleteGroup</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Architecture -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">security</span>
+                            Security Architecture
+                        </h2>
+
+                        <h3 class="h5 mt-4">Envelope Encryption</h3>
+                        <p>Three-tier encryption architecture for maximum security:</p>
+
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph LR
+    subgraph input["Input"]
+        PK["Private Key<br/>(Plaintext)"]
+    end
+
+    subgraph encryption["Encryption Process"]
+        DEK["Generate DEK<br/>(256-bit random)"]
+        ENC_DATA["Encrypt with DEK<br/>(AES-256-GCM)"]
+        ENC_DEK["Encrypt DEK with<br/>Master Key"]
+    end
+
+    subgraph output["Output"]
+        STORED["Encrypted Payload<br/>(Base64)"]
+    end
+
+    PK --> DEK
+    DEK --> ENC_DATA
+    DEK --> ENC_DEK
+    ENC_DATA --> STORED
+    ENC_DEK --> STORED
+
+    style input fill:#ffcccc,stroke:#cc0000
+    style encryption fill:#fff5e6,stroke:#ed8936
+    style output fill:#ccffcc,stroke:#00cc00
+                            </div>
+                        </div>
+
+                        <ol class="mt-3">
+                            <li><strong>Master Key</strong> (32 bytes) - Loaded from <code>TUTUM_MASTER_KEY</code> environment variable</li>
+                            <li><strong>Data Encryption Keys (DEKs)</strong> - Random 256-bit keys generated per certificate</li>
+                            <li><strong>Certificate Private Keys</strong> - Encrypted with DEK using AES-256-GCM</li>
+                        </ol>
+
+                        <div class="alert alert-warning d-flex align-items-start mt-4" role="alert">
+                            <span class="material-symbols-outlined me-2">warning</span>
+                            <div>
+                                <strong>Security Best Practice:</strong> Never commit the Master Key to version control.
+                                Use different keys for each environment (dev, staging, production).
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Confidentiality Levels</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>Level</th>
+                                        <th>REST API (Read)</th>
+                                        <th>REST API (Write)</th>
+                                        <th>gRPC API</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>NORMAL</code></td>
+                                        <td>Full access</td>
+                                        <td>Full access</td>
+                                        <td>Full access</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>PARANOIC</code></td>
+                                        <td>Blocked (403) + sanitized metadata</td>
+                                        <td>Allowed</td>
+                                        <td>Full access</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Transport Security</h3>
+                        <ul>
+                            <li><strong>mTLS for gRPC</strong> - Mutual TLS authentication for certificate retrieval</li>
+                            <li><strong>JWT for REST</strong> - JSON Web Tokens for administrative operations</li>
+                            <li><strong>TLS 1.3</strong> - Modern TLS protocol support</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Deployment Models -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">deployed_code</span>
+                            Deployment Models
+                        </h2>
+
+                        <h3 class="h5 mt-4">Kubernetes Deployment</h3>
+                        <ul>
+                            <li><strong>tutum-engine</strong>: Deployment with RollingUpdate strategy</li>
+                            <li><strong>tutum-csi-driver-k8s</strong>: DaemonSet on all nodes</li>
+                            <li><strong>CSIDriver CRD</strong>: Custom Resource Definition for driver registration</li>
+                            <li><strong>StorageClass</strong>: Dynamic volume provisioning</li>
+                        </ul>
+
+                        <h3 class="h5 mt-4">Docker Deployment</h3>
+                        <ul>
+                            <li><strong>tutum-engine</strong>: Docker Compose with PostgreSQL container</li>
+                            <li><strong>tutum-csi-driver-docker</strong>: Systemd service (recommended) or Docker plugin</li>
+                            <li><strong>Plugin Discovery</strong>: Via <code>/etc/docker/plugins/*.spec</code> files</li>
+                        </ul>
+
+                        <h3 class="h5 mt-4">Health Probes (Kubernetes)</h3>
+                        <pre class="bg-light p-3 rounded"><code>startupProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  failureThreshold: 30  # Max 61s startup time
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  periodSeconds: 5
+  failureThreshold: 2</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Flow -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">swap_horiz</span>
+                            Data Flow
+                        </h2>
+
+                        <h3 class="h5 mt-4">Certificate Retrieval Flow</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+sequenceDiagram
+    participant Pod as K8s Pod
+    participant CSI as CSI Driver
+    participant Netlib as tutum-netlib
+    participant Engine as tutum-engine
+    participant DB as PostgreSQL
+
+    Pod->>CSI: Mount volume request
+    CSI->>Netlib: GetCertificate(name, group, namespace)
+    Netlib->>Engine: gRPC GetCertificate
+    Engine->>Engine: Validate token (if required)
+    Engine->>DB: Query certificate
+    DB-->>Engine: Encrypted certificate
+    Engine->>Engine: Decrypt private key
+    Engine-->>Netlib: Certificate + Private Key
+    Netlib-->>CSI: Certificate data
+    CSI->>CSI: Write to tmpfs
+    CSI-->>Pod: Volume mounted
+    Note over Engine: Audit log created
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Certificate Update Flow</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+sequenceDiagram
+    participant Admin as Admin User
+    participant REST as REST API
+    participant Engine as tutum-engine
+    participant DB as PostgreSQL
+    participant K8s as Kubernetes API
+
+    Admin->>REST: PUT /api/v1/certificates/:name
+    REST->>Engine: Update certificate
+    Engine->>Engine: Encrypt private key
+    Engine->>DB: Create new version
+    DB-->>Engine: Success
+    Engine->>Engine: Query workloads mounting certificate
+    Engine->>K8s: Update Deployment annotations
+    K8s-->>Engine: Pods restarting
+    Engine-->>REST: Success response
+    REST-->>Admin: Certificate updated
+    Note over K8s: Rolling restart
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container-fluid text-center">
+            <p class="mb-1">&copy; 2025 Tutum Platform - Enterprise X.509 Certificate Management</p>
+            <p class="mb-2">Built with Go 1.21+ | Protocol Buffers v3 | Docker | Kubernetes</p>
+            <div class="mt-3 pt-3 border-top border-secondary">
+                <p class="mb-1"><strong>Dual License:</strong> GPLv3 (Non-Profit) | Commercial License (Business Use)</p>
+                <p class="mb-0 small">
+                    <a href="licensing.html" class="text-white text-decoration-underline">View Licensing Terms</a> |
+                    <a href="pricing.html" class="text-white text-decoration-underline">Commercial Pricing</a> |
+                    <a href="mailto:licensing@tutum-pro.io" class="text-white text-decoration-underline">Request Exemption</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleRTL() {
+            const isRTL = document.getElementById('rtlSwitch').checked;
+            document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+            localStorage.setItem('rtl', isRTL);
+        }
+        function toggleDarkMode() {
+            const isDark = document.getElementById('darkModeSwitch').checked;
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : '');
+            localStorage.setItem('darkMode', isDark);
+            initMermaid(isDark ? 'dark' : 'neutral');
+            mermaid.run();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('rtl') === 'true') {
+                document.getElementById('rtlSwitch').checked = true;
+                document.documentElement.setAttribute('dir', 'rtl');
+            }
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.getElementById('darkModeSwitch').checked = true;
+                document.body.setAttribute('data-bs-theme', 'dark');
+                initMermaid('dark');
+                mermaid.run();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Licensing - Tutum Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">security</span>
+                </button>
+                <a class="navbar-brand d-flex align-items-center mb-0" href="index.html">
+                    <div>
+                        <div class="fw-bold">Tutum Platform</div>
+                        <small class="d-block" style="font-size: 0.75rem; opacity: 0.9;">X.509 Certificate Management</small>
+                    </div>
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">settings</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">menu_book</span> Documentation</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="index.html"><span class="material-symbols-outlined me-2">home</span>Overview</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="architecture.html"><span class="material-symbols-outlined me-2">architecture</span>Architecture</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="engine.html"><span class="material-symbols-outlined me-2">dns</span>tutum-engine</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="netlib.html"><span class="material-symbols-outlined me-2">library_books</span>tutum-netlib</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="settingsMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">settings</span> Settings</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="setting-item mb-4 pb-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">format_textdirection_r_to_l</span>RTL Mode</h6><small class="text-muted">Right-to-left text direction</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="rtlSwitch" onchange="toggleRTL()"></div>
+                </div>
+            </div>
+            <div class="setting-item mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">dark_mode</span>Dark Mode</h6><small class="text-muted">Use dark color scheme</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active">Licensing</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-primary mb-4">
+                <span class="material-symbols-outlined align-middle">balance</span>
+                Tutum Platform Licensing
+            </h1>
+
+            <!-- Dual License Overview -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">info</span>
+                            Dual License Model
+                        </h2>
+                        <p class="lead">Tutum Platform is available under two licensing options to support both commercial and non-profit use cases.</p>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card h-100 border-success">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-success">
+                                            <span class="material-symbols-outlined align-middle">public</span>
+                                            GPLv3 - Non-Profit Use
+                                        </h5>
+                                        <p>Free for non-profit organizations and individuals</p>
+                                        <ul>
+                                            <li>Full access to source code</li>
+                                            <li>Free to use, modify, and distribute</li>
+                                            <li>Must share modifications under GPLv3</li>
+                                            <li>Perfect for open-source projects</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-warning">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-warning">
+                                            <span class="material-symbols-outlined align-middle">business</span>
+                                            Commercial License - Business Use
+                                        </h5>
+                                        <p>Required for commercial and for-profit use</p>
+                                        <ul>
+                                            <li>Full commercial rights</li>
+                                            <li>No GPL copyleft requirements</li>
+                                            <li>Priority support available</li>
+                                            <li>Enterprise SLA options</li>
+                                        </ul>
+                                        <a href="pricing.html" class="btn btn-warning mt-2">View Pricing</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GPLv3 License -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">description</span>
+                            GNU General Public License v3.0 (GPLv3)
+                        </h2>
+
+                        <div class="alert alert-success">
+                            <h5 class="alert-heading">Non-Profit Use</h5>
+                            <p>This software may be used, modified, and distributed under the terms of the GNU General Public License version 3 (GPLv3) for <strong>non-profit purposes only</strong>.</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">Key Terms</h3>
+                        <ul>
+                            <li><strong>Freedom to Use:</strong> Use the software for any non-profit purpose</li>
+                            <li><strong>Freedom to Study:</strong> Access and study the source code</li>
+                            <li><strong>Freedom to Modify:</strong> Make changes to suit your needs</li>
+                            <li><strong>Freedom to Distribute:</strong> Share the software and your modifications</li>
+                            <li><strong>Copyleft:</strong> Modifications must also be licensed under GPLv3</li>
+                        </ul>
+
+                        <a href="https://www.gnu.org/licenses/gpl-3.0.html" class="btn btn-outline-success mt-3" target="_blank">
+                            Read Full GPLv3 License
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Commercial License -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">store</span>
+                            Tutum Business License (BLS)
+                        </h2>
+
+                        <div class="alert alert-warning">
+                            <h5 class="alert-heading">Commercial Use Required</h5>
+                            <p>Any commercial use of this software requires a valid commercial license.</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">What Constitutes Commercial Use?</h3>
+                        <p>Commercial use is defined as any use of the software by an organization or individual that:</p>
+                        <ul>
+                            <li>Operates for profit, OR</li>
+                            <li>Uses the software directly or indirectly in connection with commercial activities</li>
+                            <li>Uses the software in revenue-generating operations</li>
+                            <li>Uses the software for business purposes</li>
+                        </ul>
+
+                        <h3 class="h5 mt-4">How to Obtain a Commercial License</h3>
+                        <ol>
+                            <li>Review our <a href="pricing.html">pricing plans</a></li>
+                            <li>Contact us at <a href="mailto:licensing@tutum-pro.io">licensing@tutum-pro.io</a></li>
+                            <li>Receive your license key and invoice</li>
+                            <li>Deploy with full commercial rights</li>
+                        </ol>
+
+                        <h3 class="h5 mt-4">License Benefits</h3>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card border-info h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <span class="material-symbols-outlined text-info">verified</span>
+                                            Full Commercial Rights
+                                        </h6>
+                                        <p class="card-text small">Use the software without GPL restrictions in your commercial products</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-info h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <span class="material-symbols-outlined text-info">support_agent</span>
+                                            Priority Support
+                                        </h6>
+                                        <p class="card-text small">Direct access to our engineering team for technical support</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-info h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <span class="material-symbols-outlined text-info">update</span>
+                                            Updates & Patches
+                                        </h6>
+                                        <p class="card-text small">Receive security updates and feature releases</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <a href="pricing.html" class="btn btn-warning me-2">View Pricing</a>
+                            <a href="mailto:licensing@tutum-pro.io" class="btn btn-outline-primary">Contact Sales</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- License Exemptions -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">handshake</span>
+                            Commercial License Exemptions
+                        </h2>
+
+                        <p>We understand that some commercial organizations may have unique circumstances. We offer license exemptions on a case-by-case basis.</p>
+
+                        <h3 class="h5 mt-4">How to Request an Exemption</h3>
+                        <ol>
+                            <li>Send a written request to: <a href="mailto:licensing@tutum-pro.io">licensing@tutum-pro.io</a></li>
+                            <li>Include:
+                                <ul>
+                                    <li>Organization name and description</li>
+                                    <li>Intended use of the software</li>
+                                    <li>Justification for exemption request</li>
+                                </ul>
+                            </li>
+                            <li>Receive our decision via email</li>
+                            <li>Approved exemptions will be published at: <strong>https://tutum-pro.io/license-exemptions</strong></li>
+                        </ol>
+
+                        <div class="alert alert-info mt-4">
+                            <h6 class="alert-heading">Examples of Potential Exemptions:</h6>
+                            <ul class="mb-0">
+                                <li>Educational institutions for research purposes</li>
+                                <li>Non-profit organizations with incidental commercial activities</li>
+                                <li>Open-source projects with commercial sponsors</li>
+                                <li>Startups in early stages (case-by-case evaluation)</li>
+                            </ul>
+                        </div>
+
+                        <a href="mailto:licensing@tutum-pro.io?subject=Commercial License Exemption Request" class="btn btn-outline-primary mt-3">
+                            Request Exemption
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">help</span>
+                            Frequently Asked Questions
+                        </h2>
+
+                        <div class="accordion" id="faqAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                        Do I need a commercial license if I'm a startup?
+                                    </button>
+                                </h2>
+                                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        If you are operating for profit or generating revenue, yes, you need a commercial license. However, we offer startup-friendly pricing and may consider exemptions for early-stage startups. Contact us to discuss your situation.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                        Can I use Tutum for development/testing without a commercial license?
+                                    </button>
+                                </h2>
+                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Development and testing environments that are part of a commercial operation still require a commercial license. However, personal learning and experimentation can use the GPLv3 license.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                        What happens if I use Tutum commercially without a license?
+                                    </button>
+                                </h2>
+                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Using the software for commercial purposes without a valid license constitutes copyright infringement and breach of license terms. We reserve the right to pursue legal action. Please contact us to regularize your licensing.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                        Can I modify the source code under a commercial license?
+                                    </button>
+                                </h2>
+                                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Yes! The commercial license allows you to modify the source code for your internal use without the copyleft requirements of GPLv3. You do not need to share your modifications.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container-fluid text-center">
+            <p class="mb-1">&copy; 2025 Tutum Platform - Enterprise X.509 Certificate Management</p>
+            <p class="mb-2">Built with Go 1.21+ | Protocol Buffers v3 | Docker | Kubernetes</p>
+            <div class="mt-3 pt-3 border-top border-secondary">
+                <p class="mb-1"><strong>Dual License:</strong> GPLv3 (Non-Profit) | Commercial License (Business Use)</p>
+                <p class="mb-0 small">
+                    <a href="licensing.html" class="text-white text-decoration-underline">View Licensing Terms</a> |
+                    <a href="pricing.html" class="text-white text-decoration-underline">Commercial Pricing</a> |
+                    <a href="mailto:licensing@tutum-pro.io" class="text-white text-decoration-underline">Request Exemption</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleRTL() {
+            const isRTL = document.getElementById('rtlSwitch').checked;
+            document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+            localStorage.setItem('rtl', isRTL);
+        }
+        function toggleDarkMode() {
+            const isDark = document.getElementById('darkModeSwitch').checked;
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : '');
+            localStorage.setItem('darkMode', isDark);
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('rtl') === 'true') {
+                document.getElementById('rtlSwitch').checked = true;
+                document.documentElement.setAttribute('dir', 'rtl');
+            }
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.getElementById('darkModeSwitch').checked = true;
+                document.body.setAttribute('data-bs-theme', 'dark');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tutum-netlib - Tutum Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        function initMermaid(theme) {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: theme || 'neutral',
+                flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+            });
+        }
+        initMermaid('neutral');
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">security</span>
+                </button>
+                <a class="navbar-brand d-flex align-items-center mb-0" href="index.html">
+                    <div>
+                        <div class="fw-bold">Tutum Platform</div>
+                        <small class="d-block" style="font-size: 0.75rem; opacity: 0.9;">X.509 Certificate Management</small>
+                    </div>
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">settings</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">menu_book</span> Documentation</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="index.html"><span class="material-symbols-outlined me-2">home</span>Overview</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="architecture.html"><span class="material-symbols-outlined me-2">architecture</span>Architecture</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="engine.html"><span class="material-symbols-outlined me-2">dns</span>tutum-engine</a></li>
+                <li class="nav-item"><a class="nav-link active d-flex align-items-center" href="netlib.html"><span class="material-symbols-outlined me-2">library_books</span>tutum-netlib</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="settingsMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">settings</span> Settings</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="setting-item mb-4 pb-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">format_textdirection_r_to_l</span>RTL Mode</h6><small class="text-muted">Right-to-left text direction</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="rtlSwitch" onchange="toggleRTL()"></div>
+                </div>
+            </div>
+            <div class="setting-item mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">dark_mode</span>Dark Mode</h6><small class="text-muted">Use dark color scheme</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active">tutum-netlib</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-primary mb-4">
+                <span class="material-symbols-outlined align-middle">library_books</span>
+                tutum-netlib
+            </h1>
+
+            <p class="lead">Go Client Library for Certificate Retrieval - Shared Object (.so) with JDBC-like API</p>
+
+            <!-- Overview -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">info</span>
+                            Overview
+                        </h2>
+                        <p><strong>tutum-netlib</strong> is a Go-based shared library that provides a simple, JDBC-like API for retrieving X.509 certificates from the Tutum Engine. It serves as the communication layer between CSI drivers (both Kubernetes and Docker) and the tutum-engine backend.</p>
+
+                        <div class="alert alert-info d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">lightbulb</span>
+                            <div>
+                                <strong>Key Design:</strong> The library is compiled as a shared object (<code>.so</code>) file, making it linkable from both Go and C applications. This allows both CSI drivers to share the same certificate retrieval logic.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Position -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">account_tree</span>
+                            Architecture Position
+                        </h2>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph TB
+    subgraph drivers["CSI Drivers"]
+        K8S["tutum-csi-driver-k8s"]
+        DOCKER["tutum-csi-driver-docker"]
+    end
+
+    subgraph netlib["tutum-netlib"]
+        API["JDBC-like API"]
+        GRPC["gRPC Client"]
+        CONN["Connection Pool"]
+        CACHE["Certificate Cache"]
+    end
+
+    ENGINE["tutum-engine<br/>(gRPC :9090)"]
+
+    K8S --> API
+    DOCKER --> API
+    API --> GRPC
+    GRPC --> CONN
+    CONN --> ENGINE
+    GRPC --> CACHE
+
+    style netlib fill:#fff5e6,stroke:#ed8936,stroke-width:3px
+    style drivers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+    style ENGINE fill:#e6ffe6,stroke:#48bb78,stroke-width:2px
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">checklist</span>
+                            Features
+                        </h2>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>gRPC-based communication with tutum-engine</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Connection pooling for high performance</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Automatic reconnection and retry logic</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>In-memory certificate caching</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>mTLS support for secure communication</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Token-based authentication support</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Workload tracking for audit logging</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Cross-platform shared library (.so)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Reference -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">api</span>
+                            API Reference
+                        </h2>
+
+                        <h3 class="h5 mt-4">Connection Management</h3>
+                        <pre class="bg-light p-3 rounded"><code>// Connect establishes a connection to the tutum-engine
+func Connect(endpoint string, opts ...ConnectOption) (*Client, error)
+
+// Close closes the connection and releases resources
+func (c *Client) Close() error</code></pre>
+
+                        <h3 class="h5 mt-4">Certificate Retrieval</h3>
+                        <pre class="bg-light p-3 rounded"><code>// GetCertificate retrieves a certificate by name
+func (c *Client) GetCertificate(ctx context.Context, req *GetCertificateRequest) (*Certificate, error)
+
+// GetCertificateRequest contains the parameters for certificate retrieval
+type GetCertificateRequest struct {
+    Name              string  // Certificate name
+    GroupID           string  // Group UUID
+    Namespace         string  // Namespace name
+    Version           int32   // Specific version (0 = latest)
+    Channel           string  // Distribution channel
+    AuthToken         string  // Authentication token
+    WorkloadType      string  // k8s-pod, k8s-deployment, docker-container
+    WorkloadName      string  // Name of the workload
+    WorkloadNamespace string  // Workload's namespace
+}
+
+// Certificate contains the retrieved certificate data
+type Certificate struct {
+    CertificatePEM string    // PEM-encoded certificate
+    PrivateKeyPEM  string    // PEM-encoded private key
+    CAChainPEM     string    // PEM-encoded CA chain
+    Version        int32     // Certificate version
+    NotBefore      time.Time // Validity start
+    NotAfter       time.Time // Validity end
+}</code></pre>
+
+                        <h3 class="h5 mt-4">Connection Options</h3>
+                        <pre class="bg-light p-3 rounded"><code>// WithTLS enables TLS with the specified credentials
+func WithTLS(certFile, keyFile, caFile string) ConnectOption
+
+// WithInsecure disables TLS (not recommended for production)
+func WithInsecure() ConnectOption
+
+// WithTimeout sets the connection timeout
+func WithTimeout(timeout time.Duration) ConnectOption
+
+// WithRetry configures retry behavior
+func WithRetry(maxRetries int, backoff time.Duration) ConnectOption</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Usage Examples -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">code</span>
+                            Usage Examples
+                        </h2>
+
+                        <h3 class="h5 mt-4">Basic Usage (Go)</h3>
+                        <pre class="bg-light p-3 rounded"><code>package main
+
+import (
+    "context"
+    "log"
+    "github.com/tutum/netlib"
+)
+
+func main() {
+    // Connect to tutum-engine
+    client, err := netlib.Connect("localhost:9090", netlib.WithInsecure())
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer client.Close()
+
+    // Retrieve certificate
+    cert, err := client.GetCertificate(context.Background(), &netlib.GetCertificateRequest{
+        Name:      "my-app-cert",
+        GroupID:   "group-uuid",
+        Namespace: "production",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    log.Printf("Certificate: %s", cert.CertificatePEM)
+    log.Printf("Valid until: %s", cert.NotAfter)
+}</code></pre>
+
+                        <h3 class="h5 mt-4">With Authentication</h3>
+                        <pre class="bg-light p-3 rounded"><code>cert, err := client.GetCertificate(ctx, &netlib.GetCertificateRequest{
+    Name:      "secure-cert",
+    GroupID:   "group-uuid",
+    Namespace: "production",
+    Channel:   "internal",
+    AuthToken: "eyJhbGciOiJIUzI1NiIs...",
+    WorkloadType:      "k8s-deployment",
+    WorkloadName:      "my-service",
+    WorkloadNamespace: "production",
+})</code></pre>
+
+                        <h3 class="h5 mt-4">With mTLS</h3>
+                        <pre class="bg-light p-3 rounded"><code>client, err := netlib.Connect(
+    "tutum-engine.tutum-system:9090",
+    netlib.WithTLS(
+        "/etc/tutum/client.crt",
+        "/etc/tutum/client.key",
+        "/etc/tutum/ca.crt",
+    ),
+    netlib.WithTimeout(10 * time.Second),
+)</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Building -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">build</span>
+                            Building the Library
+                        </h2>
+                        <pre class="bg-light p-3 rounded"><code># Build shared library
+make build-shared
+
+# Output: libtutum-netlib.so
+
+# Build static library
+make build-static
+
+# Output: libtutum-netlib.a
+
+# Run tests
+make test
+
+# Generate protobuf code
+make proto</code></pre>
+
+                        <h3 class="h5 mt-4">CGO Export</h3>
+                        <p>The library exports C-compatible functions for use from non-Go applications:</p>
+                        <pre class="bg-light p-3 rounded"><code>// C-compatible function exports
+//export TutumConnect
+func TutumConnect(endpoint *C.char) C.int
+
+//export TutumGetCertificate
+func TutumGetCertificate(name, groupID, namespace *C.char) *C.char
+
+//export TutumClose
+func TutumClose()</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configuration -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">settings</span>
+                            Configuration
+                        </h2>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Environment Variable</th><th>Default</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>TUTUM_ENGINE_ENDPOINT</code></td><td><code>localhost:9090</code></td><td>tutum-engine gRPC endpoint</td></tr>
+                                    <tr><td><code>TUTUM_TLS_CERT</code></td><td>(empty)</td><td>Path to client certificate</td></tr>
+                                    <tr><td><code>TUTUM_TLS_KEY</code></td><td>(empty)</td><td>Path to client private key</td></tr>
+                                    <tr><td><code>TUTUM_TLS_CA</code></td><td>(empty)</td><td>Path to CA certificate</td></tr>
+                                    <tr><td><code>TUTUM_INSECURE</code></td><td><code>false</code></td><td>Disable TLS verification</td></tr>
+                                    <tr><td><code>TUTUM_TIMEOUT</code></td><td><code>30s</code></td><td>Connection timeout</td></tr>
+                                    <tr><td><code>TUTUM_MAX_RETRIES</code></td><td><code>3</code></td><td>Maximum retry attempts</td></tr>
+                                    <tr><td><code>TUTUM_CACHE_TTL</code></td><td><code>5m</code></td><td>Certificate cache TTL</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Handling -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">error</span>
+                            Error Handling
+                        </h2>
+                        <p>The library provides structured error types for different failure scenarios:</p>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Error Type</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>ErrConnectionFailed</code></td><td>Failed to establish connection to tutum-engine</td></tr>
+                                    <tr><td><code>ErrCertificateNotFound</code></td><td>Certificate with specified name/group/namespace not found</td></tr>
+                                    <tr><td><code>ErrAuthenticationFailed</code></td><td>Token authentication failed or token expired</td></tr>
+                                    <tr><td><code>ErrAccessDenied</code></td><td>Channel requires authentication but no token provided</td></tr>
+                                    <tr><td><code>ErrVersionNotFound</code></td><td>Specified certificate version does not exist</td></tr>
+                                    <tr><td><code>ErrTimeout</code></td><td>Request timed out</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container-fluid text-center">
+            <p class="mb-1">&copy; 2025 Tutum Platform - Enterprise X.509 Certificate Management</p>
+            <p class="mb-2">Built with Go 1.21+ | Protocol Buffers v3 | Docker | Kubernetes</p>
+            <div class="mt-3 pt-3 border-top border-secondary">
+                <p class="mb-1"><strong>Dual License:</strong> GPLv3 (Non-Profit) | Commercial License (Business Use)</p>
+                <p class="mb-0 small">
+                    <a href="licensing.html" class="text-white text-decoration-underline">View Licensing Terms</a> |
+                    <a href="pricing.html" class="text-white text-decoration-underline">Commercial Pricing</a> |
+                    <a href="mailto:licensing@tutum-pro.io" class="text-white text-decoration-underline">Request Exemption</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleRTL() {
+            const isRTL = document.getElementById('rtlSwitch').checked;
+            document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+            localStorage.setItem('rtl', isRTL);
+        }
+        function toggleDarkMode() {
+            const isDark = document.getElementById('darkModeSwitch').checked;
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : '');
+            localStorage.setItem('darkMode', isDark);
+            initMermaid(isDark ? 'dark' : 'neutral');
+            mermaid.run();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('rtl') === 'true') {
+                document.getElementById('rtlSwitch').checked = true;
+                document.documentElement.setAttribute('dir', 'rtl');
+            }
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.getElementById('darkModeSwitch').checked = true;
+                document.body.setAttribute('data-bs-theme', 'dark');
+                initMermaid('dark');
+                mermaid.run();
+            }
+        });
+    </script>
+</body>
+</html>

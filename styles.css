@@ -1,0 +1,584 @@
+/* Tutum Platform Technical Documentation - Bootstrap 5 + Material Design */
+
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --info-color: #0dcaf0;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+/* Global Styles */
+body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', 'Arial', sans-serif;
+    padding-top: 70px; /* Fixed navbar height */
+}
+
+/* Fixed Top Navbar */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1030;
+}
+
+.navbar-brand {
+    font-size: 1.1rem;
+}
+
+.navbar-brand .material-symbols-outlined {
+    font-size: 2rem;
+    vertical-align: middle;
+}
+
+/* Security Icon Button */
+.btn-link.text-white:hover {
+    opacity: 0.8;
+    text-decoration: none;
+}
+
+.btn-link.text-white:focus {
+    box-shadow: none;
+    text-decoration: none;
+}
+
+/* Offcanvas Sidebar Menu */
+.offcanvas {
+    width: 300px !important;
+}
+
+.offcanvas-header {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Settings Menu */
+.settings-container {
+    padding: 0.5rem 0;
+}
+
+.setting-item h6 {
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-check-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-switch .form-check-input {
+    width: 3rem;
+    height: 1.5rem;
+    cursor: pointer;
+}
+
+.offcanvas-body .nav-link {
+    color: #495057;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0;
+    transition: all 0.2s ease;
+}
+
+.offcanvas-body .nav-link:hover {
+    background-color: #e9ecef;
+    color: var(--primary-color);
+}
+
+.offcanvas-body .nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.offcanvas-body .material-symbols-outlined {
+    font-size: 20px;
+    vertical-align: middle;
+}
+
+/* Main Content */
+.main-content {
+    min-height: calc(100vh - 70px);
+}
+
+/* Material Symbols */
+.material-symbols-outlined {
+    font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+    vertical-align: middle;
+}
+
+.card-title .material-symbols-outlined,
+h2 .material-symbols-outlined,
+h5 .material-symbols-outlined {
+    font-size: 1.5rem;
+    margin-right: 0.25rem;
+}
+
+/* Cards */
+.card {
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Architecture Diagram */
+.architecture-diagram {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.architecture-diagram .mermaid {
+    background: white;
+    padding: 2rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 500px;
+}
+
+.architecture-diagram .mermaid svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Component Cards in Grid */
+.component-card .card-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.component-card .card-title .material-symbols-outlined {
+    font-size: 1.75rem;
+    margin-right: 0.5rem;
+}
+
+.component-card .list-unstyled li {
+    padding: 0.35rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.component-card .list-unstyled .material-symbols-outlined {
+    color: var(--success-color);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+/* Tables */
+.table {
+    margin-top: 1rem;
+}
+
+.table-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.table-primary th {
+    border-color: rgba(255,255,255,0.2);
+}
+
+/* Code Blocks */
+code {
+    background: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #dc3545;
+}
+
+pre {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    border: 1px solid #dee2e6;
+}
+
+pre code {
+    background: transparent;
+    padding: 0;
+    color: #212529;
+}
+
+/* Alerts with Icons */
+.alert .material-symbols-outlined {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+/* List Group Items */
+.list-group-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.list-group-item .material-symbols-outlined {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--primary-color);
+    padding-left: calc(1rem - 4px);
+}
+
+/* Badges */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    font-weight: 500;
+}
+
+/* Footer */
+footer {
+    margin-top: 3rem;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding-top: 60px;
+    }
+
+    .navbar-brand div {
+        font-size: 0.95rem;
+    }
+
+    .navbar-brand small {
+        font-size: 0.7rem !important;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+    }
+
+    .architecture-diagram {
+        padding: 1rem;
+    }
+
+    .architecture-diagram .mermaid {
+        padding: 1rem;
+        min-height: 400px;
+    }
+
+    .component-card .card-title {
+        font-size: 1.1rem;
+    }
+
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    pre {
+        font-size: 0.8rem;
+    }
+
+    .material-symbols-outlined {
+        font-size: 1.25rem !important;
+    }
+
+    h2 .material-symbols-outlined {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .navbar,
+    .offcanvas,
+    footer {
+        display: none;
+    }
+
+    body {
+        padding-top: 0;
+    }
+
+    .main-content {
+        margin: 0;
+    }
+
+    .card {
+        page-break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #dee2e6;
+    }
+
+    .architecture-diagram .mermaid {
+        page-break-inside: avoid;
+    }
+}
+
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Loading Animation for Mermaid */
+.mermaid:empty::before {
+    content: 'Loading diagram...';
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Dark Mode Styles */
+[data-bs-theme="dark"] {
+    --primary-color: #4dabf7;
+    --secondary-color: #adb5bd;
+    --success-color: #51cf66;
+    --info-color: #22b8cf;
+    --warning-color: #ffd43b;
+    --danger-color: #ff6b6b;
+    --light-color: #343a40;
+    --dark-color: #f8f9fa;
+}
+
+/* Dark Mode - Body and Main Content */
+[data-bs-theme="dark"] body {
+    background-color: #1a1a1a;
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .main-content {
+    background-color: #1a1a1a;
+}
+
+/* Dark Mode - Cards */
+[data-bs-theme="dark"] .card {
+    background-color: #2d3748;
+    border-color: #4a5568;
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+}
+
+[data-bs-theme="dark"] .card-title {
+    color: #90cdf4;
+}
+
+/* Dark Mode - Offcanvas Menus */
+[data-bs-theme="dark"] .offcanvas {
+    background-color: #2d3748 !important;
+}
+
+[data-bs-theme="dark"] .offcanvas-header {
+    background-color: #1a365d !important;
+    border-bottom-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .offcanvas-body .nav-link {
+    color: #cbd5e0;
+}
+
+[data-bs-theme="dark"] .offcanvas-body .nav-link:hover {
+    background-color: #4a5568;
+    color: #90cdf4;
+}
+
+[data-bs-theme="dark"] .offcanvas-body .nav-link.active {
+    background-color: #2c5282;
+    color: white;
+}
+
+/* Dark Mode - Settings Menu */
+[data-bs-theme="dark"] .setting-item {
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .setting-item .text-muted {
+    color: #a0aec0 !important;
+}
+
+[data-bs-theme="dark"] .setting-item.border-bottom {
+    border-bottom-color: #4a5568 !important;
+}
+
+/* Dark Mode - Architecture Diagram */
+[data-bs-theme="dark"] .architecture-diagram {
+    background: #2d3748;
+}
+
+[data-bs-theme="dark"] .architecture-diagram .mermaid {
+    background: #1a202c;
+}
+
+/* Dark Mode - Code Blocks */
+[data-bs-theme="dark"] code {
+    background: #2d3748 !important;
+    color: #fca5a5 !important;
+}
+
+[data-bs-theme="dark"] pre,
+[data-bs-theme="dark"] pre.bg-light,
+[data-bs-theme="dark"] .bg-light pre {
+    background: #1a202c !important;
+    background-color: #1a202c !important;
+    border-color: #4a5568 !important;
+    color: #e9ecef !important;
+}
+
+[data-bs-theme="dark"] pre code {
+    background: transparent !important;
+    color: #e9ecef !important;
+}
+
+/* Dark Mode - Tables */
+[data-bs-theme="dark"] .table {
+    color: #e9ecef;
+    border-color: #4a5568;
+}
+
+[data-bs-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+[data-bs-theme="dark"] .table-primary {
+    background-color: #2c5282;
+}
+
+/* Dark Mode - Alerts */
+[data-bs-theme="dark"] .alert-info {
+    background-color: #2c5282;
+    border-color: #2b6cb0;
+    color: #bee3f8;
+}
+
+[data-bs-theme="dark"] .alert-warning {
+    background-color: #744210;
+    border-color: #975a16;
+    color: #fbd38d;
+}
+
+/* Dark Mode - Badges */
+[data-bs-theme="dark"] .badge {
+    opacity: 0.9;
+}
+
+[data-bs-theme="dark"] .badge.bg-success {
+    background-color: #2f855a !important;
+}
+
+[data-bs-theme="dark"] .badge.bg-info {
+    background-color: #2c5282 !important;
+}
+
+[data-bs-theme="dark"] .badge.bg-warning {
+    background-color: #975a16 !important;
+}
+
+/* Dark Mode - Component Cards with Borders */
+[data-bs-theme="dark"] .border-success {
+    border-color: #38a169 !important;
+}
+
+[data-bs-theme="dark"] .border-info {
+    border-color: #3182ce !important;
+}
+
+[data-bs-theme="dark"] .border-warning {
+    border-color: #d69e2e !important;
+}
+
+/* Dark Mode - List Groups */
+[data-bs-theme="dark"] .list-group-item {
+    background-color: #2d3748;
+    border-color: #4a5568;
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .list-group-item:hover {
+    background-color: #4a5568;
+}
+
+/* Dark Mode - Material Icons Color Adjustments */
+[data-bs-theme="dark"] .text-primary {
+    color: #90cdf4 !important;
+}
+
+[data-bs-theme="dark"] .text-success {
+    color: #68d391 !important;
+}
+
+[data-bs-theme="dark"] .text-info {
+    color: #63b3ed !important;
+}
+
+[data-bs-theme="dark"] .text-warning {
+    color: #f6e05e !important;
+}
+
+/* Dark Mode - Scrollbar */
+[data-bs-theme="dark"] ::-webkit-scrollbar-track {
+    background: #2d3748;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #4a5568;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+}

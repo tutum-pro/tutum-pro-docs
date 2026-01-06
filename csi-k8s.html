@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes CSI Driver - Tutum Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        function initMermaid(theme) {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: theme || 'neutral',
+                flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+            });
+        }
+        initMermaid('neutral');
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">security</span>
+                </button>
+                <a class="navbar-brand d-flex align-items-center mb-0" href="index.html">
+                    <div>
+                        <div class="fw-bold">Tutum Platform</div>
+                        <small class="d-block" style="font-size: 0.75rem; opacity: 0.9;">X.509 Certificate Management</small>
+                    </div>
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">settings</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">menu_book</span> Documentation</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="index.html"><span class="material-symbols-outlined me-2">home</span>Overview</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="architecture.html"><span class="material-symbols-outlined me-2">architecture</span>Architecture</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="engine.html"><span class="material-symbols-outlined me-2">dns</span>tutum-engine</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="netlib.html"><span class="material-symbols-outlined me-2">library_books</span>tutum-netlib</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link active d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="settingsMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">settings</span> Settings</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="setting-item mb-4 pb-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">format_textdirection_r_to_l</span>RTL Mode</h6><small class="text-muted">Right-to-left text direction</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="rtlSwitch" onchange="toggleRTL()"></div>
+                </div>
+            </div>
+            <div class="setting-item mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">dark_mode</span>Dark Mode</h6><small class="text-muted">Use dark color scheme</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active">Kubernetes CSI Driver</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-primary mb-4">
+                <span class="material-symbols-outlined align-middle">cloud</span>
+                Kubernetes CSI Driver (tutum-csi-driver-k8s)
+            </h1>
+
+            <p class="lead">Container Storage Interface Driver for Kubernetes - Native Certificate Volume Mounting</p>
+
+            <!-- Overview -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">info</span>
+                            Overview
+                        </h2>
+                        <p><strong>tutum-csi-driver-k8s</strong> is a Kubernetes CSI (Container Storage Interface) driver that enables pods to mount X.509 certificates as volumes. Certificates are retrieved from tutum-engine and exposed as files in a tmpfs filesystem.</p>
+
+                        <div class="alert alert-success d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">security</span>
+                            <div>
+                                <strong>Security:</strong> Certificates are stored in memory (tmpfs), never written to disk, and automatically cleaned up when pods are terminated.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">account_tree</span>
+                            Architecture
+                        </h2>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph TB
+    subgraph k8s["Kubernetes Cluster"]
+        subgraph node["Worker Node"]
+            POD["Application Pod"]
+            KUBELET["kubelet"]
+            CSI["tutum-csi-driver-k8s<br/>(DaemonSet)"]
+            TMPFS["tmpfs<br/>/var/lib/kubelet/pods/.../volumes/"]
+        end
+
+        API["kube-apiserver"]
+        SC["StorageClass<br/>tutum.io"]
+        PV["PersistentVolume"]
+        PVC["PersistentVolumeClaim"]
+    end
+
+    ENGINE["tutum-engine<br/>(gRPC :9090)"]
+
+    POD -->|"volume mount"| TMPFS
+    KUBELET -->|"CSI calls"| CSI
+    CSI -->|"GetCertificate"| ENGINE
+    CSI -->|"write files"| TMPFS
+    API --> KUBELET
+    PVC --> PV
+    PV --> SC
+
+    style CSI fill:#e6f2ff,stroke:#3182ce,stroke-width:3px
+    style ENGINE fill:#e6ffe6,stroke:#48bb78,stroke-width:2px
+    style TMPFS fill:#fff5e6,stroke:#ed8936,stroke-width:2px
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">checklist</span>
+                            Features
+                        </h2>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Native Kubernetes CSI integration</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>tmpfs-based secure storage</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Dynamic provisioning via StorageClass</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Automatic certificate refresh</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Workload tracking for audit logs</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Token-based authentication support</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>ReadOnlyMany (ROX) access mode</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Health probes and metrics</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Installation -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">download</span>
+                            Installation
+                        </h2>
+
+                        <h3 class="h5 mt-4">Prerequisites</h3>
+                        <ul>
+                            <li>Kubernetes 1.20+</li>
+                            <li>tutum-engine deployed and accessible</li>
+                            <li>RBAC permissions for CSI driver</li>
+                        </ul>
+
+                        <h3 class="h5 mt-4">Deploy CSI Driver</h3>
+                        <pre class="bg-light p-3 rounded"><code># Apply all CSI driver manifests
+kubectl apply -f deploy/k8s/
+
+# Verify DaemonSet is running
+kubectl get pods -n tutum-system -l app=tutum-csi-driver
+
+# Check CSI driver registration
+kubectl get csidriver tutum.io</code></pre>
+
+                        <h3 class="h5 mt-4">Required Kubernetes Resources</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Resource</th><th>Name</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>CSIDriver</td><td><code>tutum.io</code></td><td>CSI driver registration</td></tr>
+                                    <tr><td>DaemonSet</td><td><code>tutum-csi-driver</code></td><td>Driver pods on all nodes</td></tr>
+                                    <tr><td>StorageClass</td><td><code>tutum-certificates</code></td><td>Dynamic provisioning</td></tr>
+                                    <tr><td>ServiceAccount</td><td><code>tutum-csi-driver</code></td><td>Driver identity</td></tr>
+                                    <tr><td>ClusterRole</td><td><code>tutum-csi-driver</code></td><td>Required permissions</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Usage -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">play_arrow</span>
+                            Usage
+                        </h2>
+
+                        <h3 class="h5 mt-4">1. Create StorageClass</h3>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: tutum-certificates
+provisioner: tutum.io
+parameters:
+  tutum.io/engine-endpoint: "tutum-engine.tutum-system:9090"
+volumeBindingMode: Immediate</code></pre>
+
+                        <h3 class="h5 mt-4">2. Create PersistentVolumeClaim</h3>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-app-cert
+  namespace: production
+spec:
+  storageClassName: tutum-certificates
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Mi
+  # Certificate parameters via annotations
+  metadata:
+    annotations:
+      tutum.io/certificate-name: "my-app-cert"
+      tutum.io/group-id: "production-group-uuid"
+      tutum.io/namespace: "production"
+      tutum.io/channel: "internal"
+      tutum.io/auth-token-secret: "tutum-token-secret"</code></pre>
+
+                        <h3 class="h5 mt-4">3. Mount in Pod</h3>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app
+  namespace: production
+spec:
+  containers:
+    - name: app
+      image: my-app:latest
+      volumeMounts:
+        - name: cert-volume
+          mountPath: /etc/ssl/certs/my-app
+          readOnly: true
+  volumes:
+    - name: cert-volume
+      persistentVolumeClaim:
+        claimName: my-app-cert</code></pre>
+
+                        <h3 class="h5 mt-4">Mounted Files</h3>
+                        <pre class="bg-light p-3 rounded"><code>/etc/ssl/certs/my-app/
+├── tls.crt          # Certificate (PEM)
+├── tls.key          # Private key (PEM)
+├── ca.crt           # CA chain (PEM)
+└── metadata.json    # Certificate metadata</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inline Ephemeral Volume -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">flash_on</span>
+                            Inline Ephemeral Volumes
+                        </h2>
+                        <p>For simpler use cases, use CSI inline ephemeral volumes without PVC:</p>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app
+spec:
+  containers:
+    - name: app
+      image: my-app:latest
+      volumeMounts:
+        - name: cert
+          mountPath: /etc/ssl/certs/my-app
+          readOnly: true
+  volumes:
+    - name: cert
+      csi:
+        driver: tutum.io
+        readOnly: true
+        volumeAttributes:
+          tutum.io/certificate-name: "my-app-cert"
+          tutum.io/group-id: "production-group-uuid"
+          tutum.io/namespace: "production"</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configuration -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">settings</span>
+                            Configuration
+                        </h2>
+
+                        <h3 class="h5 mt-4">Volume Attributes</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Attribute</th><th>Required</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>tutum.io/certificate-name</code></td><td>Yes</td><td>Certificate name</td></tr>
+                                    <tr><td><code>tutum.io/group-id</code></td><td>Yes</td><td>Group UUID</td></tr>
+                                    <tr><td><code>tutum.io/namespace</code></td><td>Yes</td><td>Namespace name</td></tr>
+                                    <tr><td><code>tutum.io/version</code></td><td>No</td><td>Specific version (default: latest)</td></tr>
+                                    <tr><td><code>tutum.io/channel</code></td><td>No</td><td>Distribution channel name</td></tr>
+                                    <tr><td><code>tutum.io/auth-token-secret</code></td><td>No</td><td>Secret containing auth token</td></tr>
+                                    <tr><td><code>tutum.io/refresh-interval</code></td><td>No</td><td>Auto-refresh interval (e.g., "5m")</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Environment Variables</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>TUTUM_ENGINE_ENDPOINT</code></td><td><code>tutum-engine:9090</code></td><td>tutum-engine gRPC endpoint</td></tr>
+                                    <tr><td><code>TUTUM_NODE_ID</code></td><td>(from downward API)</td><td>Kubernetes node name</td></tr>
+                                    <tr><td><code>TUTUM_DRIVER_NAME</code></td><td><code>tutum.io</code></td><td>CSI driver name</td></tr>
+                                    <tr><td><code>TUTUM_SOCKET_PATH</code></td><td><code>/csi/csi.sock</code></td><td>CSI socket path</td></tr>
+                                    <tr><td><code>TUTUM_TLS_ENABLED</code></td><td><code>false</code></td><td>Enable mTLS to engine</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RBAC -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">admin_panel_settings</span>
+                            RBAC Requirements
+                        </h2>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tutum-csi-driver
+rules:
+  # CSI node operations
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  # Read secrets for auth tokens
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Troubleshooting -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">bug_report</span>
+                            Troubleshooting
+                        </h2>
+
+                        <h3 class="h5 mt-4">Check CSI Driver Status</h3>
+                        <pre class="bg-light p-3 rounded"><code># Check DaemonSet pods
+kubectl get pods -n tutum-system -l app=tutum-csi-driver
+
+# View driver logs
+kubectl logs -n tutum-system -l app=tutum-csi-driver -c csi-driver
+
+# Check CSI driver registration
+kubectl get csidriver tutum.io -o yaml
+
+# Describe CSI node info
+kubectl get csinodes -o yaml</code></pre>
+
+                        <h3 class="h5 mt-4">Common Issues</h3>
+                        <div class="accordion" id="troubleshootingAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#issue1">
+                                        Volume mount fails with "certificate not found"
+                                    </button>
+                                </h2>
+                                <div id="issue1" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <p>Verify the certificate exists and the group/namespace match:</p>
+                                        <pre><code>curl http://tutum-engine:8080/api/v1/certificates?group=GROUP_ID&namespace=NAMESPACE</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#issue2">
+                                        Authentication error when accessing protected channel
+                                    </button>
+                                </h2>
+                                <div id="issue2" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <p>Ensure the auth token secret exists and contains a valid token:</p>
+                                        <pre><code>kubectl get secret tutum-token-secret -o yaml
+kubectl describe secret tutum-token-secret</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#issue3">
+                                        CSI driver not connecting to tutum-engine
+                                    </button>
+                                </h2>
+                                <div id="issue3" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <p>Check network connectivity and DNS resolution:</p>
+                                        <pre><code># From CSI driver pod
+kubectl exec -n tutum-system tutum-csi-driver-xxx -- nslookup tutum-engine
+kubectl exec -n tutum-system tutum-csi-driver-xxx -- nc -zv tutum-engine 9090</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container-fluid text-center">
+            <p class="mb-1">&copy; 2025 Tutum Platform - Enterprise X.509 Certificate Management</p>
+            <p class="mb-2">Built with Go 1.21+ | Protocol Buffers v3 | Docker | Kubernetes</p>
+            <div class="mt-3 pt-3 border-top border-secondary">
+                <p class="mb-1"><strong>Dual License:</strong> GPLv3 (Non-Profit) | Commercial License (Business Use)</p>
+                <p class="mb-0 small">
+                    <a href="licensing.html" class="text-white text-decoration-underline">View Licensing Terms</a> |
+                    <a href="pricing.html" class="text-white text-decoration-underline">Commercial Pricing</a> |
+                    <a href="mailto:licensing@tutum-pro.io" class="text-white text-decoration-underline">Request Exemption</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleRTL() {
+            const isRTL = document.getElementById('rtlSwitch').checked;
+            document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+            localStorage.setItem('rtl', isRTL);
+        }
+        function toggleDarkMode() {
+            const isDark = document.getElementById('darkModeSwitch').checked;
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : '');
+            localStorage.setItem('darkMode', isDark);
+            initMermaid(isDark ? 'dark' : 'neutral');
+            mermaid.run();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('rtl') === 'true') {
+                document.getElementById('rtlSwitch').checked = true;
+                document.documentElement.setAttribute('dir', 'rtl');
+            }
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.getElementById('darkModeSwitch').checked = true;
+                document.body.setAttribute('data-bs-theme', 'dark');
+                initMermaid('dark');
+                mermaid.run();
+            }
+        });
+    </script>
+</body>
+</html>

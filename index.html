@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutum Platform - Technical Documentation</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Material Design Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="link">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        // Initialize Mermaid with default theme
+        function initMermaid(theme) {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: theme || 'neutral',
+                flowchart: {
+                    useMaxWidth: true,
+                    htmlLabels: true,
+                    curve: 'basis'
+                }
+            });
+        }
+
+        // Start with neutral theme
+        initMermaid('neutral');
+    </script>
+</head>
+<body>
+    <!-- Fixed Top Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">security</span>
+                </button>
+                <a class="navbar-brand d-flex align-items-center mb-0" href="index.html">
+                    <div>
+                        <div class="fw-bold">Tutum Platform</div>
+                        <small class="d-block" style="font-size: 0.75rem; opacity: 0.9;">X.509 Certificate Management</small>
+                    </div>
+                </a>
+            </div>
+
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsMenu" aria-controls="settingsMenu" aria-expanded="false" aria-label="Settings">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">settings</span>
+                </button>
+                <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar/Offcanvas Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title" id="sidebarMenuLabel">
+                <span class="material-symbols-outlined align-middle">menu_book</span>
+                Documentation
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active d-flex align-items-center" href="index.html">
+                        <span class="material-symbols-outlined me-2">home</span>
+                        Overview
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="architecture.html">
+                        <span class="material-symbols-outlined me-2">architecture</span>
+                        Architecture
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="engine.html">
+                        <span class="material-symbols-outlined me-2">dns</span>
+                        tutum-engine
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="netlib.html">
+                        <span class="material-symbols-outlined me-2">library_books</span>
+                        tutum-netlib
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="proto.html">
+                        <span class="material-symbols-outlined me-2">code</span>
+                        Protocol Buffers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="csi-docker.html">
+                        <span class="material-symbols-outlined me-2">storage</span>
+                        Docker CSI Driver
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="csi-k8s.html">
+                        <span class="material-symbols-outlined me-2">cloud</span>
+                        Kubernetes CSI Driver
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Settings Offcanvas Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="settingsMenu" aria-labelledby="settingsMenuLabel">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title" id="settingsMenuLabel">
+                <span class="material-symbols-outlined align-middle">settings</span>
+                Settings
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="settings-container">
+                <!-- RTL Mode Setting -->
+                <div class="setting-item mb-4 pb-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">
+                                <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.25rem;">format_textdirection_r_to_l</span>
+                                RTL Mode
+                            </h6>
+                            <small class="text-muted">Right-to-left text direction</small>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="rtlSwitch" onchange="toggleRTL()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dark Mode Setting -->
+                <div class="setting-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">
+                                <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.25rem;">dark_mode</span>
+                                Dark Mode
+                            </h6>
+                            <small class="text-muted">Use dark color scheme</small>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="darkModeSwitch" onchange="toggleDarkMode()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+
+            <!-- Platform Overview Section -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">info</span>
+                            Platform Overview
+                        </h2>
+                        <p class="card-text">
+                            Tutum is a comprehensive X.509 certificate management platform designed for containerized
+                            environments (Kubernetes and Docker Engine). Built entirely in Go with full multi-architecture
+                            support (amd64/arm64), it provides secure certificate distribution, envelope encryption,
+                            and seamless integration with container orchestration systems.
+                        </p>
+
+                        <div class="alert alert-info d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">lightbulb</span>
+                            <div>
+                                <strong>Design Philosophy:</strong> Tutum follows a microservices architecture with clear
+                                separation between certificate storage, retrieval, and consumption layers, ensuring security,
+                                scalability, and maintainability.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Overview Section - Business Focus -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">architecture</span>
+                            Architecture
+                        </h2>
+
+                        <h3 class="h5 mt-4">Business Goals & Value Proposition</h3>
+                        <p>Tutum Platform addresses critical enterprise challenges in certificate management:</p>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <div class="card h-100 border-primary">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-primary">
+                                            <span class="material-symbols-outlined align-middle">verified_user</span>
+                                            Security & Compliance
+                                        </h5>
+                                        <ul class="list-unstyled mb-0">
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> AES-256-GCM envelope encryption for private keys at rest</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Confidentiality levels (NORMAL/PARANOIC) for access control</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Token-based authentication for distribution channels</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Comprehensive audit logging with workload tracking</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> mTLS support for secure certificate retrieval</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-success">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-success">
+                                            <span class="material-symbols-outlined align-middle">speed</span>
+                                            Operational Efficiency
+                                        </h5>
+                                        <ul class="list-unstyled mb-0">
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Automatic certificate validity checking and status updates</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Automatic pod restart on certificate updates (K8s)</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Certificate versioning with full history tracking</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Expiry notifications and proactive alerting</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Zero-downtime rolling deployments</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-info">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-info">
+                                            <span class="material-symbols-outlined align-middle">integration_instructions</span>
+                                            Seamless Integration
+                                        </h5>
+                                        <ul class="list-unstyled mb-0">
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Native Kubernetes CSI driver for ephemeral volumes</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Docker Volume Plugin for standalone deployments</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> REST API for administrative operations</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> gRPC API for high-performance certificate retrieval</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Multi-architecture support (amd64/arm64)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-warning">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-warning">
+                                            <span class="material-symbols-outlined align-middle">hub</span>
+                                            Scalability & Organization
+                                        </h5>
+                                        <ul class="list-unstyled mb-0">
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Groups for logical certificate organization</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Namespaces with configurable confidentiality</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Distribution channels for access segregation</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> PostgreSQL backend for enterprise reliability</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Prometheus metrics for observability</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Solution Structure</h3>
+                        <p>The platform consists of five interconnected components working together to provide end-to-end certificate management:</p>
+
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph TD
+    subgraph containers["Container Orchestration Layer"]
+        direction LR
+        K8S["Kubernetes Pods"]
+        DOCKER["Docker Engine Containers"]
+    end
+
+    subgraph drivers["CSI Driver Layer"]
+        direction LR
+        K8S_DRIVER["tutum-csi-driver-k8s"]
+        DOCKER_DRIVER["tutum-csi-driver-docker"]
+    end
+
+    subgraph netlib["Client Library Layer"]
+        NETLIB["tutum-netlib (.so)<br/>JDBC-like API + gRPC Client"]
+    end
+
+    GRPC_CONN["⬇<br/>gRPC/Protobuf Communication<br/>(mTLS Secured)<br/>⬇"]
+
+    subgraph engine["tutum-engine - Core Certificate Management Service"]
+        direction TB
+
+        subgraph apis["API Layer"]
+            direction LR
+            REST["REST API<br/>(Admin)<br/>Port 8080"]
+            GRPC["gRPC API<br/>(Cert Retrieval)<br/>Port 9090"]
+        end
+
+        subgraph logic["Business Logic Layer"]
+            BL["Certificate Service<br/>Encryption Service<br/>(AES-256-GCM Envelope Encryption)"]
+        end
+
+        subgraph data["Data Persistence Layer"]
+            DB[("PostgreSQL Database<br/>(Encrypted Certificates)")]
+        end
+
+        REST --> BL
+        GRPC --> BL
+        BL --> DB
+    end
+
+    K8S --> K8S_DRIVER
+    DOCKER --> DOCKER_DRIVER
+    K8S_DRIVER --> NETLIB
+    DOCKER_DRIVER --> NETLIB
+    NETLIB --> GRPC_CONN
+    GRPC_CONN --> GRPC
+
+    style containers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+    style drivers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+    style netlib fill:#fff5e6,stroke:#ed8936,stroke-width:2px
+    style engine fill:#e6ffe6,stroke:#48bb78,stroke-width:3px
+    style apis fill:#f0fff4,stroke:#48bb78,stroke-width:2px
+    style logic fill:#f0fff4,stroke:#48bb78,stroke-width:2px
+    style data fill:#f0fff4,stroke:#48bb78,stroke-width:2px
+
+    style K8S fill:#4299e1,stroke:#2c5282,stroke-width:2px,color:#fff
+    style DOCKER fill:#4299e1,stroke:#2c5282,stroke-width:2px,color:#fff
+    style K8S_DRIVER fill:#3182ce,stroke:#2c5282,stroke-width:2px,color:#fff
+    style DOCKER_DRIVER fill:#3182ce,stroke:#2c5282,stroke-width:2px,color:#fff
+    style NETLIB fill:#ed8936,stroke:#c05621,stroke-width:2px,color:#fff
+    style GRPC_CONN fill:#edf2f7,stroke:#718096,stroke-width:2px,stroke-dasharray: 5 5
+    style REST fill:#48bb78,stroke:#2f855a,stroke-width:2px,color:#fff
+    style GRPC fill:#48bb78,stroke:#2f855a,stroke-width:2px,color:#fff
+    style BL fill:#38a169,stroke:#2f855a,stroke-width:2px,color:#fff
+    style DB fill:#2c5282,stroke:#1a365d,stroke-width:3px,color:#fff
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <a href="architecture.html" class="btn btn-primary">
+                                <span class="material-symbols-outlined align-middle">arrow_forward</span>
+                                View Detailed Architecture Documentation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Platform Components Section -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary mb-4">
+                            <span class="material-symbols-outlined align-middle">apps</span>
+                            Platform Components
+                        </h2>
+
+                        <div class="row g-4">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 border-success component-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <span class="material-symbols-outlined align-middle text-success">dns</span>
+                                            tutum-engine
+                                        </h5>
+                                        <p><span class="badge bg-success">Core</span></p>
+                                        <ul class="list-unstyled">
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Certificate lifecycle management</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> AES-256-GCM envelope encryption</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> REST API (30+ endpoints)</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> gRPC API (Protobuf v3)</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> PostgreSQL 15+ backend</li>
+                                        </ul>
+                                        <a href="engine.html" class="btn btn-outline-success btn-sm mt-2">
+                                            <span class="material-symbols-outlined align-middle" style="font-size: 18px;">arrow_forward</span>
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 border-info component-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <span class="material-symbols-outlined align-middle text-info">library_books</span>
+                                            tutum-netlib
+                                        </h5>
+                                        <p><span class="badge bg-info">Library</span></p>
+                                        <ul class="list-unstyled">
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> JDBC-like client API</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> gRPC client implementation</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Shared object (.so) compilation</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Multi-arch support (amd64/arm64)</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Connection pooling & retry logic</li>
+                                        </ul>
+                                        <a href="netlib.html" class="btn btn-outline-info btn-sm mt-2">
+                                            <span class="material-symbols-outlined align-middle" style="font-size: 18px;">arrow_forward</span>
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 border-info component-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <span class="material-symbols-outlined align-middle text-info">code</span>
+                                            proto
+                                        </h5>
+                                        <p><span class="badge bg-info">Protocol</span></p>
+                                        <ul class="list-unstyled">
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Protocol Buffer definitions (v3)</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> CertificateService gRPC API</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> GroupService gRPC API</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Buf toolchain integration</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Versioned API (v1)</li>
+                                        </ul>
+                                        <a href="proto.html" class="btn btn-outline-info btn-sm mt-2">
+                                            <span class="material-symbols-outlined align-middle" style="font-size: 18px;">arrow_forward</span>
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 border-warning component-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <span class="material-symbols-outlined align-middle text-warning">cloud</span>
+                                            tutum-csi-driver-k8s
+                                        </h5>
+                                        <p><span class="badge bg-warning text-dark">Kubernetes</span></p>
+                                        <ul class="list-unstyled">
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> CSI Driver implementation (v1.5.0)</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Ephemeral & persistent volumes</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> tmpfs in-memory mounting</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> DaemonSet deployment</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Pod security contexts</li>
+                                        </ul>
+                                        <a href="csi-k8s.html" class="btn btn-outline-warning btn-sm mt-2">
+                                            <span class="material-symbols-outlined align-middle" style="font-size: 18px;">arrow_forward</span>
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 border-warning component-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <span class="material-symbols-outlined align-middle text-warning">storage</span>
+                                            tutum-csi-driver-docker
+                                        </h5>
+                                        <p><span class="badge bg-warning text-dark">Docker</span></p>
+                                        <ul class="list-unstyled">
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Docker Volume Plugin API</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Systemd service deployment</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Managed plugin support</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Mount propagation handling</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Group/namespace filtering</li>
+                                        </ul>
+                                        <a href="csi-docker.html" class="btn btn-outline-warning btn-sm mt-2">
+                                            <span class="material-symbols-outlined align-middle" style="font-size: 18px;">arrow_forward</span>
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Build Tools & Technologies Section -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">build</span>
+                            Build Tools & Technologies
+                        </h2>
+
+                        <h3 class="h5 mt-4">Programming Languages & Frameworks</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Language</th>
+                                        <th>Version</th>
+                                        <th>Key Libraries</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>tutum-engine</td>
+                                        <td>Go</td>
+                                        <td>1.21+</td>
+                                        <td>Gorilla Mux, gRPC-Go, database/sql, Zap</td>
+                                    </tr>
+                                    <tr>
+                                        <td>tutum-netlib</td>
+                                        <td>Go</td>
+                                        <td>1.21+</td>
+                                        <td>gRPC-Go, Protobuf</td>
+                                    </tr>
+                                    <tr>
+                                        <td>tutum-csi-driver-k8s</td>
+                                        <td>Go</td>
+                                        <td>1.21+</td>
+                                        <td>Kubernetes CSI, gRPC-Go</td>
+                                    </tr>
+                                    <tr>
+                                        <td>tutum-csi-driver-docker</td>
+                                        <td>Go</td>
+                                        <td>1.21+</td>
+                                        <td>go-plugins-helpers, Docker SDK</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Build System</h3>
+                        <p>All projects use <strong>GNU Make</strong> for build automation with standardized targets:</p>
+                        <ul>
+                            <li><code>make build</code> - Build binary</li>
+                            <li><code>make test</code> - Run unit tests</li>
+                            <li><code>make lint</code> - Run linters (golangci-lint)</li>
+                            <li><code>make docker-build</code> - Build Docker image</li>
+                            <li><code>make clean</code> - Remove build artifacts</li>
+                        </ul>
+
+                        <h3 class="h5 mt-4">Cross-Compilation</h3>
+                        <p>Multi-architecture support through Go's cross-compilation:</p>
+                        <pre class="bg-light p-3 rounded"><code>GOOS=linux GOARCH=amd64 go build -o bin/app-amd64 ./cmd/app
+GOOS=linux GOARCH=arm64 go build -o bin/app-arm64 ./cmd/app</code></pre>
+
+                        <h3 class="h5 mt-4">Protocol Buffers Toolchain</h3>
+                        <p>Using <strong>Buf</strong> for Protocol Buffer management:</p>
+                        <ul>
+                            <li><code>buf generate</code> - Generate Go code from .proto files</li>
+                            <li><code>buf lint</code> - Lint Protocol Buffer definitions</li>
+                            <li><code>buf breaking</code> - Check for breaking API changes</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Project Statistics Section -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">analytics</span>
+                            Project Statistics
+                        </h2>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>Project</th>
+                                        <th>Lines of Code</th>
+                                        <th>Go Modules</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>tutum-engine</td>
+                                        <td>~8,000</td>
+                                        <td>15+</td>
+                                        <td><span class="badge bg-success">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>tutum-netlib</td>
+                                        <td>~800</td>
+                                        <td>3</td>
+                                        <td><span class="badge bg-success">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>proto</td>
+                                        <td>~200 (.proto)</td>
+                                        <td>Generated</td>
+                                        <td><span class="badge bg-success">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>tutum-csi-driver-k8s</td>
+                                        <td>~1,500</td>
+                                        <td>8</td>
+                                        <td><span class="badge bg-success">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>tutum-csi-driver-docker</td>
+                                        <td>~1,200</td>
+                                        <td>7</td>
+                                        <td><span class="badge bg-success">Completed</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Getting Started Section -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">rocket_launch</span>
+                            Getting Started
+                        </h2>
+                        <h3 class="h5 mt-4">Quick Start - Full Platform</h3>
+                        <pre class="bg-light p-3 rounded"><code># Clone repository
+git clone https://github.com/tutum/platform
+cd platform
+
+# Start tutum-engine with PostgreSQL
+cd tutum-engine
+export TUTUM_MASTER_KEY=$(openssl rand -base64 32)
+make db-up
+make db-migrate
+make run
+
+# In another terminal - Deploy Kubernetes CSI Driver
+cd tutum-csi-driver-k8s
+make docker-build
+kubectl apply -f deploy/
+
+# Or deploy Docker plugin
+cd tutum-csi-driver-docker
+make build
+sudo systemctl start tutum-csi-driver</code></pre>
+
+                        <div class="alert alert-info mt-4 d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">info</span>
+                            <div>
+                                <strong>Next Steps:</strong> Click the security icon <span class="material-symbols-outlined align-middle">security</span> in the header to explore detailed documentation for each component.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container-fluid text-center">
+            <p class="mb-1">&copy; 2025 Tutum Platform - Enterprise X.509 Certificate Management</p>
+            <p class="mb-2">Built with Go 1.21+ | Protocol Buffers v3 | Docker | Kubernetes</p>
+            <div class="mt-3 pt-3 border-top border-secondary">
+                <p class="mb-1"><strong>Dual License:</strong> GPLv3 (Non-Profit) | Commercial License (Business Use)</p>
+                <p class="mb-0 small">
+                    <a href="licensing.html" class="text-white text-decoration-underline">View Licensing Terms</a> |
+                    <a href="pricing.html" class="text-white text-decoration-underline">Commercial Pricing</a> |
+                    <a href="mailto:licensing@tutum-pro.io" class="text-white text-decoration-underline">Request Exemption</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Settings Script -->
+    <script>
+        // RTL Toggle Function
+        function toggleRTL() {
+            const isRTL = document.getElementById('rtlSwitch').checked;
+            const htmlElement = document.documentElement;
+            const sidebarMenu = document.getElementById('sidebarMenu');
+            const settingsMenu = document.getElementById('settingsMenu');
+
+            if (isRTL) {
+                htmlElement.setAttribute('dir', 'rtl');
+                localStorage.setItem('rtl', 'true');
+                // Change offcanvas direction to end (right in RTL)
+                sidebarMenu.classList.remove('offcanvas-start');
+                sidebarMenu.classList.add('offcanvas-end');
+                settingsMenu.classList.remove('offcanvas-start');
+                settingsMenu.classList.add('offcanvas-end');
+            } else {
+                htmlElement.removeAttribute('dir');
+                localStorage.setItem('rtl', 'false');
+                // Change offcanvas direction to start (left in LTR)
+                sidebarMenu.classList.remove('offcanvas-end');
+                sidebarMenu.classList.add('offcanvas-start');
+                settingsMenu.classList.remove('offcanvas-end');
+                settingsMenu.classList.add('offcanvas-start');
+            }
+        }
+
+        // Dark Mode Toggle Function
+        function toggleDarkMode() {
+            const isDark = document.getElementById('darkModeSwitch').checked;
+
+            if (isDark) {
+                document.body.setAttribute('data-bs-theme', 'dark');
+                localStorage.setItem('darkMode', 'true');
+                // Reinitialize Mermaid with dark theme
+                initMermaid('dark');
+                // Re-render all mermaid diagrams
+                mermaid.run();
+            } else {
+                document.body.removeAttribute('data-bs-theme');
+                localStorage.setItem('darkMode', 'false');
+                // Reinitialize Mermaid with neutral theme
+                initMermaid('neutral');
+                // Re-render all mermaid diagrams
+                mermaid.run();
+            }
+        }
+
+        // Load saved settings on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load RTL setting
+            const savedRTL = localStorage.getItem('rtl');
+            if (savedRTL === 'true') {
+                document.getElementById('rtlSwitch').checked = true;
+                document.documentElement.setAttribute('dir', 'rtl');
+            }
+
+            // Load Dark Mode setting
+            const savedDarkMode = localStorage.getItem('darkMode');
+            if (savedDarkMode === 'true') {
+                document.getElementById('darkModeSwitch').checked = true;
+                document.body.setAttribute('data-bs-theme', 'dark');
+                // Initialize Mermaid with dark theme
+                initMermaid('dark');
+                mermaid.run();
+            }
+        });
+    </script>
+</body>
+</html>

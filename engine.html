@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tutum-engine - Tutum Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        function initMermaid(theme) {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: theme || 'neutral',
+                flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+            });
+        }
+        initMermaid('neutral');
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">security</span>
+                </button>
+                <a class="navbar-brand d-flex align-items-center mb-0" href="index.html">
+                    <div>
+                        <div class="fw-bold">Tutum Platform</div>
+                        <small class="d-block" style="font-size: 0.75rem; opacity: 0.9;">X.509 Certificate Management</small>
+                    </div>
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">settings</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">menu_book</span> Documentation</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="index.html"><span class="material-symbols-outlined me-2">home</span>Overview</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="architecture.html"><span class="material-symbols-outlined me-2">architecture</span>Architecture</a></li>
+                <li class="nav-item"><a class="nav-link active d-flex align-items-center" href="engine.html"><span class="material-symbols-outlined me-2">dns</span>tutum-engine</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="netlib.html"><span class="material-symbols-outlined me-2">library_books</span>tutum-netlib</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="settingsMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">settings</span> Settings</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="setting-item mb-4 pb-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">format_textdirection_r_to_l</span>RTL Mode</h6><small class="text-muted">Right-to-left text direction</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="rtlSwitch" onchange="toggleRTL()"></div>
+                </div>
+            </div>
+            <div class="setting-item mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">dark_mode</span>Dark Mode</h6><small class="text-muted">Use dark color scheme</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active">tutum-engine</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-primary mb-4">
+                <span class="material-symbols-outlined align-middle">dns</span>
+                tutum-engine
+            </h1>
+
+            <p class="lead">Enterprise X.509 Certificate Management Platform - Core Backend Service</p>
+
+            <!-- Quick Start -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">rocket_launch</span>
+                            Quick Start
+                        </h2>
+                        <pre class="bg-light p-3 rounded"><code># 1. Start PostgreSQL
+make db-up
+
+# 2. Run migrations
+make db-migrate
+
+# 3. Generate master key (32 bytes, base64 encoded)
+export TUTUM_MASTER_KEY=$(openssl rand -base64 32)
+
+# 4. Start server
+make run</code></pre>
+                        <p class="mt-3"><strong>Service endpoints:</strong></p>
+                        <ul>
+                            <li><strong>REST API:</strong> http://localhost:8080</li>
+                            <li><strong>gRPC API:</strong> localhost:9090</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Overview -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">account_tree</span>
+                            Architecture Overview
+                        </h2>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph TB
+    subgraph apis["API Layer"]
+        REST["REST API<br/>:8080"]
+        GRPC["gRPC API<br/>:9090"]
+    end
+
+    subgraph services["Domain Services"]
+        CERT["Certificate<br/>Service"]
+        GROUP["Group<br/>Service"]
+        NS["Namespace<br/>Service"]
+        CHAN["Channel<br/>Service"]
+        TOKEN["Token<br/>Service"]
+        AUDIT["Audit<br/>Service"]
+        ENC["Encryption<br/>Service"]
+    end
+
+    subgraph infra["Infrastructure"]
+        REPO["PostgreSQL<br/>Repository"]
+        KM["Key<br/>Manager"]
+        K8S["K8s Pod<br/>Restarter"]
+        SCHED["Schedulers"]
+    end
+
+    REST --> CERT
+    REST --> GROUP
+    REST --> NS
+    REST --> CHAN
+    REST --> TOKEN
+    GRPC --> CERT
+    GRPC --> GROUP
+    CERT --> ENC
+    CERT --> AUDIT
+    CERT --> REPO
+    ENC --> KM
+    CERT --> K8S
+
+    style apis fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+    style services fill:#e6ffe6,stroke:#48bb78,stroke-width:2px
+    style infra fill:#fff5e6,stroke:#ed8936,stroke-width:2px
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">description</span> Architecture Overview</h5>
+                            <p class="mb-0">The tutum-engine architecture follows a layered design pattern that separates concerns and enables independent scaling and testing of each component. The arrows in the diagram show the data flow: API calls flow into domain services, which coordinate among themselves and persist data through the infrastructure layer.</p>
+                        </div>
+
+                        <!-- API Layer Components -->
+                        <h4 class="mt-4 mb-3"><span class="material-symbols-outlined align-middle text-info">api</span> API Layer <span class="badge bg-info">Blue</span></h4>
+                        <p>Two entry points serve different use cases, each optimized for specific client types and communication patterns.</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-info mb-3 h-100">
+                                    <div class="card-header bg-info text-white">
+                                        <span class="material-symbols-outlined align-middle">http</span> REST API (:8080)
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">HTTP/JSON API for administrative operations, management dashboards, and CI/CD pipeline integrations.</p>
+                                        <p><strong>Protocol:</strong> HTTP/1.1 with JSON payloads</p>
+                                        <p><strong>Use Cases:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Certificate CRUD operations</li>
+                                            <li>Group and namespace management</li>
+                                            <li>Channel and token administration</li>
+                                            <li>Search and filtering with pagination</li>
+                                            <li>Integration with CI/CD pipelines (curl, scripts)</li>
+                                            <li>Management dashboard backends</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-info mb-3 h-100">
+                                    <div class="card-header bg-info text-white">
+                                        <span class="material-symbols-outlined align-middle">code</span> gRPC API (:9090)
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">High-performance binary API for CSI drivers, application runtime, and service-to-service communication.</p>
+                                        <p><strong>Protocol:</strong> HTTP/2 with Protocol Buffers</p>
+                                        <p><strong>Use Cases:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>CSI driver certificate retrieval</li>
+                                            <li>Workload tracking (pod/deployment info)</li>
+                                            <li>Certificate streaming (<code>WatchCertificate</code>)</li>
+                                            <li>Access to PARANOIC namespaces</li>
+                                            <li>Token-authenticated channel access</li>
+                                            <li>Low-latency, high-throughput operations</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Domain Services Components -->
+                        <h4 class="mt-4 mb-3"><span class="material-symbols-outlined align-middle text-success">hub</span> Domain Services <span class="badge bg-success">Green</span></h4>
+                        <p>Business logic layer containing all core services. Each service has a single responsibility and communicates through well-defined interfaces.</p>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <span class="material-symbols-outlined align-middle">verified</span> Certificate Service
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text"><strong>Core service</strong> - manages the complete lifecycle of X.509 certificates.</p>
+                                        <p><strong>Responsibilities:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Certificate CRUD with versioning</li>
+                                            <li>X.509 parsing and metadata extraction</li>
+                                            <li>Status management (ACTIVE, EXPIRED, PENDING)</li>
+                                            <li>Coordination with Encryption and Audit services</li>
+                                            <li>Triggering pod restarts on certificate updates</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <span class="material-symbols-outlined align-middle">folder_shared</span> Group Service
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Manages logical groupings of certificates for organizational purposes.</p>
+                                        <p><strong>Responsibilities:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Group CRUD operations</li>
+                                            <li>Group-level metadata storage</li>
+                                            <li>Auto-creation when <code>CREATE_NOT_EXISTING_OBJ=true</code></li>
+                                            <li>Group membership queries</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <span class="material-symbols-outlined align-middle">workspaces</span> Namespace Service
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Manages namespaces with configurable confidentiality levels.</p>
+                                        <p><strong>Responsibilities:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Namespace CRUD operations</li>
+                                            <li>Confidentiality level management (NORMAL/PARANOIC)</li>
+                                            <li>Default channel association</li>
+                                            <li>Access control policy enforcement</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <span class="material-symbols-outlined align-middle">share</span> Channel Service
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Manages distribution channels for certificate delivery.</p>
+                                        <p><strong>Responsibilities:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Channel CRUD operations</li>
+                                            <li>Authentication requirements (<code>requires_auth</code>)</li>
+                                            <li>Channel-certificate associations</li>
+                                            <li>Access policy configuration</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <span class="material-symbols-outlined align-middle">key</span> Token Service
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Manages authentication tokens for protected channel access.</p>
+                                        <p><strong>Responsibilities:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Token generation with validity windows</li>
+                                            <li>Token hash verification</li>
+                                            <li>Token status management (ACTIVE, EXPIRED, REVOKED)</li>
+                                            <li>Encrypted token storage</li>
+                                            <li>Last-used tracking</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <span class="material-symbols-outlined align-middle">history</span> Audit Service
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Records all operations for compliance and security auditing.</p>
+                                        <p><strong>Responsibilities:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Logging all CRUD operations</li>
+                                            <li>Workload tracking (MOUNT/UNMOUNT)</li>
+                                            <li>User identification and IP logging</li>
+                                            <li>Success/failure recording</li>
+                                            <li>Compliance reporting support</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <span class="material-symbols-outlined align-middle">enhanced_encryption</span> Encryption Service
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Provides envelope encryption for sensitive data protection.</p>
+                                        <p><strong>Responsibilities:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Private key encryption (AES-256-GCM)</li>
+                                            <li>DEK generation and management</li>
+                                            <li>Decryption for authorized access</li>
+                                            <li>Token payload encryption</li>
+                                            <li>Coordination with Key Manager</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Infrastructure Components -->
+                        <h4 class="mt-4 mb-3"><span class="material-symbols-outlined align-middle text-warning">dns</span> Infrastructure <span class="badge bg-warning text-dark">Orange</span></h4>
+                        <p>Foundation layer providing persistence, external integrations, and scheduled operations.</p>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card border-warning mb-3 h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <span class="material-symbols-outlined align-middle">storage</span> PostgreSQL Repository
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Data persistence layer with optimized queries.</p>
+                                        <p><strong>Features:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Connection pooling</li>
+                                            <li>Transaction management</li>
+                                            <li>Migration support</li>
+                                            <li>Indexed queries</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card border-warning mb-3 h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <span class="material-symbols-outlined align-middle">vpn_key</span> Key Manager
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Master key management and DEK operations.</p>
+                                        <p><strong>Features:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Master Key storage</li>
+                                            <li>DEK generation</li>
+                                            <li>DEK encryption/decryption</li>
+                                            <li>Key rotation support</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card border-warning mb-3 h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <span class="material-symbols-outlined align-middle">restart_alt</span> K8s Pod Restarter
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Kubernetes workload restart automation.</p>
+                                        <p><strong>Features:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Deployment/StatefulSet/DaemonSet support</li>
+                                            <li>Rate limiting protection</li>
+                                            <li>Circuit breaker</li>
+                                            <li>Exponential backoff</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card border-warning mb-3 h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <span class="material-symbols-outlined align-middle">schedule</span> Schedulers
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Periodic background tasks for maintenance.</p>
+                                        <p><strong>Tasks:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Certificate validity checker</li>
+                                            <li>Token expiration checker</li>
+                                            <li>Status transitions</li>
+                                            <li>Cron-based scheduling</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Core Functionality Details -->
+            <section class="mb-5">
+                <div class="card shadow-sm border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="card-title mb-0">
+                            <span class="material-symbols-outlined align-middle">functions</span>
+                            Core Functionality - Detailed Description
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">This section provides in-depth documentation of the key functionalities of tutum-engine.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1. Certificate Creation (Adding Certificates) -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">add_circle</span>
+                            1. Certificate Creation (Adding Certificates)
+                        </h2>
+
+                        <h3 class="h5 mt-4">Overview</h3>
+                        <p>Certificate creation is the process of storing X.509 certificates in the Tutum Platform with full encryption and metadata extraction. The system supports both certificate creation and updates with automatic versioning.</p>
+
+                        <h3 class="h5 mt-4">Creation Flow</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+sequenceDiagram
+    participant Client as REST Client
+    participant API as REST API
+    participant Service as Certificate Service
+    participant Enc as Encryption Service
+    participant KM as Key Manager
+    participant DB as PostgreSQL
+    participant K8s as K8s Pod Restarter
+    participant Audit as Audit Service
+
+    Client->>API: POST /api/v1/certificates
+    API->>API: Validate request payload
+    API->>Service: Create(certificate)
+    Service->>Service: Parse X.509 certificate
+    Service->>Service: Extract metadata (subject, issuer, SANs, expiry)
+    Service->>Enc: Encrypt private key
+    Enc->>KM: GenerateDEK()
+    KM-->>Enc: DEK (256-bit)
+    Enc->>Enc: Encrypt private key with DEK (AES-256-GCM)
+    Enc->>KM: EncryptDEK(dek)
+    KM-->>Enc: Encrypted DEK
+    Enc-->>Service: Encrypted payload
+    Service->>DB: INSERT certificate (version=1)
+    DB-->>Service: Success
+    Service->>Audit: Log CREATE action
+    Service->>K8s: Trigger pod restart (if applicable)
+    Service-->>API: Certificate created
+    API-->>Client: 201 Created + certificate response
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">description</span> Diagram Explanation</h5>
+                            <p>The certificate creation flow begins when a REST client sends a POST request to the <code>/api/v1/certificates</code> endpoint. The REST API layer first validates the incoming request payload to ensure all required fields are present and properly formatted.</p>
+                            <p>Once validated, the request is forwarded to the Certificate Service, which performs two critical operations: parsing the X.509 certificate to validate its structure, and extracting metadata such as subject, issuer, Subject Alternative Names (SANs), and expiration dates.</p>
+                            <p>The private key then undergoes envelope encryption through the Encryption Service. First, the Key Manager generates a unique Data Encryption Key (DEK) - a 256-bit random key. The private key is encrypted using this DEK with the AES-256-GCM algorithm. Then, the DEK itself is encrypted using the Master Key, creating a secure "envelope" around the sensitive data.</p>
+                            <p>With the encrypted payload ready, the Certificate Service stores the certificate in PostgreSQL with version=1 for new certificates. The Audit Service logs the CREATE action for compliance tracking. If applicable (when the certificate replaces an existing one used by workloads), the K8s Pod Restarter is triggered to perform rolling restarts of affected deployments.</p>
+                            <p class="mb-0">Finally, the API returns a 201 Created response with the certificate details (excluding the decrypted private key in the response for security).</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">Request Payload</h3>
+                        <pre class="bg-light p-3 rounded"><code>{
+  "name": "my-app-cert",
+  "group_id": "550e8400-e29b-41d4-a716-446655440000",
+  "group_name": "production",          // Alternative to group_id
+  "namespace": "default",
+  "channel_id": "660e8400-e29b-41d4-a716-446655440001",
+  "channel_name": "internal",          // Alternative to channel_id
+  "type": "X509",
+  "certificate_pem": "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----",
+  "private_key_pem": "-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----",
+  "ca_chain_pem": "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----",
+  "custom_metadata": {
+    "environment": "production",
+    "team": "platform",
+    "cost_center": "CC-123"
+  },
+  "created_by": "admin@example.com"
+}</code></pre>
+
+                        <h3 class="h5 mt-4">Automatic Metadata Extraction</h3>
+                        <p>When a certificate is created, the system automatically extracts and stores comprehensive metadata from the X.509 certificate structure. This metadata serves multiple purposes: enabling search and filtering capabilities, providing visibility into certificate properties, and calculating status based on validity dates. The extraction is performed using Go's <code>crypto/x509</code> package, which parses the DER-encoded certificate data and exposes all standard X.509 fields.</p>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Field</th><th>Source</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>subject</code></td><td>X.509 Subject</td><td>Certificate subject (CN=example.com, O=...)</td></tr>
+                                    <tr><td><code>issuer</code></td><td>X.509 Issuer</td><td>CA that issued the certificate</td></tr>
+                                    <tr><td><code>serial_number</code></td><td>X.509 SerialNumber</td><td>Unique serial number (hex)</td></tr>
+                                    <tr><td><code>not_before</code></td><td>X.509 NotBefore</td><td>Validity start date</td></tr>
+                                    <tr><td><code>not_after</code></td><td>X.509 NotAfter</td><td>Validity end date</td></tr>
+                                    <tr><td><code>fingerprint_sha256</code></td><td>Calculated</td><td>SHA-256 hash of certificate DER</td></tr>
+                                    <tr><td><code>subject_alt_names</code></td><td>X.509 SAN extension</td><td>DNS names, IP addresses, emails</td></tr>
+                                    <tr><td><code>key_usage</code></td><td>X.509 KeyUsage</td><td>Digital Signature, Key Encipherment, etc.</td></tr>
+                                    <tr><td><code>extended_key_usage</code></td><td>X.509 ExtKeyUsage</td><td>TLS Web Server Auth, Client Auth, etc.</td></tr>
+                                    <tr><td><code>is_ca</code></td><td>X.509 BasicConstraints</td><td>Whether certificate is a CA</td></tr>
+                                    <tr><td><code>status</code></td><td>Calculated</td><td>ACTIVE, PENDING, or EXPIRED based on validity</td></tr>
+                                    <tr><td><code>days_until_expiry</code></td><td>Calculated</td><td>Days remaining until expiration</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Versioning</h3>
+                        <p>Each certificate update creates a new version:</p>
+                        <ul>
+                            <li><strong>Create:</strong> Creates version 1</li>
+                            <li><strong>Update:</strong> Increments version (1 → 2 → 3...)</li>
+                            <li><strong>Retrieve:</strong> By default returns latest version; specific version can be requested</li>
+                            <li><strong>History:</strong> All versions are preserved and can be listed via <code>/api/v1/certificates/{name}/versions</code></li>
+                        </ul>
+
+                        <h3 class="h5 mt-4">Auto-Creation of Groups/Namespaces</h3>
+                        <p>When <code>CREATE_NOT_EXISTING_OBJ=true</code>:</p>
+                        <ul>
+                            <li>If <code>group_name</code> is provided but group doesn't exist → automatically created</li>
+                            <li>If <code>namespace</code> doesn't exist → automatically created with default channel</li>
+                            <li>Useful for CI/CD pipelines that need to create certificates dynamically</li>
+                        </ul>
+
+                        <div class="alert alert-warning d-flex align-items-start mt-4" role="alert">
+                            <span class="material-symbols-outlined me-2">warning</span>
+                            <div>
+                                <strong>Security Note:</strong> Private keys are never stored in plaintext. They are encrypted using envelope encryption (AES-256-GCM) with a unique DEK per certificate, which is itself encrypted with the Master Key.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Certificate Retrieval -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">download</span>
+                            2. Certificate Retrieval (REST & gRPC)
+                        </h2>
+
+                        <h3 class="h5 mt-4">Overview</h3>
+                        <p>Certificates can be retrieved through two APIs, each optimized for different use cases:</p>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card border-info h-100">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0"><span class="material-symbols-outlined align-middle">api</span> REST API</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Use Case:</strong> Administration, management dashboards, CI/CD pipelines</p>
+                                        <p><strong>Port:</strong> 8080</p>
+                                        <p><strong>Protocol:</strong> HTTP/JSON</p>
+                                        <p><strong>Features:</strong></p>
+                                        <ul>
+                                            <li>Full CRUD operations</li>
+                                            <li>Filtering and pagination</li>
+                                            <li>Search functionality</li>
+                                            <li>Respects confidentiality levels</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-success h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0"><span class="material-symbols-outlined align-middle">code</span> gRPC API</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Use Case:</strong> CSI drivers, application runtime, high-performance retrieval</p>
+                                        <p><strong>Port:</strong> 9090</p>
+                                        <p><strong>Protocol:</strong> Protocol Buffers over HTTP/2</p>
+                                        <p><strong>Features:</strong></p>
+                                        <ul>
+                                            <li>Binary protocol (faster)</li>
+                                            <li>Streaming support (WatchCertificate)</li>
+                                            <li>Workload tracking for audit</li>
+                                            <li>Full access to PARANOIC namespaces</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">REST API Retrieval Flow</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+sequenceDiagram
+    participant Client as REST Client
+    participant API as REST API
+    participant Service as Certificate Service
+    participant NS as Namespace Service
+    participant Enc as Encryption Service
+    participant DB as PostgreSQL
+    participant Audit as Audit Service
+
+    Client->>API: GET /api/v1/certificates/{name}?group=...&namespace=...
+    API->>Service: Get(name, groupID, namespace, version)
+    Service->>DB: SELECT certificate
+    DB-->>Service: Encrypted certificate
+    Service->>NS: GetNamespace(namespace)
+    NS-->>Service: Namespace (with confidentiality level)
+
+    alt PARANOIC namespace
+        Service-->>API: 403 Forbidden + sanitized metadata
+        API-->>Client: 403 + metadata only (no private key)
+    else NORMAL namespace
+        Service->>Enc: Decrypt private key
+        Enc-->>Service: Decrypted private key
+        Service->>Audit: Log GET action
+        Service-->>API: Full certificate
+        API-->>Client: 200 OK + certificate
+    end
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">description</span> REST Flow Explanation</h5>
+                            <p>The REST API retrieval process begins with a GET request specifying the certificate name and filtering parameters (group and namespace). The REST API forwards this request to the Certificate Service, which queries PostgreSQL for the encrypted certificate data.</p>
+                            <p>A critical security check follows: the Namespace Service is consulted to determine the namespace's confidentiality level. This is where the two paths diverge:</p>
+                            <ul>
+                                <li><strong>PARANOIC namespace:</strong> The REST API is deliberately blocked from accessing sensitive data. A 403 Forbidden response is returned, but with sanitized metadata (certificate name, expiration dates, subject) to allow basic monitoring without exposing the private key. This mode is designed for high-security environments where only machine-to-machine access (via gRPC) should retrieve private keys.</li>
+                                <li><strong>NORMAL namespace:</strong> The Encryption Service decrypts the private key using the envelope encryption mechanism (DEK decryption followed by private key decryption). The GET action is logged to the Audit Service, and the full certificate including the private key is returned.</li>
+                            </ul>
+                            <p class="mb-0">This dual-mode approach allows organizations to implement defense-in-depth, ensuring that even if the REST API is compromised, certificates in PARANOIC namespaces remain protected.</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">gRPC API Retrieval Flow</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+sequenceDiagram
+    participant CSI as CSI Driver / Client
+    participant GRPC as gRPC API
+    participant Auth as Token Validator
+    participant Service as Certificate Service
+    participant Enc as Encryption Service
+    participant DB as PostgreSQL
+    participant Audit as Audit Service
+
+    CSI->>GRPC: GetCertificate(name, group, namespace, channel, token, workload_info)
+    GRPC->>Auth: Validate token (if channel requires auth)
+
+    alt Invalid/Expired token
+        Auth-->>GRPC: Authentication failed
+        GRPC-->>CSI: UNAUTHENTICATED error
+    else Valid token or no auth required
+        Auth-->>GRPC: OK
+        GRPC->>Service: Get(name, groupID, namespace, version)
+        Service->>DB: SELECT certificate
+        DB-->>Service: Encrypted certificate
+        Service->>Enc: Decrypt private key
+        Enc-->>Service: Decrypted private key
+        Service->>Audit: Log MOUNT action with workload info
+        Service-->>GRPC: Certificate
+        GRPC-->>CSI: GetCertificateResponse
+    end
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">description</span> gRPC Flow Explanation</h5>
+                            <p>The gRPC API is designed for machine-to-machine communication, primarily used by CSI (Container Storage Interface) drivers and application runtime code. Unlike REST, gRPC uses Protocol Buffers for efficient binary serialization and HTTP/2 for multiplexed streaming.</p>
+                            <p>The flow begins with a <code>GetCertificate</code> RPC call that includes not only certificate identification (name, group, namespace) but also optional authentication credentials (channel and auth_token) and workload metadata (type, name, namespace). The workload metadata is crucial for tracking which pods/deployments are consuming which certificates.</p>
+                            <p>If the specified channel requires authentication, the Token Validator verifies the provided token. An invalid or expired token results in an immediate UNAUTHENTICATED error. If authentication succeeds (or isn't required), the flow proceeds to certificate retrieval.</p>
+                            <p>Unlike the REST API, gRPC has full access to all certificates regardless of confidentiality level, including PARANOIC namespaces. This is by design - CSI drivers need to retrieve private keys to mount them as volumes in pods, and they operate in a trusted, service-to-service context.</p>
+                            <p class="mb-0">The MOUNT action is logged with full workload context, enabling administrators to track exactly which deployments are using each certificate. This audit trail is essential for certificate rotation planning and security compliance.</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">REST API Examples</h3>
+                        <pre class="bg-light p-3 rounded"><code># Get latest version
+curl "http://localhost:8080/api/v1/certificates/my-cert?group=GROUP_UUID&namespace=production"
+
+# Get specific version
+curl "http://localhost:8080/api/v1/certificates/my-cert?group=GROUP_UUID&namespace=production&version=2"
+
+# List with filters
+curl "http://localhost:8080/api/v1/certificates?group_name=production&status=ACTIVE&page_size=50"
+
+# Search
+curl "http://localhost:8080/api/v1/certificates/search?q=example.com&namespace=production"
+
+# Filter by channel
+curl "http://localhost:8080/api/v1/certificates?channel_name=internal"</code></pre>
+
+                        <h3 class="h5 mt-4">gRPC API Example (Go)</h3>
+                        <pre class="bg-light p-3 rounded"><code>// Connect to gRPC server
+conn, _ := grpc.Dial("localhost:9090", grpc.WithTransportCredentials(insecure.NewCredentials()))
+client := tutumv1.NewCertificateServiceClient(conn)
+
+// Retrieve certificate with workload tracking
+resp, err := client.GetCertificate(ctx, &tutumv1.GetCertificateRequest{
+    Name:              "my-app-cert",
+    GroupId:           "550e8400-e29b-41d4-a716-446655440000",
+    Namespace:         "production",
+    Version:           0,  // 0 = latest
+    Channel:           "internal",
+    AuthToken:         "eyJhbGciOiJIUzI1NiIs...",
+    WorkloadType:      "k8s-deployment",
+    WorkloadName:      "my-service",
+    WorkloadNamespace: "production",
+})
+
+// Access certificate data
+cert := resp.Certificate
+fmt.Println("Certificate PEM:", cert.CertificatePem)
+fmt.Println("Private Key PEM:", cert.PrivateKeyPem)
+fmt.Println("CA Chain PEM:", cert.CaChainPem)
+fmt.Println("Version:", cert.Version)
+fmt.Println("Expires:", cert.X509Metadata.NotAfter.AsTime())</code></pre>
+
+                        <h3 class="h5 mt-4">Confidentiality Level Behavior</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Namespace Level</th><th>REST GET</th><th>REST LIST</th><th>gRPC GET</th><th>Returned Data</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>NORMAL</code></td>
+                                        <td><span class="badge bg-success">200 OK</span></td>
+                                        <td><span class="badge bg-success">200 OK</span></td>
+                                        <td><span class="badge bg-success">OK</span></td>
+                                        <td>Full certificate + private key + metadata</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>PARANOIC</code></td>
+                                        <td><span class="badge bg-danger">403 Forbidden</span></td>
+                                        <td><span class="badge bg-danger">403 Forbidden</span></td>
+                                        <td><span class="badge bg-success">OK</span></td>
+                                        <td>REST: Sanitized metadata only<br/>gRPC: Full certificate + private key</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info d-flex align-items-start mt-4" role="alert">
+                            <span class="material-symbols-outlined me-2">info</span>
+                            <div>
+                                <strong>PARANOIC Mode:</strong> Designed for high-security environments where certificates should only be accessed by CSI drivers (via gRPC), not by administrators through REST API. REST write operations (create, update, delete) are still allowed.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Audit Logging -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">history</span>
+                            3. Audit Logging
+                        </h2>
+
+                        <h3 class="h5 mt-4">Overview</h3>
+                        <p>Every operation on certificates, groups, namespaces, channels, and tokens is logged to an audit trail. This provides complete visibility into who accessed what, when, and from where.</p>
+
+                        <h3 class="h5 mt-4">Audit Log Structure</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+erDiagram
+    AUDIT_LOG {
+        bigint id PK "Sequential ID"
+        timestamp timestamp "Event timestamp"
+        varchar action "CREATE, UPDATE, DELETE, GET, MOUNT..."
+        varchar resource_type "CERTIFICATE, GROUP, NAMESPACE..."
+        uuid resource_id "Resource UUID"
+        varchar resource_name "name:group_id:namespace"
+        varchar user_id "User identifier or 'system'"
+        varchar user_agent "Client user agent"
+        varchar ip_address "Client IP address"
+        jsonb details "Operation-specific details"
+        boolean success "Operation success/failure"
+        text error_message "Error details if failed"
+        varchar workload_type "k8s-pod, k8s-deployment..."
+        varchar workload_name "Workload name"
+        varchar workload_namespace "Workload K8s namespace"
+        int version_requested "Requested certificate version"
+    }
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">description</span> Data Model Explanation</h5>
+                            <p>The audit log table is designed to capture comprehensive information about every operation in the system. Each record is uniquely identified by a sequential ID and timestamped for chronological ordering.</p>
+                            <p>The core fields capture <strong>what happened</strong> (action, resource_type, resource_id, resource_name) and <strong>who did it</strong> (user_id, user_agent, ip_address). The <code>resource_name</code> uses a composite format <code>name:group_id:namespace</code> to enable efficient filtering without JOIN operations.</p>
+                            <p>The <code>details</code> field is a JSONB column that stores operation-specific metadata, such as certificate version numbers, channel information, or authentication status. This flexible schema allows different action types to store relevant context without requiring schema changes.</p>
+                            <p>For tracking certificate usage by Kubernetes workloads, three dedicated columns capture workload information: <code>workload_type</code> (e.g., k8s-deployment, k8s-statefulset), <code>workload_name</code>, and <code>workload_namespace</code>. The <code>version_requested</code> field tracks whether the client requested a specific version or the latest (version=0).</p>
+                            <p class="mb-0">The <code>success</code> boolean and <code>error_message</code> fields enable monitoring of failed operations, which is essential for security incident detection and troubleshooting.</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">Logged Actions</h3>
+                        <p>The audit system categorizes actions into four groups based on their nature and the resources they affect. Each action type provides specific context in the <code>details</code> field, enabling precise reconstruction of events during security reviews or compliance audits.</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-primary mb-3">
+                                    <div class="card-header bg-primary text-white">CRUD Operations</div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li><code>CREATE</code> - New resource created</li>
+                                            <li><code>UPDATE</code> - Resource modified (new version for certs)</li>
+                                            <li><code>DELETE</code> - Resource deleted</li>
+                                            <li><code>GET</code> - Single resource retrieved</li>
+                                            <li><code>LIST</code> - Multiple resources listed</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-success mb-3">
+                                    <div class="card-header bg-success text-white">Certificate-Specific Actions</div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li><code>MOUNT</code> - Certificate mounted by workload (gRPC)</li>
+                                            <li><code>UNMOUNT</code> - Certificate unmounted</li>
+                                            <li><code>INVALIDATE</code> - Certificate manually invalidated</li>
+                                            <li><code>EXPIRE</code> - Certificate expired (scheduler)</li>
+                                            <li><code>ACTIVATE</code> - Certificate became active</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-warning mb-3">
+                                    <div class="card-header bg-warning">Token Operations</div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li><code>REVOKE</code> - Token revoked</li>
+                                            <li><code>EXPIRE</code> - Token expired (scheduler)</li>
+                                            <li><code>ACTIVATE</code> - Token became active</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-info mb-3">
+                                    <div class="card-header bg-info text-white">System Actions</div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li><code>POD_RESTART</code> - Workload restart triggered</li>
+                                            <li><code>VALIDITY_CHECK</code> - Scheduler validity check</li>
+                                            <li><code>STATUS_CHANGE</code> - Status transition logged</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Workload Tracking</h3>
+                        <p>One of the most powerful features of the audit system is workload tracking. When CSI drivers retrieve certificates via gRPC, they include metadata about the requesting workload. This creates a mapping between certificates and their consumers, which is essential for:</p>
+                        <ul>
+                            <li><strong>Certificate rotation planning:</strong> Before rotating a certificate, identify all workloads that will be affected</li>
+                            <li><strong>Impact analysis:</strong> When a certificate expires or is revoked, determine which services will be impacted</li>
+                            <li><strong>Automatic pod restart:</strong> The system uses this data to trigger rolling restarts when certificates are updated</li>
+                            <li><strong>Security auditing:</strong> Verify that only authorized workloads are accessing sensitive certificates</li>
+                        </ul>
+                        <p>Below is an example of a MOUNT audit log entry with full workload context:</p>
+                        <pre class="bg-light p-3 rounded"><code>{
+  "action": "MOUNT",
+  "resource_type": "CERTIFICATE",
+  "resource_name": "my-app-cert:550e8400-e29b-41d4-a716-446655440000:production",
+  "workload_type": "k8s-deployment",
+  "workload_name": "my-service",
+  "workload_namespace": "production",
+  "version_requested": 0,
+  "details": {
+    "actual_version": 3,
+    "channel": "internal",
+    "authenticated": true
+  }
+}</code></pre>
+
+                        <h3 class="h5 mt-4">Audit Log Example</h3>
+                        <pre class="bg-light p-3 rounded"><code>// CREATE action
+{
+  "id": 12345,
+  "timestamp": "2024-01-15T10:30:45.123Z",
+  "action": "CREATE",
+  "resource_type": "CERTIFICATE",
+  "resource_id": "770e8400-e29b-41d4-a716-446655440002",
+  "resource_name": "my-app-cert:550e8400-...:production",
+  "user_id": "admin@example.com",
+  "user_agent": "curl/7.68.0",
+  "ip_address": "192.168.1.100",
+  "details": {
+    "version": 1,
+    "type": "X509",
+    "subject": "CN=example.com",
+    "expires_at": "2025-01-15T00:00:00Z",
+    "days_until_expiry": 365
+  },
+  "success": true
+}
+
+// MOUNT action (from CSI driver)
+{
+  "id": 12346,
+  "timestamp": "2024-01-15T10:31:00.456Z",
+  "action": "MOUNT",
+  "resource_type": "CERTIFICATE",
+  "resource_id": "770e8400-e29b-41d4-a716-446655440002",
+  "resource_name": "my-app-cert:550e8400-...:production",
+  "user_id": "system",
+  "user_agent": "tutum-csi-driver/1.0.0",
+  "ip_address": "10.0.0.50",
+  "details": {
+    "channel": "internal",
+    "authenticated": true,
+    "version_returned": 3
+  },
+  "success": true,
+  "workload_type": "k8s-deployment",
+  "workload_name": "my-service",
+  "workload_namespace": "production",
+  "version_requested": 0
+}</code></pre>
+
+                        <h3 class="h5 mt-4">Querying Audit Logs</h3>
+                        <p>Audit logs are stored in PostgreSQL, enabling powerful SQL queries for compliance reporting, security analysis, and operational monitoring. The indexed columns (<code>timestamp</code>, <code>action</code>, <code>resource_name</code>, <code>workload_name</code>) ensure efficient query execution even on large audit tables.</p>
+                        <p>Below are common query patterns used by security teams and compliance auditors:</p>
+                        <pre class="bg-light p-3 rounded"><code>-- Find all certificate access for a specific workload
+SELECT * FROM audit_logs
+WHERE workload_name = 'my-service'
+  AND workload_namespace = 'production'
+  AND action = 'MOUNT'
+ORDER BY timestamp DESC;
+
+-- Find all modifications to a certificate
+SELECT * FROM audit_logs
+WHERE resource_name LIKE 'my-app-cert:%'
+  AND action IN ('CREATE', 'UPDATE', 'DELETE', 'INVALIDATE')
+ORDER BY timestamp DESC;
+
+-- Failed operations in the last 24 hours
+SELECT * FROM audit_logs
+WHERE success = false
+  AND timestamp > NOW() - INTERVAL '24 hours'
+ORDER BY timestamp DESC;</code></pre>
+
+                        <div class="alert alert-success d-flex align-items-start mt-4" role="alert">
+                            <span class="material-symbols-outlined me-2">verified</span>
+                            <div>
+                                <strong>Compliance:</strong> Audit logging helps meet regulatory requirements (SOC 2, PCI-DSS, HIPAA) by providing a complete audit trail of all certificate operations.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Kubernetes Deployment Restart -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">restart_alt</span>
+                            4. Kubernetes Deployment Restart with Rate Limiting
+                        </h2>
+
+                        <h3 class="h5 mt-4">Overview</h3>
+                        <p>When a certificate is created or updated, tutum-engine can automatically trigger a rolling restart of Kubernetes workloads (Deployments, StatefulSets, DaemonSets) that are using that certificate. This ensures workloads always have the latest certificate without manual intervention.</p>
+
+                        <div class="alert alert-danger d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">warning</span>
+                            <div>
+                                <strong>Flapping Protection:</strong> To prevent "certificate flapping" (rapid updates causing continuous pod restarts), the system implements multiple protection mechanisms described below.
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Restart Flow</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+sequenceDiagram
+    participant API as REST API
+    participant Service as Certificate Service
+    participant Audit as Audit Service
+    participant Restarter as Pod Restarter
+    participant Dedup as Deduplication
+    participant RL as Rate Limiter
+    participant CB as Circuit Breaker
+    participant Backoff as Backoff Calculator
+    participant K8s as Kubernetes API
+
+    API->>Service: Create/Update certificate
+    Service->>Service: Save certificate
+    Service->>Audit: Query workloads mounting this certificate
+    Audit-->>Service: List of workloads (from MOUNT actions)
+
+    loop For each workload
+        Service->>Restarter: RestartWorkload(type, name, namespace)
+        Restarter->>Dedup: Check duplicate (30s window)
+
+        alt Duplicate request
+            Dedup-->>Restarter: BLOCKED (duplicate)
+        else Not duplicate
+            Restarter->>RL: Check rate limit (3/15min)
+
+            alt Rate limit exceeded
+                RL-->>Restarter: BLOCKED (rate limited)
+            else Within rate limit
+                Restarter->>CB: Check circuit breaker
+
+                alt Circuit OPEN
+                    CB-->>Restarter: BLOCKED (circuit open)
+                else Circuit CLOSED/HALF_OPEN
+                    Restarter->>Backoff: Calculate delay
+                    Backoff-->>Restarter: Delay (0s/30s/2m/5m/15m)
+                    Restarter->>Restarter: Wait delay
+                    Restarter->>K8s: PATCH Deployment (update annotation)
+
+                    alt Success
+                        K8s-->>Restarter: OK
+                        Restarter->>CB: Record success
+                    else Failure
+                        K8s-->>Restarter: Error
+                        Restarter->>CB: Record failure
+                    end
+                end
+            end
+        end
+    end
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">description</span> Restart Flow Explanation</h5>
+                            <p>When a certificate is created or updated via the REST API, the Certificate Service triggers a cascade of events to ensure all consuming workloads receive the new certificate. The process begins by querying the Audit Service for all MOUNT actions related to this certificate, which reveals which Kubernetes workloads are currently using it.</p>
+                            <p>For each discovered workload, the Pod Restarter initiates a restart request. However, before any restart actually occurs, the request passes through a multi-layer protection pipeline designed to prevent "certificate flapping" - a condition where rapid certificate updates cause continuous pod restarts, leading to service instability.</p>
+                            <p><strong>Layer 1 - Deduplication:</strong> The first check prevents duplicate restart requests within a 30-second window. If the same workload already received a restart request recently, the new request is silently ignored. This handles the case of multiple rapid certificate updates.</p>
+                            <p><strong>Layer 2 - Rate Limiting:</strong> Even if the request passes deduplication, it must comply with the rate limit of 3 restarts per workload per 15-minute window. Excess requests are queued or rejected, preventing a certificate update storm from overwhelming the cluster.</p>
+                            <p><strong>Layer 3 - Circuit Breaker:</strong> The circuit breaker monitors the success rate of restart operations. If the circuit is OPEN (due to consecutive failures), all restart requests are blocked until the recovery timeout expires. This prevents the system from repeatedly trying to restart workloads that are failing for external reasons.</p>
+                            <p><strong>Layer 4 - Exponential Backoff:</strong> Finally, if all checks pass, the backoff calculator determines the delay before executing the restart. The first restart happens immediately, but subsequent restarts face increasing delays (30s, 2m, 5m, 15m) to give the cluster time to stabilize.</p>
+                            <p class="mb-0">The actual restart is performed by patching the workload's pod template annotation (<code>tutum.io/restartedAt</code>), which triggers Kubernetes' native rolling restart mechanism.</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">Protection Mechanisms</h3>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-primary">
+                                    <tr><th style="width: 20%">Mechanism</th><th style="width: 25%">Configuration</th><th>Description</th><th style="width: 20%">Effect</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>1. Deduplication</strong></td>
+                                        <td>Window: 30 seconds</td>
+                                        <td>Blocks duplicate restart requests for the same workload within the deduplication window. Prevents rapid-fire restarts from multiple certificate updates in quick succession.</td>
+                                        <td>Duplicate requests silently ignored</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>2. Rate Limiting</strong></td>
+                                        <td>3 restarts per 15 minutes<br/>per workload</td>
+                                        <td>Limits the maximum number of restarts a single workload can receive within a time window. Uses sliding window algorithm.</td>
+                                        <td>Excess requests queued or rejected</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>3. Exponential Backoff</strong></td>
+                                        <td>
+                                            Restart #1: 0s<br/>
+                                            Restart #2: 30s<br/>
+                                            Restart #3: 2m<br/>
+                                            Restart #4: 5m<br/>
+                                            Restart #5+: 15m
+                                        </td>
+                                        <td>Progressive delays between consecutive restarts of the same workload. Increases the delay with each restart to prevent cascading failures.</td>
+                                        <td>Restart delayed by calculated backoff</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>4. Circuit Breaker</strong></td>
+                                        <td>
+                                            Failure threshold: 5<br/>
+                                            Recovery timeout: 15 minutes<br/>
+                                            Half-open requests: 1
+                                        </td>
+                                        <td>After consecutive failures, stops all restart attempts. Automatically recovers after timeout.</td>
+                                        <td>All restarts blocked when OPEN</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Circuit Breaker States</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+stateDiagram-v2
+    [*] --> CLOSED
+    CLOSED --> OPEN: 5 consecutive failures
+    OPEN --> HALF_OPEN: After 15 minutes
+    HALF_OPEN --> CLOSED: 1 successful restart
+    HALF_OPEN --> OPEN: 1 failed restart
+
+    note right of CLOSED: Normal operation\nAll restarts allowed
+    note right of OPEN: Protection mode\nAll restarts blocked
+    note right of HALF_OPEN: Testing recovery\n1 restart allowed
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">description</span> Circuit Breaker States Explanation</h5>
+                            <p>The circuit breaker pattern is a resilience mechanism borrowed from electrical engineering. Just as an electrical circuit breaker trips to prevent damage from overload, this software circuit breaker "trips" to prevent cascading failures in the Kubernetes cluster.</p>
+                            <p><strong>CLOSED (Normal Operation):</strong> This is the healthy state. All restart requests pass through the circuit breaker to the Kubernetes API. Each successful restart keeps the circuit closed, and the failure counter remains at zero.</p>
+                            <p><strong>OPEN (Protection Mode):</strong> When 5 consecutive restart attempts fail (e.g., due to Kubernetes API errors, network issues, or RBAC problems), the circuit breaker trips to the OPEN state. In this state, all restart requests are immediately rejected without attempting to contact the Kubernetes API. This prevents resource waste and gives the cluster time to recover from whatever issue caused the failures.</p>
+                            <p><strong>HALF_OPEN (Recovery Testing):</strong> After 15 minutes in the OPEN state, the circuit breaker transitions to HALF_OPEN. This is a probe state that allows exactly one restart request to pass through. If this request succeeds, the circuit closes and normal operation resumes. If it fails, the circuit opens again for another 15-minute recovery period.</p>
+                            <p class="mb-0">This state machine ensures that the system can automatically recover from transient failures while still protecting against persistent problems that could destabilize the cluster.</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">Restart Mechanism</h3>
+                        <p>Kubernetes rolling restarts are triggered by updating the <code>tutum.io/restartedAt</code> annotation on the workload:</p>
+                        <pre class="bg-light p-3 rounded"><code>// Patch applied to Deployment/StatefulSet/DaemonSet
+{
+  "spec": {
+    "template": {
+      "metadata": {
+        "annotations": {
+          "tutum.io/restartedAt": "2024-01-15T10:30:45Z",
+          "tutum.io/restartReason": "certificate-update",
+          "tutum.io/certificateName": "my-app-cert",
+          "tutum.io/certificateVersion": "3"
+        }
+      }
+    }
+  }
+}</code></pre>
+
+                        <h3 class="h5 mt-4">Configuration</h3>
+                        <pre class="bg-light p-3 rounded"><code># Enable pod restart functionality
+export K8S_POD_RESTART_ENABLED="true"
+
+# Kubeconfig path (empty for in-cluster)
+export K8S_KUBECONFIG_PATH=""
+
+# Protection mechanism settings (defaults shown)
+export K8S_RESTART_DEDUP_WINDOW="30s"
+export K8S_RESTART_RATE_LIMIT="3"
+export K8S_RESTART_RATE_WINDOW="15m"
+export K8S_RESTART_CIRCUIT_BREAKER_THRESHOLD="5"
+export K8S_RESTART_CIRCUIT_BREAKER_TIMEOUT="15m"</code></pre>
+
+                        <h3 class="h5 mt-4">Required RBAC Permissions</h3>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tutum-engine-pod-restarter
+rules:
+  # Read workloads
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list"]
+  # Update annotations for restart
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["update", "patch"]
+  # List pods for status checking
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]</code></pre>
+
+                        <h3 class="h5 mt-4">Workload Discovery</h3>
+                        <p>Workloads to restart are discovered by querying the audit log for recent <code>MOUNT</code> actions:</p>
+                        <pre class="bg-light p-3 rounded"><code>-- Query to find workloads using a certificate
+SELECT DISTINCT
+    workload_type,
+    workload_name,
+    workload_namespace
+FROM audit_logs
+WHERE resource_name LIKE 'my-app-cert:%'
+  AND action = 'MOUNT'
+  AND version_requested = 0  -- Only workloads using "latest"
+  AND timestamp > NOW() - INTERVAL '24 hours';</code></pre>
+
+                        <div class="alert alert-info d-flex align-items-start mt-4" role="alert">
+                            <span class="material-symbols-outlined me-2">lightbulb</span>
+                            <div>
+                                <strong>Important:</strong> Only workloads that requested <code>version=0</code> (latest) are restarted. Workloads pinned to a specific version are not affected by certificate updates.
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Monitoring Pod Restarts</h3>
+                        <p>Prometheus metrics are available for monitoring:</p>
+                        <pre class="bg-light p-3 rounded"><code># Total restart attempts
+tutum_pod_restarts_total{workload_type="deployment", status="success"}
+tutum_pod_restarts_total{workload_type="deployment", status="failed"}
+tutum_pod_restarts_total{workload_type="deployment", status="rate_limited"}
+tutum_pod_restarts_total{workload_type="deployment", status="circuit_open"}
+
+# Circuit breaker state
+tutum_circuit_breaker_state{state="closed|open|half_open"}
+
+# Rate limiter queue depth
+tutum_rate_limiter_queue_depth{workload="my-service"}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- REST API Reference -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">api</span>
+                            REST API Reference
+                        </h2>
+
+                        <h3 class="h5 mt-4">Health & Readiness Probes</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Endpoint</th><th>Method</th><th>Description</th><th>Response</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>/health</code></td><td>GET</td><td>Liveness probe - process alive check</td><td><code>200 OK</code> if process running</td></tr>
+                                    <tr><td><code>/ready</code></td><td>GET</td><td>Readiness probe - checks database connectivity</td><td><code>200 OK</code> if ready, <code>503</code> if not</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Certificate Management</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>/api/v1/certificates</code></td><td>POST</td><td>Create certificate</td></tr>
+                                    <tr><td><code>/api/v1/certificates</code></td><td>GET</td><td>List certificates with filters</td></tr>
+                                    <tr><td><code>/api/v1/certificates/{name}</code></td><td>GET</td><td>Get certificate (optionally specific version)</td></tr>
+                                    <tr><td><code>/api/v1/certificates/{name}</code></td><td>PUT</td><td>Update certificate (creates new version)</td></tr>
+                                    <tr><td><code>/api/v1/certificates/{name}</code></td><td>DELETE</td><td>Delete certificate</td></tr>
+                                    <tr><td><code>/api/v1/certificates/{name}/invalidate</code></td><td>POST</td><td>Invalidate certificate</td></tr>
+                                    <tr><td><code>/api/v1/certificates/{name}/status</code></td><td>GET</td><td>Get certificate status</td></tr>
+                                    <tr><td><code>/api/v1/certificates/{name}/versions</code></td><td>GET</td><td>List all versions</td></tr>
+                                    <tr><td><code>/api/v1/certificates/expiring</code></td><td>GET</td><td>Get expiring certificates</td></tr>
+                                    <tr><td><code>/api/v1/certificates/search</code></td><td>GET</td><td>Search certificates</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Query Parameters for List/Search</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>name</code></td><td>string</td><td>Filter by exact certificate name</td></tr>
+                                    <tr><td><code>group</code></td><td>UUID</td><td>Filter by group ID</td></tr>
+                                    <tr><td><code>group_name</code></td><td>string</td><td>Filter by group name</td></tr>
+                                    <tr><td><code>namespace</code></td><td>string</td><td>Filter by namespace</td></tr>
+                                    <tr><td><code>channel</code></td><td>UUID</td><td>Filter by channel ID</td></tr>
+                                    <tr><td><code>channel_name</code></td><td>string</td><td>Filter by channel name</td></tr>
+                                    <tr><td><code>status</code></td><td>string</td><td>Filter by status (ACTIVE, EXPIRED, PENDING, REVOKED, INVALID)</td></tr>
+                                    <tr><td><code>search</code></td><td>string</td><td>Full-text search</td></tr>
+                                    <tr><td><code>page_size</code></td><td>int</td><td>Results per page (default: 100, max: 1000)</td></tr>
+                                    <tr><td><code>page_token</code></td><td>string</td><td>Pagination token</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Group Management</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>/api/v1/groups</code></td><td>POST</td><td>Create group</td></tr>
+                                    <tr><td><code>/api/v1/groups</code></td><td>GET</td><td>List groups</td></tr>
+                                    <tr><td><code>/api/v1/groups/{id}</code></td><td>GET</td><td>Get group by ID</td></tr>
+                                    <tr><td><code>/api/v1/groups/{id}</code></td><td>PUT</td><td>Update group</td></tr>
+                                    <tr><td><code>/api/v1/groups/{id}</code></td><td>DELETE</td><td>Delete group</td></tr>
+                                    <tr><td><code>/api/v1/groups/{id}/certificates</code></td><td>GET</td><td>List group certificates</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Namespace Management</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>/api/v1/namespaces</code></td><td>POST</td><td>Create namespace</td></tr>
+                                    <tr><td><code>/api/v1/namespaces</code></td><td>GET</td><td>List namespaces</td></tr>
+                                    <tr><td><code>/api/v1/namespaces/{id}</code></td><td>GET</td><td>Get namespace</td></tr>
+                                    <tr><td><code>/api/v1/namespaces/{id}</code></td><td>PUT</td><td>Update namespace</td></tr>
+                                    <tr><td><code>/api/v1/namespaces/{id}</code></td><td>DELETE</td><td>Delete namespace</td></tr>
+                                    <tr><td><code>/api/v1/namespaces/{id}/certificates</code></td><td>GET</td><td>List namespace certificates</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Distribution Channel Management</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>/api/v1/channels</code></td><td>POST</td><td>Create channel</td></tr>
+                                    <tr><td><code>/api/v1/channels</code></td><td>GET</td><td>List channels</td></tr>
+                                    <tr><td><code>/api/v1/channels/{id}</code></td><td>GET</td><td>Get channel</td></tr>
+                                    <tr><td><code>/api/v1/channels/{id}</code></td><td>PUT</td><td>Update channel</td></tr>
+                                    <tr><td><code>/api/v1/channels/{id}</code></td><td>DELETE</td><td>Delete channel</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Token Management</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>/api/v1/channels/{id}/tokens</code></td><td>POST</td><td>Create token</td></tr>
+                                    <tr><td><code>/api/v1/channels/{id}/tokens</code></td><td>GET</td><td>List tokens</td></tr>
+                                    <tr><td><code>/api/v1/channels/{id}/tokens/{token_id}</code></td><td>GET</td><td>Get token</td></tr>
+                                    <tr><td><code>/api/v1/channels/{id}/tokens/{token_id}</code></td><td>PUT</td><td>Update token</td></tr>
+                                    <tr><td><code>/api/v1/channels/{id}/tokens/{token_id}</code></td><td>DELETE</td><td>Delete token</td></tr>
+                                    <tr><td><code>/api/v1/channels/{id}/tokens/{token_id}/revoke</code></td><td>POST</td><td>Revoke token</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- gRPC API Reference -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">code</span>
+                            gRPC API Reference
+                        </h2>
+
+                        <h3 class="h5 mt-4">Certificate Service (<code>tutum.v1.CertificateService</code>)</h3>
+                        <pre class="bg-light p-3 rounded"><code>service CertificateService {
+  rpc GetCertificate(GetCertificateRequest) returns (GetCertificateResponse);
+  rpc ListCertificates(ListCertificatesRequest) returns (ListCertificatesResponse);
+  rpc WatchCertificate(WatchCertificateRequest) returns (stream WatchCertificateResponse);
+  rpc GetCertificateMetadata(GetCertificateMetadataRequest) returns (CertificateMetadata);
+}</code></pre>
+
+                        <h3 class="h5 mt-4">GetCertificate Request Fields</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Certificate name</td></tr>
+                                    <tr><td><code>group_id</code></td><td>string</td><td>Yes</td><td>Group UUID</td></tr>
+                                    <tr><td><code>namespace</code></td><td>string</td><td>Yes</td><td>Namespace name</td></tr>
+                                    <tr><td><code>version</code></td><td>int32</td><td>No</td><td>Specific version (0 = latest)</td></tr>
+                                    <tr><td><code>channel</code></td><td>string</td><td>No</td><td>Channel name for auth</td></tr>
+                                    <tr><td><code>auth_token</code></td><td>string</td><td>No</td><td>Authentication token</td></tr>
+                                    <tr><td><code>workload_type</code></td><td>string</td><td>No</td><td>k8s-pod, k8s-deployment, etc.</td></tr>
+                                    <tr><td><code>workload_name</code></td><td>string</td><td>No</td><td>Name of the workload</td></tr>
+                                    <tr><td><code>workload_namespace</code></td><td>string</td><td>No</td><td>Workload's namespace</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Example gRPC Client (Go)</h3>
+                        <pre class="bg-light p-3 rounded"><code>import (
+    tutumv1 "github.com/tutum/proto/gen/go/tutum/v1"
+    "google.golang.org/grpc"
+)
+
+conn, _ := grpc.Dial("localhost:9090", grpc.WithInsecure())
+client := tutumv1.NewCertificateServiceClient(conn)
+
+// Get certificate without authentication (default channel)
+resp, _ := client.GetCertificate(ctx, &tutumv1.GetCertificateRequest{
+    Name:      "my-app-cert",
+    GroupId:   "group-uuid",
+    Namespace: "default",
+})
+
+// Get certificate with authentication (protected channel)
+resp, _ := client.GetCertificate(ctx, &tutumv1.GetCertificateRequest{
+    Name:      "my-app-cert",
+    GroupId:   "group-uuid",
+    Namespace: "production",
+    Channel:   "internal",
+    AuthToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    WorkloadType:      "k8s-deployment",
+    WorkloadName:      "my-service",
+    WorkloadNamespace: "production",
+})
+
+fmt.Println(resp.Certificate.CertificatePem)
+fmt.Println(resp.Certificate.PrivateKeyPem)</code></pre>
+
+                        <h3 class="h5 mt-4">Group Service (<code>tutum.v1.GroupService</code>)</h3>
+                        <pre class="bg-light p-3 rounded"><code>service GroupService {
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse);
+  rpc GetGroup(GetGroupRequest) returns (GetGroupResponse);
+  rpc ListGroups(ListGroupsRequest) returns (ListGroupsResponse);
+  rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse);
+  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse);
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Domain Models -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">schema</span>
+                            Domain Models
+                        </h2>
+
+                        <h3 class="h5 mt-4">Certificate</h3>
+                        <pre class="bg-light p-3 rounded"><code>type Certificate struct {
+    ID              string                  // UUID
+    Name            string                  // Unique within group+namespace
+    GroupID         string                  // Group UUID
+    GroupName       string                  // Group name (populated on read)
+    Namespace       string                  // Kubernetes namespace
+    ChannelID       string                  // Distribution channel UUID
+    ChannelName     string                  // Channel name
+    Version         int                     // Current version number
+    Type            CertificateType         // X509 or secret
+    Status          Status                  // ACTIVE, EXPIRED, PENDING, REVOKED, INVALID
+    DaysUntilExpiry int                     // Days until expiry (X509 only)
+    X509Response    *X509ResponsePayload    // X.509 certificate data
+    SecretResponse  *SecretResponsePayload  // Secret data (for type=secret)
+    CustomMetadata  map[string]string       // User-defined metadata
+    CreatedAt       time.Time
+    CreatedBy       string
+    UpdatedAt       time.Time
+    UpdatedBy       string
+}
+
+type Status string
+const (
+    StatusActive   Status = "ACTIVE"   // Within validity window
+    StatusExpired  Status = "EXPIRED"  // Past not_after
+    StatusPending  Status = "PENDING"  // Before not_before
+    StatusRevoked  Status = "REVOKED"  // Manually revoked
+    StatusInvalid  Status = "INVALID"  // Parse error or invalid data
+)</code></pre>
+
+                        <h3 class="h5 mt-4">X509ResponsePayload</h3>
+                        <pre class="bg-light p-3 rounded"><code>type X509ResponsePayload struct {
+    Certificate       string    // PEM-encoded certificate
+    PrivateKey        string    // PEM-encoded private key (decrypted)
+    CAChain           string    // PEM-encoded CA chain
+    Subject           string    // Certificate subject (CN=...)
+    Issuer            string    // Certificate issuer
+    SerialNumber      string    // Serial number (hex)
+    NotBefore         time.Time // Validity start
+    NotAfter          time.Time // Validity end
+    FingerprintSHA256 string    // SHA-256 fingerprint
+    SubjectAltNames   []string  // SANs (DNS names, IPs, emails)
+    KeyUsage          []string  // Key usage extensions
+    ExtendedKeyUsage  []string  // Extended key usage
+    IsCA              bool      // Is certificate authority
+}</code></pre>
+
+                        <h3 class="h5 mt-4">Group</h3>
+                        <pre class="bg-light p-3 rounded"><code>type Group struct {
+    ID          string            // UUID
+    Name        string            // Unique name
+    Description string
+    Metadata    map[string]string
+    CreatedAt   time.Time
+    CreatedBy   string
+    UpdatedAt   time.Time
+    UpdatedBy   string
+}</code></pre>
+
+                        <h3 class="h5 mt-4">Namespace</h3>
+                        <pre class="bg-light p-3 rounded"><code>type Namespace struct {
+    ID                   string               // UUID
+    Name                 string               // Unique name
+    ConfidentialityLevel ConfidentialityLevel // NORMAL or PARANOIC
+    Description          string
+    ChannelID            string               // Associated channel
+    ChannelName          string
+    ChannelRequiresAuth  bool
+    Metadata             map[string]string
+    CreatedAt            time.Time
+    CreatedBy            string
+    UpdatedAt            time.Time
+    UpdatedBy            string
+}
+
+type ConfidentialityLevel string
+const (
+    ConfidentialityLevelNormal   ConfidentialityLevel = "NORMAL"
+    ConfidentialityLevelParanoic ConfidentialityLevel = "PARANOIC"
+)</code></pre>
+
+                        <h3 class="h5 mt-4">Channel (Distribution Channel)</h3>
+                        <pre class="bg-light p-3 rounded"><code>type Channel struct {
+    ID           string            // UUID
+    Name         string            // Unique name
+    Description  string
+    RequiresAuth bool              // If true, tokens required for access
+    Metadata     map[string]string
+    CreatedAt    time.Time
+    CreatedBy    string
+    UpdatedAt    time.Time
+    UpdatedBy    string
+}</code></pre>
+
+                        <h3 class="h5 mt-4">Token</h3>
+                        <pre class="bg-light p-3 rounded"><code>type Token struct {
+    ID             string            // UUID
+    ChannelID      string            // Parent channel UUID
+    ChannelName    string
+    Name           string            // Unique within channel
+    TokenHash      string            // SHA-256 hash for verification
+    TokenEncrypted string            // AES-256-GCM encrypted payload
+    Status         TokenStatus       // PENDING, ACTIVE, EXPIRED, REVOKED
+    NotBefore      time.Time         // Validity start
+    NotAfter       time.Time         // Validity end
+    LastUsedAt     *time.Time        // Last usage timestamp
+    Metadata       map[string]string
+    CreatedAt      time.Time
+    CreatedBy      string
+    UpdatedAt      time.Time
+    UpdatedBy      string
+    RevokedAt      *time.Time
+    RevokedBy      string
+}
+
+type TokenStatus string
+const (
+    TokenStatusPending  TokenStatus = "PENDING"
+    TokenStatusActive   TokenStatus = "ACTIVE"
+    TokenStatusExpired  TokenStatus = "EXPIRED"
+    TokenStatusRevoked  TokenStatus = "REVOKED"
+)</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Features -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">security</span>
+                            Security Features
+                        </h2>
+
+                        <h3 class="h5 mt-4">Envelope Encryption Architecture</h3>
+                        <p>Tutum Engine uses envelope encryption with AES-256-GCM for all sensitive data:</p>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph LR
+    subgraph input["Input"]
+        PK["Private Key<br/>(Plaintext)"]
+    end
+
+    subgraph encryption["Encryption Process"]
+        DEK["Generate DEK<br/>(256-bit random)"]
+        ENC_DATA["Encrypt with DEK<br/>(AES-256-GCM)"]
+        ENC_DEK["Encrypt DEK with<br/>Master Key"]
+    end
+
+    subgraph output["Output"]
+        STORED["Encrypted Payload<br/>(Base64)"]
+    end
+
+    PK --> DEK
+    DEK --> ENC_DATA
+    DEK --> ENC_DEK
+    ENC_DATA --> STORED
+    ENC_DEK --> STORED
+
+    style input fill:#ffcccc,stroke:#cc0000
+    style encryption fill:#fff5e6,stroke:#ed8936
+    style output fill:#ccffcc,stroke:#00cc00
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">description</span> Envelope Encryption Explanation</h5>
+                            <p>Envelope encryption is a two-layer encryption strategy that provides both security and key management flexibility. The name comes from the concept of placing data in a "secure envelope" - the inner layer protects the data, while the outer layer protects the key.</p>
+                            <p><strong>Why not encrypt directly with the Master Key?</strong> If we encrypted every private key directly with the Master Key, rotating that key would require decrypting and re-encrypting every certificate in the database - a risky and time-consuming operation. Envelope encryption solves this by using a unique Data Encryption Key (DEK) for each certificate.</p>
+                            <p><strong>The Encryption Process:</strong></p>
+                            <ol>
+                                <li><strong>DEK Generation:</strong> A cryptographically secure 256-bit random key is generated for each certificate. This key is never reused and exists only in memory during the encryption operation.</li>
+                                <li><strong>Data Encryption:</strong> The private key is encrypted using AES-256-GCM with the DEK. GCM mode provides both confidentiality (encryption) and integrity (authentication tag), ensuring the data cannot be modified without detection.</li>
+                                <li><strong>DEK Encryption:</strong> The DEK itself is encrypted with the Master Key, creating the "envelope". Only the encrypted DEK is stored alongside the encrypted data.</li>
+                                <li><strong>Storage:</strong> The final payload contains the encrypted private key, the encrypted DEK, the GCM nonce, and the authentication tag - all Base64 encoded for safe storage in PostgreSQL.</li>
+                            </ol>
+                            <p class="mb-0"><strong>Key Rotation Benefit:</strong> When the Master Key needs to be rotated, only the DEKs need to be re-encrypted (decrypt with old Master Key, re-encrypt with new Master Key). The actual certificate data remains untouched, making rotation fast and safe.</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">Master Key Management</h3>
+                        <pre class="bg-light p-3 rounded"><code># Generate a secure master key (32 bytes, base64 encoded)
+export TUTUM_MASTER_KEY=$(openssl rand -base64 32)
+
+# Or use a raw 32-byte key (will be SHA-256 hashed if not exactly 32 bytes)
+export TUTUM_MASTER_KEY="my-secret-key-for-encryption"</code></pre>
+
+                        <p><strong>Key Manager Features:</strong></p>
+                        <ul>
+                            <li><code>GenerateDEK()</code> - Generate new 256-bit random key</li>
+                            <li><code>EncryptDEK(dek)</code> - Encrypt DEK with Master Key</li>
+                            <li><code>DecryptDEK(encrypted)</code> - Decrypt DEK</li>
+                            <li><code>GetMasterKeyFingerprint()</code> - SHA-256 fingerprint for audit/monitoring</li>
+                            <li><code>RotateMasterKey(newKey)</code> - Rotate master key (triggers re-encryption)</li>
+                        </ul>
+
+                        <h3 class="h5 mt-4">Confidentiality Levels</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Level</th><th>REST API (Read)</th><th>REST API (Write)</th><th>gRPC API</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>NORMAL</code></td><td>Full access</td><td>Full access</td><td>Full access</td></tr>
+                                    <tr><td><code>PARANOIC</code></td><td>Blocked (403) + sanitized metadata</td><td>Allowed</td><td>Full access</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Token-Based Authentication</h3>
+                        <p>For protected distribution channels:</p>
+                        <ol>
+                            <li>Create a channel with <code>requires_auth: true</code></li>
+                            <li>Generate tokens with validity windows</li>
+                            <li>Use token in gRPC <code>auth_token</code> field</li>
+                        </ol>
+                        <p><strong>Token Validation:</strong></p>
+                        <ol>
+                            <li>Verify SHA-256 token hash</li>
+                            <li>Decrypt token payload with Master Key</li>
+                            <li>Validate <code>not_before &lt;= now &lt; not_after</code></li>
+                            <li>Check status is not REVOKED</li>
+                            <li>Grant or deny access</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Kubernetes Integration -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">cloud</span>
+                            Kubernetes Integration
+                        </h2>
+
+                        <h3 class="h5 mt-4">Automatic Pod Restart</h3>
+                        <p>When a certificate is updated or created, Tutum Engine automatically restarts Kubernetes workloads that mount the certificate.</p>
+
+                        <h3 class="h5 mt-4">Protection Mechanisms (Flapping Protection)</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3 border-success">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><span class="material-symbols-outlined text-success">timer</span> Deduplication</h5>
+                                        <p class="mb-0">Blocks duplicate restart requests for the same workload within <strong>30 seconds</strong>.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3 border-info">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><span class="material-symbols-outlined text-info">speed</span> Rate Limiting</h5>
+                                        <p class="mb-0">Maximum <strong>3 restarts per workload</strong> in a 15-minute window.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3 border-warning">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><span class="material-symbols-outlined text-warning">trending_up</span> Exponential Backoff</h5>
+                                        <p class="mb-0">Progressive delays: 0s, 30s, 2m, 5m, 15m between restarts.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3 border-danger">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><span class="material-symbols-outlined text-danger">block</span> Circuit Breaker</h5>
+                                        <p class="mb-0">After 5 consecutive failures, blocks all restarts for <strong>15 minutes</strong>.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Required RBAC</h3>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tutum-engine-pod-restarter
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Schedulers -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">schedule</span>
+                            Schedulers and Background Tasks
+                        </h2>
+
+                        <h3 class="h5 mt-4">Certificate Validity Checker</h3>
+                        <p>Periodically checks certificate validity and updates status.</p>
+                        <pre class="bg-light p-3 rounded"><code>export VALIDITY_CHECKER_ENABLED="true"
+export VALIDITY_CHECKER_CRON="*/5 * * * *"  # Every 5 minutes</code></pre>
+                        <p><strong>Operations:</strong></p>
+                        <ol>
+                            <li>Query all certificates</li>
+                            <li>Recalculate status based on current time:
+                                <ul>
+                                    <li><code>now &lt; not_before</code> &rarr; PENDING</li>
+                                    <li><code>not_before &lt;= now &lt; not_after</code> &rarr; ACTIVE</li>
+                                    <li><code>now &gt;= not_after</code> &rarr; EXPIRED</li>
+                                </ul>
+                            </li>
+                            <li>Update database and log audit entry on status change</li>
+                            <li>Trigger pod restart if necessary</li>
+                        </ol>
+
+                        <h3 class="h5 mt-4">Token Validity Checker</h3>
+                        <p>Periodically checks token validity and updates status.</p>
+                        <pre class="bg-light p-3 rounded"><code>export TOKEN_CHECKER_ENABLED="true"
+export TOKEN_CHECKER_CRON="* * * * *"  # Every minute</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Audit Logging -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">history</span>
+                            Audit Logging
+                        </h2>
+
+                        <p>All operations are logged with comprehensive details:</p>
+                        <pre class="bg-light p-3 rounded"><code>{
+  "id": 12345,
+  "timestamp": "2024-01-15T10:30:45Z",
+  "action": "MOUNT",
+  "resource_type": "CERTIFICATE",
+  "resource_id": "cert-uuid",
+  "resource_name": "my-app-cert:group-uuid:production",
+  "user_id": "system",
+  "user_agent": "tutum-csi-driver/1.0",
+  "ip_address": "10.0.0.50",
+  "details": {
+    "namespace": "production",
+    "group_id": "group-uuid",
+    "version": 3
+  },
+  "success": true,
+  "workload_type": "k8s-deployment",
+  "workload_name": "my-service",
+  "workload_namespace": "production",
+  "version_requested": 0
+}</code></pre>
+
+                        <p><strong>Logged Actions:</strong></p>
+                        <ul>
+                            <li><code>CREATE</code>, <code>UPDATE</code>, <code>DELETE</code> - CRUD operations</li>
+                            <li><code>GET</code>, <code>LIST</code> - Read operations</li>
+                            <li><code>INVALIDATE</code> - Certificate invalidation</li>
+                            <li><code>MOUNT</code>, <code>UNMOUNT</code> - Certificate access by workloads</li>
+                            <li><code>ACTIVATE</code>, <code>DEACTIVATE</code>, <code>EXPIRE</code> - Status transitions</li>
+                            <li><code>REVOKE</code> - Token revocation</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configuration -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">settings</span>
+                            Configuration
+                        </h2>
+
+                        <h3 class="h5 mt-4">Environment Variables</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>DATABASE_URL</code></td><td><code>postgres://tutum:tutum@localhost:5432/tutum?sslmode=disable</code></td><td>PostgreSQL connection string</td></tr>
+                                    <tr><td><code>DATABASE_MAX_OPEN_CONNS</code></td><td><code>25</code></td><td>Max open database connections</td></tr>
+                                    <tr><td><code>DATABASE_MAX_IDLE_CONNS</code></td><td><code>5</code></td><td>Max idle database connections</td></tr>
+                                    <tr><td><code>TUTUM_MASTER_KEY</code></td><td>(required)</td><td>Master encryption key (32 bytes or base64)</td></tr>
+                                    <tr><td><code>TUTUM_REST_ADDR</code></td><td><code>:8080</code></td><td>REST API listen address</td></tr>
+                                    <tr><td><code>TUTUM_GRPC_ADDR</code></td><td><code>:9090</code></td><td>gRPC API listen address</td></tr>
+                                    <tr><td><code>LOG_LEVEL</code></td><td><code>info</code></td><td>Log level: debug, info, warn, error</td></tr>
+                                    <tr><td><code>LOG_FORMAT</code></td><td><code>json</code></td><td>Log format: json, console</td></tr>
+                                    <tr><td><code>CREATE_NOT_EXISTING_OBJ</code></td><td><code>false</code></td><td>Auto-create missing groups/namespaces</td></tr>
+                                    <tr><td><code>K8S_POD_RESTART_ENABLED</code></td><td><code>false</code></td><td>Enable pod restart on certificate updates</td></tr>
+                                    <tr><td><code>K8S_KUBECONFIG_PATH</code></td><td>(empty)</td><td>Path to kubeconfig ("" = in-cluster)</td></tr>
+                                    <tr><td><code>VALIDITY_CHECKER_ENABLED</code></td><td><code>true</code></td><td>Enable certificate validity checker</td></tr>
+                                    <tr><td><code>VALIDITY_CHECKER_CRON</code></td><td><code>*/5 * * * *</code></td><td>Validity checker cron expression</td></tr>
+                                    <tr><td><code>TOKEN_CHECKER_ENABLED</code></td><td><code>true</code></td><td>Enable token validity checker</td></tr>
+                                    <tr><td><code>TOKEN_CHECKER_CRON</code></td><td><code>* * * * *</code></td><td>Token checker cron expression</td></tr>
+                                    <tr><td><code>ENABLE_METRICS</code></td><td><code>true</code></td><td>Enable Prometheus metrics</td></tr>
+                                    <tr><td><code>METRICS_PORT</code></td><td><code>9091</code></td><td>Metrics server port</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Migrations -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">storage</span>
+                            Database Migrations
+                        </h2>
+
+                        <p>Migrations are located in <code>internal/repository/postgres/migrations/</code>:</p>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Migration</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>000_add_pid_columns.sql</code></td><td>Add private ID (pid) columns</td></tr>
+                                    <tr><td><code>001_add_versioning.sql</code></td><td>Certificate versioning support</td></tr>
+                                    <tr><td><code>002_update_audit_logs_constraints.sql</code></td><td>Audit log constraints</td></tr>
+                                    <tr><td><code>003_unique_name_per_group_namespace.sql</code></td><td>Unique certificate names per group+namespace</td></tr>
+                                    <tr><td><code>004_add_workload_to_audit_log.sql</code></td><td>Workload tracking in audit logs</td></tr>
+                                    <tr><td><code>005_add_version_requested_to_audit_log.sql</code></td><td>Certificate version tracking</td></tr>
+                                    <tr><td><code>006_populate_group_names.sql</code></td><td>Populate group names</td></tr>
+                                    <tr><td><code>007_add_pod_restart_config_to_namespaces.sql</code></td><td>Pod restart configuration</td></tr>
+                                    <tr><td><code>008_add_distribution_channels.sql</code></td><td>Distribution channels and tokens</td></tr>
+                                    <tr><td><code>009_move_channel_to_certificates.sql</code></td><td>Move channel reference to certificates</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="mt-3"><strong>Run migrations:</strong></p>
+                        <pre class="bg-light p-3 rounded"><code>make db-migrate</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Monitoring -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">monitoring</span>
+                            Monitoring
+                        </h2>
+
+                        <h3 class="h5 mt-4">Prometheus Metrics</h3>
+                        <p>Available at <code>/metrics</code> on port 9091 (configurable):</p>
+                        <pre class="bg-light p-3 rounded"><code>tutum_certificate_retrievals_total{name,status}
+tutum_encryption_duration_seconds{quantile}
+tutum_database_connections_active
+tutum_grpc_requests_total{method,status}
+tutum_rest_requests_total{endpoint,method,status}
+tutum_pod_restarts_total{workload_type,status}</code></pre>
+
+                        <h3 class="h5 mt-4">Health Endpoints</h3>
+                        <pre class="bg-light p-3 rounded"><code># Liveness probe
+curl http://localhost:8080/health
+# {"status": "healthy"}
+
+# Readiness probe
+curl http://localhost:8080/ready
+# {"status": "ready"} or 503 if not ready</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Development -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">build</span>
+                            Development
+                        </h2>
+                        <pre class="bg-light p-3 rounded"><code># Run tests
+make test
+
+# Run integration tests (requires PostgreSQL)
+make test-integration
+
+# Lint code
+make lint
+
+# Build binary
+make build
+
+# Build Docker image
+make docker-build
+
+# Bump version and tag
+make bump
+make tag
+
+# Push Docker image
+make docker-push</code></pre>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container-fluid text-center">
+            <p class="mb-1">&copy; 2025 Tutum Platform - Enterprise X.509 Certificate Management</p>
+            <p class="mb-2">Built with Go 1.21+ | Protocol Buffers v3 | Docker | Kubernetes</p>
+            <div class="mt-3 pt-3 border-top border-secondary">
+                <p class="mb-1"><strong>Dual License:</strong> GPLv3 (Non-Profit) | Commercial License (Business Use)</p>
+                <p class="mb-0 small">
+                    <a href="licensing.html" class="text-white text-decoration-underline">View Licensing Terms</a> |
+                    <a href="pricing.html" class="text-white text-decoration-underline">Commercial Pricing</a> |
+                    <a href="mailto:licensing@tutum-pro.io" class="text-white text-decoration-underline">Request Exemption</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleRTL() {
+            const isRTL = document.getElementById('rtlSwitch').checked;
+            document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+            localStorage.setItem('rtl', isRTL);
+        }
+        function toggleDarkMode() {
+            const isDark = document.getElementById('darkModeSwitch').checked;
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : '');
+            localStorage.setItem('darkMode', isDark);
+            initMermaid(isDark ? 'dark' : 'neutral');
+            mermaid.run();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('rtl') === 'true') {
+                document.getElementById('rtlSwitch').checked = true;
+                document.documentElement.setAttribute('dir', 'rtl');
+            }
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.getElementById('darkModeSwitch').checked = true;
+                document.body.setAttribute('data-bs-theme', 'dark');
+                initMermaid('dark');
+                mermaid.run();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tutum-admin-cli - Tutum Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        function initMermaid(theme) {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: theme || 'neutral',
+                flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+            });
+        }
+        initMermaid('neutral');
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">security</span>
+                </button>
+                <a class="navbar-brand d-flex align-items-center mb-0" href="index.html">
+                    <div>
+                        <div class="fw-bold">Tutum Platform</div>
+                        <small class="d-block" style="font-size: 0.75rem; opacity: 0.9;">X.509 Certificate Management</small>
+                    </div>
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">settings</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">menu_book</span> Documentation</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="index.html"><span class="material-symbols-outlined me-2">home</span>Overview</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="architecture.html"><span class="material-symbols-outlined me-2">architecture</span>Architecture</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="engine.html"><span class="material-symbols-outlined me-2">dns</span>tutum-engine</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="netlib.html"><span class="material-symbols-outlined me-2">library_books</span>tutum-netlib</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+                <li class="nav-item border-top mt-2 pt-2"><a class="nav-link active d-flex align-items-center" href="cli.html"><span class="material-symbols-outlined me-2">terminal</span>tutum-admin-cli</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="cicd.html"><span class="material-symbols-outlined me-2">deployed_code</span>tutum-cicd</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="settingsMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">settings</span> Settings</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="setting-item mb-4 pb-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">format_textdirection_r_to_l</span>RTL Mode</h6><small class="text-muted">Right-to-left text direction</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="rtlSwitch" onchange="toggleRTL()"></div>
+                </div>
+            </div>
+            <div class="setting-item mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">dark_mode</span>Dark Mode</h6><small class="text-muted">Use dark color scheme</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active">tutum-admin-cli</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-primary mb-4">
+                <span class="material-symbols-outlined align-middle">terminal</span>
+                tutum-admin-cli
+            </h1>
+
+            <!-- Overview -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">info</span>
+                            Overview
+                        </h2>
+                        <p>
+                            <strong>tutum-admin-cli</strong> is an interactive command-line interface for managing certificates
+                            in the Tutum Platform. It communicates directly with <code>tutum-engine</code> via gRPC,
+                            providing a powerful tool for administrators to perform certificate operations.
+                        </p>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h5><span class="material-symbols-outlined align-middle text-success">check_circle</span> Key Features</h5>
+                                <ul>
+                                    <li>Interactive certificate management</li>
+                                    <li>Native gRPC communication (mTLS secured)</li>
+                                    <li>Batch operations support</li>
+                                    <li>Multiple output formats (table, JSON, YAML)</li>
+                                    <li>Shell completion (bash, zsh, fish)</li>
+                                    <li>Configuration file support</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><span class="material-symbols-outlined align-middle text-info">build</span> Technical Details</h5>
+                                <ul>
+                                    <li><strong>Language:</strong> Go 1.21+</li>
+                                    <li><strong>Framework:</strong> Cobra CLI</li>
+                                    <li><strong>Protocol:</strong> gRPC with mTLS</li>
+                                    <li><strong>Distribution:</strong> Docker image, Binary</li>
+                                    <li><strong>Configuration:</strong> YAML, Environment variables</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Installation -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">download</span>
+                            Installation
+                        </h2>
+
+                        <h4 class="mt-4">Docker (Recommended)</h4>
+                        <p>Run tutum-admin-cli as a Docker container:</p>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Interactive session
+docker run -it --rm \
+    --network tutum-network \
+    tutumpro/tutum-admin-cli:latest
+
+# Single command
+docker run --rm \
+    --network tutum-network \
+    tutumpro/tutum-admin-cli:latest \
+    certificate list</code></pre>
+
+                        <h4 class="mt-4">Using tutum-cicd (Ansible)</h4>
+                        <p>Deploy via Ansible Collection:</p>
+                        <pre class="bg-dark text-light p-3 rounded"><code>ansible-playbook tutum_pro.cicd.cli</code></pre>
+                        <p class="text-muted">See <a href="cicd.html">tutum-cicd documentation</a> for details.</p>
+
+                        <h4 class="mt-4">Binary Installation</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Download latest release
+curl -LO https://github.com/tutum/tutum-admin-cli/releases/latest/download/tutum-cli-linux-amd64
+
+# Make executable
+chmod +x tutum-cli-linux-amd64
+
+# Move to PATH
+sudo mv tutum-cli-linux-amd64 /usr/local/bin/tutum-cli</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configuration -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">settings</span>
+                            Configuration
+                        </h2>
+
+                        <h4 class="mt-4">Configuration File</h4>
+                        <p>Create <code>~/.tutum-cli.yaml</code>:</p>
+                        <pre class="bg-dark text-light p-3 rounded"><code># tutum-admin-cli configuration
+engine:
+  address: "tutum-engine:9090"    # gRPC endpoint
+  tls:
+    enabled: true
+    cert_file: "/path/to/client.crt"
+    key_file: "/path/to/client.key"
+    ca_file: "/path/to/ca.crt"
+
+output:
+  format: "table"                 # table, json, yaml
+  color: true
+
+defaults:
+  namespace: "default"
+  group: ""</code></pre>
+
+                        <h4 class="mt-4">Environment Variables</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>Variable</th>
+                                        <th>Description</th>
+                                        <th>Default</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>TUTUM_ENGINE_ADDR</code></td>
+                                        <td>tutum-engine gRPC address</td>
+                                        <td><code>localhost:9090</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>TUTUM_TLS_ENABLED</code></td>
+                                        <td>Enable TLS</td>
+                                        <td><code>false</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>TUTUM_OUTPUT_FORMAT</code></td>
+                                        <td>Output format</td>
+                                        <td><code>table</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Commands Reference -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">code</span>
+                            Commands Reference
+                        </h2>
+
+                        <h4 class="mt-4">Certificate Commands</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># List all certificates
+tutum-cli certificate list
+
+# List with filters
+tutum-cli certificate list --namespace production --group web-servers
+
+# Get certificate details
+tutum-cli certificate get my-certificate
+
+# Create certificate
+tutum-cli certificate create my-certificate \
+    --namespace production \
+    --group web-servers \
+    --cert-file /path/to/cert.pem \
+    --key-file /path/to/key.pem
+
+# Update certificate
+tutum-cli certificate update my-certificate \
+    --cert-file /path/to/new-cert.pem \
+    --key-file /path/to/new-key.pem
+
+# Delete certificate
+tutum-cli certificate delete my-certificate
+
+# List expiring certificates
+tutum-cli certificate expiring --days 30</code></pre>
+
+                        <h4 class="mt-4">Namespace Commands</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># List namespaces
+tutum-cli namespace list
+
+# Create namespace
+tutum-cli namespace create production --confidentiality NORMAL
+
+# Create with PARANOIC level (blocks REST API read)
+tutum-cli namespace create secrets --confidentiality PARANOIC</code></pre>
+
+                        <h4 class="mt-4">Group Commands</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># List groups
+tutum-cli group list
+
+# Create group
+tutum-cli group create web-servers --namespace production</code></pre>
+
+                        <h4 class="mt-4">Channel Commands</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># List channels
+tutum-cli channel list
+
+# Create channel for certificate distribution
+tutum-cli channel create frontend-channel \
+    --namespace production \
+    --groups web-servers,api-servers</code></pre>
+
+                        <h4 class="mt-4">Output Formats</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Table format (default)
+tutum-cli certificate list
+
+# JSON format
+tutum-cli certificate list -o json
+
+# YAML format
+tutum-cli certificate list -o yaml
+
+# Wide table (more columns)
+tutum-cli certificate list -o wide</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Communication Flow -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">sync_alt</span>
+                            Communication Flow
+                        </h2>
+                        <p>tutum-admin-cli communicates with tutum-engine via gRPC:</p>
+
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+sequenceDiagram
+    participant User
+    participant CLI as tutum-admin-cli
+    participant Engine as tutum-engine
+    participant DB as PostgreSQL
+
+    User->>CLI: tutum-cli certificate list
+    CLI->>Engine: gRPC: ListCertificates()
+    Engine->>DB: SELECT * FROM certificates
+    DB-->>Engine: Certificate records
+    Engine-->>CLI: CertificateList response
+    CLI-->>User: Formatted table output
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Shell Completion -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">keyboard</span>
+                            Shell Completion
+                        </h2>
+
+                        <h4 class="mt-4">Bash</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Generate completion script
+tutum-cli completion bash > /etc/bash_completion.d/tutum-cli
+
+# Or add to .bashrc
+echo 'source <(tutum-cli completion bash)' >> ~/.bashrc</code></pre>
+
+                        <h4 class="mt-4">Zsh</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Add to .zshrc
+echo 'source <(tutum-cli completion zsh)' >> ~/.zshrc</code></pre>
+
+                        <h4 class="mt-4">Fish</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code>tutum-cli completion fish > ~/.config/fish/completions/tutum-cli.fish</code></pre>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-light py-4 mt-5">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Tutum Platform</h5>
+                    <p class="mb-0">Enterprise X.509 Certificate Management Solution</p>
+                    <small class="text-muted">&copy; 2025 Tutum Platform. All rights reserved.</small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1"><strong>Technology Stack:</strong></p>
+                    <span class="badge bg-secondary me-1">Go 1.21+</span>
+                    <span class="badge bg-secondary me-1">gRPC</span>
+                    <span class="badge bg-secondary me-1">Cobra CLI</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Theme Toggle Scripts -->
+    <script>
+        function toggleRTL() {
+            const isRTL = document.getElementById('rtlSwitch').checked;
+            document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+            localStorage.setItem('rtlMode', isRTL);
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.getElementById('darkModeSwitch').checked;
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : '');
+            localStorage.setItem('darkMode', isDark);
+            if (isDark) {
+                initMermaid('dark');
+            } else {
+                initMermaid('neutral');
+            }
+            mermaid.run();
+        }
+
+        // Load saved preferences
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedRTL = localStorage.getItem('rtlMode') === 'true';
+            const savedDark = localStorage.getItem('darkMode') === 'true';
+
+            document.getElementById('rtlSwitch').checked = savedRTL;
+            document.getElementById('darkModeSwitch').checked = savedDark;
+
+            if (savedRTL) document.documentElement.setAttribute('dir', 'rtl');
+            if (savedDark) {
+                document.body.setAttribute('data-bs-theme', 'dark');
+                initMermaid('dark');
+                mermaid.run();
+            }
+        });
+    </script>
+</body>
+</html>

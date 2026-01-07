@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tutum-cicd - Tutum Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        function initMermaid(theme) {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: theme || 'neutral',
+                flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+            });
+        }
+        initMermaid('neutral');
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">security</span>
+                </button>
+                <a class="navbar-brand d-flex align-items-center mb-0" href="index.html">
+                    <div>
+                        <div class="fw-bold">Tutum Platform</div>
+                        <small class="d-block" style="font-size: 0.75rem; opacity: 0.9;">X.509 Certificate Management</small>
+                    </div>
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">settings</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">menu_book</span> Documentation</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="index.html"><span class="material-symbols-outlined me-2">home</span>Overview</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="architecture.html"><span class="material-symbols-outlined me-2">architecture</span>Architecture</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="engine.html"><span class="material-symbols-outlined me-2">dns</span>tutum-engine</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="netlib.html"><span class="material-symbols-outlined me-2">library_books</span>tutum-netlib</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+                <li class="nav-item border-top mt-2 pt-2"><a class="nav-link d-flex align-items-center" href="cli.html"><span class="material-symbols-outlined me-2">terminal</span>tutum-admin-cli</a></li>
+                <li class="nav-item"><a class="nav-link active d-flex align-items-center" href="cicd.html"><span class="material-symbols-outlined me-2">deployed_code</span>tutum-cicd</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="settingsMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">settings</span> Settings</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="setting-item mb-4 pb-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">format_textdirection_r_to_l</span>RTL Mode</h6><small class="text-muted">Right-to-left text direction</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="rtlSwitch" onchange="toggleRTL()"></div>
+                </div>
+            </div>
+            <div class="setting-item mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">dark_mode</span>Dark Mode</h6><small class="text-muted">Use dark color scheme</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active">tutum-cicd</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-primary mb-4">
+                <span class="material-symbols-outlined align-middle">deployed_code</span>
+                tutum-cicd
+            </h1>
+
+            <!-- Overview -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">info</span>
+                            Overview
+                        </h2>
+                        <p>
+                            <strong>tutum-cicd</strong> is an Ansible Collection (<code>tutum_pro.cicd</code>) for automated deployment
+                            of the Tutum Platform. It provides idempotent roles for deploying all platform components
+                            on Docker hosts, with support for both embedded and external PostgreSQL databases.
+                        </p>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h5><span class="material-symbols-outlined align-middle text-success">check_circle</span> Key Features</h5>
+                                <ul>
+                                    <li>Full stack deployment automation</li>
+                                    <li>Docker platform support (Kubernetes coming soon)</li>
+                                    <li>Embedded or external PostgreSQL</li>
+                                    <li>Automatic database migrations</li>
+                                    <li>Idempotent operations</li>
+                                    <li>Ansible Galaxy distribution</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><span class="material-symbols-outlined align-middle text-info">build</span> Technical Details</h5>
+                                <ul>
+                                    <li><strong>Collection:</strong> <code>tutum_pro.cicd</code></li>
+                                    <li><strong>Ansible:</strong> 2.14+</li>
+                                    <li><strong>Platforms:</strong> Ubuntu, Debian, RHEL/CentOS</li>
+                                    <li><strong>License:</strong> MIT</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Deployment Architecture -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">account_tree</span>
+                            Deployment Architecture
+                        </h2>
+                        <p>The collection deploys platform components using Ansible roles:</p>
+
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph LR
+    subgraph control["Control Node"]
+        ANSIBLE["Ansible<br/>Controller"]
+        COLLECTION["tutum_pro.cicd<br/>(Collection)"]
+    end
+
+    subgraph playbooks["Playbooks"]
+        direction TB
+        SITE["site.yml<br/>(Full Stack)"]
+        UNINSTALL["uninstall.yml<br/>(Cleanup)"]
+    end
+
+    subgraph roles["Ansible Roles"]
+        direction TB
+        R_PG["tutum_postgres"]
+        R_ENGINE["tutum_engine"]
+        R_PLUGIN["tutum_plugin"]
+        R_CLI["tutum_cli"]
+    end
+
+    subgraph target["Target Host (Docker)"]
+        direction TB
+        PG_CONTAINER["PostgreSQL<br/>Container"]
+        ENGINE_CONTAINER["tutum-engine<br/>Container"]
+        PLUGIN_SVC["tutum-plugin<br/>Systemd Service"]
+        CLI_CONTAINER["tutum-admin-cli<br/>Container"]
+    end
+
+    ANSIBLE --> COLLECTION
+    COLLECTION --> playbooks
+    SITE --> roles
+
+    R_PG -->|docker run| PG_CONTAINER
+    R_ENGINE -->|docker run| ENGINE_CONTAINER
+    R_PLUGIN -->|systemctl| PLUGIN_SVC
+    R_CLI -->|docker run| CLI_CONTAINER
+
+    ENGINE_CONTAINER -.->|migrations| PG_CONTAINER
+    ENGINE_CONTAINER -.->|gRPC :9090| PLUGIN_SVC
+    CLI_CONTAINER -.->|gRPC :9090| ENGINE_CONTAINER
+
+    style control fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    style playbooks fill:#fde68a,stroke:#d97706,stroke-width:2px
+    style roles fill:#fed7aa,stroke:#ea580c,stroke-width:2px
+    style target fill:#d1fae5,stroke:#10b981,stroke-width:2px
+
+    style ANSIBLE fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+    style COLLECTION fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+    style PG_CONTAINER fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    style ENGINE_CONTAINER fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
+    style PLUGIN_SVC fill:#8b5cf6,stroke:#6d28d9,stroke-width:2px,color:#fff
+    style CLI_CONTAINER fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#fff
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Installation -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">download</span>
+                            Installation
+                        </h2>
+
+                        <h4 class="mt-4">From Ansible Galaxy</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code>ansible-galaxy collection install tutum_pro.cicd</code></pre>
+
+                        <h4 class="mt-4">Using requirements.yml</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># requirements.yml
+collections:
+  - name: tutum_pro.cicd
+    version: ">=1.0.0"</code></pre>
+                        <pre class="bg-dark text-light p-3 rounded"><code>ansible-galaxy collection install -r requirements.yml</code></pre>
+
+                        <h4 class="mt-4">From Git</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code>ansible-galaxy collection install git+https://github.com/tutum/tutum-cicd.git</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Start -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">rocket_launch</span>
+                            Quick Start
+                        </h2>
+
+                        <h4 class="mt-4">Using Collection Playbooks</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Install full stack
+ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.site
+
+# Install individual components
+ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.engine
+ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.plugin
+ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.cli
+
+# Uninstall all
+ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall</code></pre>
+
+                        <h4 class="mt-4">Custom Playbook with Embedded PostgreSQL</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># site.yml
+- name: Deploy Tutum Platform
+  hosts: docker_servers
+  become: true
+
+  vars:
+    docker_tutum_engine_version: "3.3.5"
+    docker_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
+    docker_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
+
+  roles:
+    - role: tutum_pro.cicd.docker.tutum_postgres
+    - role: tutum_pro.cicd.docker.tutum_engine
+    - role: tutum_pro.cicd.docker.tutum_plugin
+    - role: tutum_pro.cicd.docker.tutum_cli</code></pre>
+
+                        <h4 class="mt-4">Custom Playbook with External PostgreSQL</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># site.yml
+- name: Deploy Tutum Platform (External DB)
+  hosts: docker_servers
+  become: true
+
+  vars:
+    docker_tutum_engine_version: "3.3.5"
+    docker_tutum_external_db_url: "postgres://tutum:password@db.example.com:5432/tutum?sslmode=require"
+    docker_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
+    docker_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
+
+  roles:
+    # Note: tutum_postgres role is skipped when external DB is configured
+    - role: tutum_pro.cicd.docker.tutum_engine
+    - role: tutum_pro.cicd.docker.tutum_plugin
+    - role: tutum_pro.cicd.docker.tutum_cli</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Roles Reference -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">folder</span>
+                            Roles Reference
+                        </h2>
+
+                        <!-- tutum_postgres -->
+                        <div class="card mt-4 border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.docker.tutum_postgres</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Installs PostgreSQL database for tutum-engine.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>docker_tutum_postgres_version</code></td><td><code>15-alpine</code></td><td>PostgreSQL version</td></tr>
+                                            <tr><td><code>docker_tutum_db_name</code></td><td><code>tutum</code></td><td>Database name</td></tr>
+                                            <tr><td><code>docker_tutum_db_user</code></td><td><code>tutum</code></td><td>Database user</td></tr>
+                                            <tr><td><code>docker_tutum_db_password</code></td><td><code>tutum</code></td><td>Database password</td></tr>
+                                            <tr><td><code>docker_tutum_db_port</code></td><td><code>5432</code></td><td>PostgreSQL port</td></tr>
+                                            <tr><td><code>docker_tutum_postgres_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- tutum_engine -->
+                        <div class="card mt-4 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.docker.tutum_engine</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Installs tutum-engine with automatic database migrations.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>docker_tutum_engine_version</code></td><td><code>3.3.5</code></td><td>Engine version</td></tr>
+                                            <tr><td><code>docker_tutum_external_db_url</code></td><td><code>""</code></td><td>External PostgreSQL URL (skips embedded DB)</td></tr>
+                                            <tr><td><code>docker_tutum_master_key</code></td><td>(generated)</td><td>32-char AES-256 encryption key</td></tr>
+                                            <tr><td><code>docker_tutum_jwt_secret</code></td><td>(generated)</td><td>32-char JWT secret</td></tr>
+                                            <tr><td><code>docker_tutum_rest_port</code></td><td><code>8080</code></td><td>REST API port</td></tr>
+                                            <tr><td><code>docker_tutum_grpc_port</code></td><td><code>9090</code></td><td>gRPC API port</td></tr>
+                                            <tr><td><code>docker_tutum_log_level</code></td><td><code>info</code></td><td>Log level</td></tr>
+                                            <tr><td><code>docker_tutum_engine_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- tutum_plugin -->
+                        <div class="card mt-4 border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">tutum_pro.cicd.docker.tutum_plugin</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Installs tutum-csi-driver-docker volume plugin.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>docker_tutum_plugin_version</code></td><td><code>2.1.6</code></td><td>Plugin version</td></tr>
+                                            <tr><td><code>docker_tutum_engine_url</code></td><td><code>localhost:9090</code></td><td>tutum-engine gRPC URL</td></tr>
+                                            <tr><td><code>docker_tutum_volume_dir</code></td><td><code>/var/lib/tutum/volumes</code></td><td>Volume mount directory</td></tr>
+                                            <tr><td><code>docker_tutum_plugin_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- tutum_cli -->
+                        <div class="card mt-4 border-info">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.docker.tutum_cli</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Installs tutum-admin-cli container.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>docker_tutum_cli_version</code></td><td><code>0.1.76</code></td><td>CLI version</td></tr>
+                                            <tr><td><code>docker_tutum_cli_container_name</code></td><td><code>tutum-admin-cli</code></td><td>Container name</td></tr>
+                                            <tr><td><code>docker_tutum_engine_url</code></td><td><code>localhost:9090</code></td><td>tutum-engine gRPC URL</td></tr>
+                                            <tr><td><code>docker_tutum_cli_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Modes -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">storage</span>
+                            Database Modes
+                        </h2>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card h-100 border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0">Embedded PostgreSQL (Default)</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>PostgreSQL runs as a Docker container managed by the collection.</p>
+                                        <ul>
+                                            <li>Automatic container deployment</li>
+                                            <li>Data persistence in <code>/var/lib/tutum/postgres</code></li>
+                                            <li>Health checks configured</li>
+                                            <li>Migrations applied automatically</li>
+                                        </ul>
+                                        <p class="mb-0"><strong>Use when:</strong> Development, testing, single-node deployments</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">External PostgreSQL</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Connect to existing PostgreSQL instance.</p>
+                                        <ul>
+                                            <li>Set <code>docker_tutum_external_db_url</code></li>
+                                            <li><code>tutum_postgres</code> role is skipped</li>
+                                            <li>Migrations still applied by <code>tutum_engine</code></li>
+                                            <li>Requires <code>postgresql-client</code> on target host</li>
+                                        </ul>
+                                        <p class="mb-0"><strong>Use when:</strong> Production, HA setups, managed databases (RDS, Cloud SQL)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Production Deployment -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">security</span>
+                            Production Deployment
+                        </h2>
+
+                        <h4 class="mt-4">Generate Secure Keys</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Generate 32-character keys
+openssl rand -base64 32 | head -c 32</code></pre>
+
+                        <h4 class="mt-4">Using Ansible Vault</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Create encrypted vars file
+ansible-vault create inventory/group_vars/vault.yml</code></pre>
+                        <pre class="bg-dark text-light p-3 rounded"><code># vault.yml contents
+docker_tutum_master_key: "your-32-char-key-here-exactly!!"
+docker_tutum_jwt_secret: "another-32-char-secret-here!!!!"
+docker_tutum_db_password: "secure-database-password"</code></pre>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Run with vault
+ansible-playbook site.yml --ask-vault-pass</code></pre>
+
+                        <div class="alert alert-warning mt-4">
+                            <h5><span class="material-symbols-outlined align-middle">warning</span> Security Notice</h5>
+                            <ul class="mb-0">
+                                <li>Always use Ansible Vault for sensitive variables in production</li>
+                                <li>Master key and JWT secret must be exactly 32 characters</li>
+                                <li>Back up your keys - losing them means losing access to encrypted certificates</li>
+                                <li>Use TLS for external PostgreSQL connections (<code>sslmode=require</code>)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Collection Structure -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">folder_open</span>
+                            Collection Structure
+                        </h2>
+                        <pre class="bg-light p-3 rounded"><code>tutum-cicd/
+├── galaxy.yml                 # Collection metadata
+├── version                    # Version file
+├── meta/
+│   └── runtime.yml           # Ansible requirements
+├── roles/
+│   └── docker/               # Docker platform roles
+│       ├── tutum_postgres/   # PostgreSQL database
+│       ├── tutum_engine/     # Tutum Engine (+ migrations)
+│       ├── tutum_plugin/     # Volume Plugin
+│       ├── tutum_cli/        # Admin CLI
+│       └── tutum_report/     # Version report
+├── playbooks/
+│   ├── site.yml              # Full stack installation
+│   ├── engine.yml            # Engine only
+│   ├── plugin.yml            # Plugin only
+│   ├── cli.yml               # CLI only
+│   ├── report.yml            # Version report
+│   └── uninstall.yml         # Full stack uninstall
+└── docs/
+    └── examples/             # Example configurations</code></pre>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-light py-4 mt-5">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Tutum Platform</h5>
+                    <p class="mb-0">Enterprise X.509 Certificate Management Solution</p>
+                    <small class="text-muted">&copy; 2025 Tutum Platform. All rights reserved.</small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1"><strong>Technology Stack:</strong></p>
+                    <span class="badge bg-secondary me-1">Ansible 2.14+</span>
+                    <span class="badge bg-secondary me-1">Docker</span>
+                    <span class="badge bg-secondary me-1">PostgreSQL</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Theme Toggle Scripts -->
+    <script>
+        function toggleRTL() {
+            const isRTL = document.getElementById('rtlSwitch').checked;
+            document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+            localStorage.setItem('rtlMode', isRTL);
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.getElementById('darkModeSwitch').checked;
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : '');
+            localStorage.setItem('darkMode', isDark);
+            if (isDark) {
+                initMermaid('dark');
+            } else {
+                initMermaid('neutral');
+            }
+            mermaid.run();
+        }
+
+        // Load saved preferences
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedRTL = localStorage.getItem('rtlMode') === 'true';
+            const savedDark = localStorage.getItem('darkMode') === 'true';
+
+            document.getElementById('rtlSwitch').checked = savedRTL;
+            document.getElementById('darkModeSwitch').checked = savedDark;
+
+            if (savedRTL) document.documentElement.setAttribute('dir', 'rtl');
+            if (savedDark) {
+                document.body.setAttribute('data-bs-theme', 'dark');
+                initMermaid('dark');
+                mermaid.run();
+            }
+        });
+    </script>
+</body>
+</html>

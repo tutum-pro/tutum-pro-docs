@@ -57,6 +57,8 @@
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+                <li class="nav-item border-top mt-2 pt-2"><a class="nav-link d-flex align-items-center" href="cli.html"><span class="material-symbols-outlined me-2">terminal</span>tutum-admin-cli</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="cicd.html"><span class="material-symbols-outlined me-2">deployed_code</span>tutum-cicd</a></li>
             </ul>
         </div>
     </div>
@@ -112,6 +114,12 @@
                         <div class="architecture-diagram">
                             <div class="mermaid">
 graph TD
+    subgraph admin_layer["Administration Layer"]
+        direction LR
+        REST_CLIENTS["🌐 REST API Clients<br/>(curl, Postman, custom apps)"]
+        ADMIN_CLI["⌨️ tutum-admin-cli<br/>(Interactive CLI)"]
+    end
+
     subgraph containers["Container Orchestration Layer"]
         direction LR
         K8S["Kubernetes Pods"]
@@ -127,8 +135,6 @@ graph TD
     subgraph netlib["Client Library Layer"]
         NETLIB["tutum-netlib (.so)<br/>JDBC-like API + gRPC Client"]
     end
-
-    GRPC_CONN["⬇<br/>gRPC/Protobuf Communication<br/>(mTLS Secured)<br/>⬇"]
 
     subgraph engine["tutum-engine - Core Certificate Management Service"]
         direction TB
@@ -152,12 +158,18 @@ graph TD
         BL --> DB
     end
 
+    REST_CLIENTS -->|HTTP/JSON| REST
+    ADMIN_CLI -->|gRPC/mTLS| GRPC
+
     K8S --> K8S_DRIVER
     DOCKER --> DOCKER_DRIVER
     K8S_DRIVER --> NETLIB
     DOCKER_DRIVER --> NETLIB
-    NETLIB --> GRPC_CONN
-    GRPC_CONN --> GRPC
+    NETLIB -->|gRPC/mTLS| GRPC
+
+    style admin_layer fill:#dbeafe,stroke:#3b82f6,stroke-width:2px
+    style REST_CLIENTS fill:#93c5fd,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
+    style ADMIN_CLI fill:#93c5fd,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
 
     style containers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
     style drivers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px

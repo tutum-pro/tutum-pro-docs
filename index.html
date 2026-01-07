@@ -115,6 +115,18 @@
                         Kubernetes CSI Driver
                     </a>
                 </li>
+                <li class="nav-item border-top mt-2 pt-2">
+                    <a class="nav-link d-flex align-items-center" href="cli.html">
+                        <span class="material-symbols-outlined me-2">terminal</span>
+                        tutum-admin-cli
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="cicd.html">
+                        <span class="material-symbols-outlined me-2">deployed_code</span>
+                        tutum-cicd
+                    </a>
+                </li>
             </ul>
         </div>
     </div>
@@ -280,11 +292,17 @@
                         </div>
 
                         <h3 class="h5 mt-4">Solution Structure</h3>
-                        <p>The platform consists of five interconnected components working together to provide end-to-end certificate management:</p>
+                        <p>The platform consists of interconnected components working together to provide end-to-end certificate management. Administrators interact via REST API or CLI, while applications consume certificates through CSI drivers:</p>
 
                         <div class="architecture-diagram">
                             <div class="mermaid">
 graph TD
+    subgraph admin_layer["Administration Layer"]
+        direction LR
+        REST_CLIENTS["🌐 REST API Clients<br/>(curl, Postman, custom apps)"]
+        ADMIN_CLI["⌨️ tutum-admin-cli<br/>(Interactive CLI)"]
+    end
+
     subgraph containers["Container Orchestration Layer"]
         direction LR
         K8S["Kubernetes Pods"]
@@ -300,8 +318,6 @@ graph TD
     subgraph netlib["Client Library Layer"]
         NETLIB["tutum-netlib (.so)<br/>JDBC-like API + gRPC Client"]
     end
-
-    GRPC_CONN["⬇<br/>gRPC/Protobuf Communication<br/>(mTLS Secured)<br/>⬇"]
 
     subgraph engine["tutum-engine - Core Certificate Management Service"]
         direction TB
@@ -325,12 +341,18 @@ graph TD
         BL --> DB
     end
 
+    REST_CLIENTS -->|HTTP/JSON| REST
+    ADMIN_CLI -->|gRPC/mTLS| GRPC
+
     K8S --> K8S_DRIVER
     DOCKER --> DOCKER_DRIVER
     K8S_DRIVER --> NETLIB
     DOCKER_DRIVER --> NETLIB
-    NETLIB --> GRPC_CONN
-    GRPC_CONN --> GRPC
+    NETLIB -->|gRPC/mTLS| GRPC
+
+    style admin_layer fill:#dbeafe,stroke:#3b82f6,stroke-width:2px
+    style REST_CLIENTS fill:#93c5fd,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
+    style ADMIN_CLI fill:#93c5fd,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
 
     style containers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
     style drivers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
@@ -345,7 +367,6 @@ graph TD
     style K8S_DRIVER fill:#3182ce,stroke:#2c5282,stroke-width:2px,color:#fff
     style DOCKER_DRIVER fill:#3182ce,stroke:#2c5282,stroke-width:2px,color:#fff
     style NETLIB fill:#ed8936,stroke:#c05621,stroke-width:2px,color:#fff
-    style GRPC_CONN fill:#edf2f7,stroke:#718096,stroke-width:2px,stroke-dasharray: 5 5
     style REST fill:#48bb78,stroke:#2f855a,stroke-width:2px,color:#fff
     style GRPC fill:#48bb78,stroke:#2f855a,stroke-width:2px,color:#fff
     style BL fill:#38a169,stroke:#2f855a,stroke-width:2px,color:#fff
@@ -481,6 +502,52 @@ graph TD
                                             <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Group/namespace filtering</li>
                                         </ul>
                                         <a href="csi-docker.html" class="btn btn-outline-warning btn-sm mt-2">
+                                            <span class="material-symbols-outlined align-middle" style="font-size: 18px;">arrow_forward</span>
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 border-primary component-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <span class="material-symbols-outlined align-middle text-primary">terminal</span>
+                                            tutum-admin-cli
+                                        </h5>
+                                        <p><span class="badge bg-primary">CLI Tool</span></p>
+                                        <ul class="list-unstyled">
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Interactive certificate management</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> gRPC native communication</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Batch operations support</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Docker & binary installation</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Shell completion (bash/zsh)</li>
+                                        </ul>
+                                        <a href="cli.html" class="btn btn-outline-primary btn-sm mt-2">
+                                            <span class="material-symbols-outlined align-middle" style="font-size: 18px;">arrow_forward</span>
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 border-secondary component-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <span class="material-symbols-outlined align-middle text-secondary">deployed_code</span>
+                                            tutum-cicd
+                                        </h5>
+                                        <p><span class="badge bg-secondary">Ansible Collection</span></p>
+                                        <ul class="list-unstyled">
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Full stack deployment automation</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Docker & Kubernetes support</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Embedded/External PostgreSQL</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Idempotent operations</li>
+                                            <li><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Ansible Galaxy distribution</li>
+                                        </ul>
+                                        <a href="cicd.html" class="btn btn-outline-secondary btn-sm mt-2">
                                             <span class="material-symbols-outlined align-middle" style="font-size: 18px;">arrow_forward</span>
                                             View Details
                                         </a>

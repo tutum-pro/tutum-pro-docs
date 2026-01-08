@@ -253,15 +253,24 @@ collections:
                         <pre class="bg-dark text-light p-3 rounded"><code># Generate installation files for localhost
 ansible localhost -m include_role -a name=tutum_pro.cicd.docker.tutum_init
 
-# Generate for remote host with SSH
+# Generate for remote host with SSH key authentication
 ansible localhost -m include_role -a name=tutum_pro.cicd.docker.tutum_init \
   -e tutum_init_target_host=192.168.1.100 \
+  -e tutum_init_target_hostname=docker-server-1 \
   -e tutum_init_ansible_connection=ssh \
   -e tutum_init_ansible_user=ansible \
   -e tutum_init_ansible_ssh_key=~/.ssh/id_rsa
 
-# Run the generated playbook
-ansible-playbook -i inventory/docker.ini tutum-install.yml</code></pre>
+# Generate for remote host with SSH password (use --ask-pass for prompt)
+ansible localhost -m include_role -a name=tutum_pro.cicd.docker.tutum_init \
+  -e tutum_init_target_host=192.168.1.100 \
+  -e tutum_init_target_hostname=docker-server-1 \
+  -e tutum_init_ansible_connection=ssh \
+  -e tutum_init_ansible_user=ansible \
+  -e tutum_init_ansible_become_password=YourSudoPassword
+
+# Run the generated playbook (with SSH password prompt)
+ansible-playbook -i inventory/docker.ini tutum-install.yml --ask-pass</code></pre>
 
                         <h4 class="mt-4">Using Collection Playbooks</h4>
                         <pre class="bg-dark text-light p-3 rounded"><code># Install full stack
@@ -469,10 +478,12 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                                             <tr><td><code>tutum_init_inventory_path</code></td><td><code>inventory/</code></td><td>Directory for inventory file</td></tr>
                                             <tr><td><code>tutum_init_inventory_file</code></td><td><code>docker.ini</code></td><td>Inventory filename</td></tr>
                                             <tr><td><code>tutum_init_playbook_file</code></td><td><code>tutum-install.yml</code></td><td>Playbook filename</td></tr>
-                                            <tr><td><code>tutum_init_target_host</code></td><td><code>localhost</code></td><td>Target host (IP or hostname)</td></tr>
+                                            <tr><td><code>tutum_init_target_host</code></td><td><code>localhost</code></td><td>Target host IP or DNS name</td></tr>
+                                            <tr><td><code>tutum_init_target_hostname</code></td><td><code>""</code></td><td>Inventory hostname (default: derived from target_host)</td></tr>
                                             <tr><td><code>tutum_init_ansible_connection</code></td><td><code>local</code></td><td><code>local</code> or <code>ssh</code></td></tr>
                                             <tr><td><code>tutum_init_ansible_user</code></td><td><code>""</code></td><td>SSH user (for remote hosts)</td></tr>
                                             <tr><td><code>tutum_init_ansible_ssh_key</code></td><td><code>""</code></td><td>SSH private key path</td></tr>
+                                            <tr><td><code>tutum_init_ansible_become_password</code></td><td><code>""</code></td><td>Sudo password (use ansible-vault in production)</td></tr>
                                             <tr><td><code>tutum_init_db_mode</code></td><td><code>embedded</code></td><td><code>embedded</code> or <code>external</code></td></tr>
                                             <tr><td><code>tutum_init_overwrite</code></td><td><code>false</code></td><td>Overwrite existing files</td></tr>
                                         </tbody>

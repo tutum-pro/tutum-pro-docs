@@ -167,6 +167,7 @@ graph LR
 
     subgraph roles["Ansible Roles"]
         direction TB
+        R_INIT["tutum_init<br/>(generator)"]
         R_PG["tutum_postgres"]
         R_ENGINE["tutum_engine"]
         R_PLUGIN["tutum_plugin"]
@@ -185,6 +186,7 @@ graph LR
     COLLECTION --> playbooks
     SITE --> roles
 
+    R_INIT -->|generates| playbooks
     R_PG -->|docker run| PG_CONTAINER
     R_ENGINE -->|docker run| ENGINE_CONTAINER
     R_PLUGIN -->|systemctl| PLUGIN_SVC
@@ -201,6 +203,7 @@ graph LR
 
     style ANSIBLE fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
     style COLLECTION fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+    style R_INIT fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff
     style PG_CONTAINER fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff
     style ENGINE_CONTAINER fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
     style PLUGIN_SVC fill:#8b5cf6,stroke:#6d28d9,stroke-width:2px,color:#fff
@@ -227,11 +230,11 @@ graph LR
                         <pre class="bg-dark text-light p-3 rounded"><code># requirements.yml
 collections:
   - name: tutum_pro.cicd
-    version: ">=1.0.0"</code></pre>
+    version: ">=1.2.4"</code></pre>
                         <pre class="bg-dark text-light p-3 rounded"><code>ansible-galaxy collection install -r requirements.yml</code></pre>
 
                         <h4 class="mt-4">From Git</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code>ansible-galaxy collection install git+https://github.com/tutum/tutum-cicd.git</code></pre>
+                        <pre class="bg-dark text-light p-3 rounded"><code>ansible-galaxy collection install git+https://github.com/tutum-pro/tutum-cicd.git</code></pre>
                     </div>
                 </div>
             </section>
@@ -245,6 +248,21 @@ collections:
                             Quick Start
                         </h2>
 
+                        <h4 class="mt-4">Using tutum_init Role (Recommended)</h4>
+                        <p>The <code>tutum_init</code> role generates installation playbook and inventory files:</p>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Generate installation files for localhost
+ansible localhost -m include_role -a name=tutum_pro.cicd.docker.tutum_init
+
+# Generate for remote host with SSH
+ansible localhost -m include_role -a name=tutum_pro.cicd.docker.tutum_init \
+  -e tutum_init_target_host=192.168.1.100 \
+  -e tutum_init_ansible_connection=ssh \
+  -e tutum_init_ansible_user=ansible \
+  -e tutum_init_ansible_ssh_key=~/.ssh/id_rsa
+
+# Run the generated playbook
+ansible-playbook -i inventory/docker.ini tutum-install.yml</code></pre>
+
                         <h4 class="mt-4">Using Collection Playbooks</h4>
                         <pre class="bg-dark text-light p-3 rounded"><code># Install full stack
 ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.site
@@ -254,8 +272,33 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.engine
 ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.plugin
 ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.cli
 
-# Uninstall all
-ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall</code></pre>
+# Uninstall all (keeps data)
+ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall
+
+# Uninstall with COMPLETE DATA REMOVAL (destructive!)
+ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
+  -e docker_tutum_engine_remove_data=true \
+  -e docker_tutum_postgres_remove_data=true \
+  -e docker_tutum_plugin_remove_volumes=true</code></pre>
+
+                        <div class="alert alert-danger mt-3">
+                            <h6><span class="material-symbols-outlined align-middle">warning</span> Complete Uninstallation</h6>
+                            <p>To completely remove Tutum Platform including all data, volumes, and certificates:</p>
+                            <pre class="bg-dark text-light p-3 rounded mb-2"><code>ansible-playbook -i inventory/docker.ini tutum_pro.cicd.uninstall \
+  -e docker_tutum_engine_remove_data=true \
+  -e docker_tutum_postgres_remove_data=true \
+  -e docker_tutum_plugin_remove_volumes=true</code></pre>
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="table-danger">
+                                    <tr><th>Variable</th><th>Effect</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>docker_tutum_engine_remove_data=true</code></td><td>Removes tutum-engine container and data directory</td></tr>
+                                    <tr><td><code>docker_tutum_postgres_remove_data=true</code></td><td>Removes PostgreSQL container and <code>/var/lib/tutum/postgres</code> data</td></tr>
+                                    <tr><td><code>docker_tutum_plugin_remove_volumes=true</code></td><td>Removes plugin service and <code>/var/lib/tutum/volumes</code></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
 
                         <h4 class="mt-4">Custom Playbook with Embedded PostgreSQL</h4>
                         <pre class="bg-dark text-light p-3 rounded"><code># site.yml
@@ -346,12 +389,20 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall</code></pre>
                                             <tr><td><code>docker_tutum_external_db_url</code></td><td><code>""</code></td><td>External PostgreSQL URL (skips embedded DB)</td></tr>
                                             <tr><td><code>docker_tutum_master_key</code></td><td>(generated)</td><td>32-char AES-256 encryption key</td></tr>
                                             <tr><td><code>docker_tutum_jwt_secret</code></td><td>(generated)</td><td>32-char JWT secret</td></tr>
-                                            <tr><td><code>docker_tutum_rest_port</code></td><td><code>8080</code></td><td>REST API port</td></tr>
-                                            <tr><td><code>docker_tutum_grpc_port</code></td><td><code>9090</code></td><td>gRPC API port</td></tr>
+                                            <tr><td><code>docker_tutum_rest_port</code></td><td><code>8080</code></td><td>REST API port (host)</td></tr>
+                                            <tr><td><code>docker_tutum_grpc_port</code></td><td><code>9090</code></td><td>gRPC API port (host)</td></tr>
                                             <tr><td><code>docker_tutum_log_level</code></td><td><code>info</code></td><td>Log level</td></tr>
                                             <tr><td><code>docker_tutum_engine_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
                                         </tbody>
                                     </table>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> Port Mapping</h6>
+                                    <p class="mb-0">
+                                        The <code>docker_tutum_rest_port</code> and <code>docker_tutum_grpc_port</code> variables control
+                                        <strong>host ports only</strong>. The container always listens on internal ports 8080 (REST) and 9090 (gRPC).
+                                        This allows changing host ports without conflicts (e.g., <code>-p 18080:8080</code>).
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -396,6 +447,34 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall</code></pre>
                                             <tr><td><code>docker_tutum_cli_container_name</code></td><td><code>tutum-admin-cli</code></td><td>Container name</td></tr>
                                             <tr><td><code>docker_tutum_engine_url</code></td><td><code>localhost:9090</code></td><td>tutum-engine gRPC URL</td></tr>
                                             <tr><td><code>docker_tutum_cli_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- tutum_init -->
+                        <div class="card mt-4 border-secondary">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.docker.tutum_init</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Generates installation playbook and inventory files. Run directly with <code>ansible localhost -m include_role</code>.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>tutum_init_inventory_path</code></td><td><code>inventory/</code></td><td>Directory for inventory file</td></tr>
+                                            <tr><td><code>tutum_init_inventory_file</code></td><td><code>docker.ini</code></td><td>Inventory filename</td></tr>
+                                            <tr><td><code>tutum_init_playbook_file</code></td><td><code>tutum-install.yml</code></td><td>Playbook filename</td></tr>
+                                            <tr><td><code>tutum_init_target_host</code></td><td><code>localhost</code></td><td>Target host (IP or hostname)</td></tr>
+                                            <tr><td><code>tutum_init_ansible_connection</code></td><td><code>local</code></td><td><code>local</code> or <code>ssh</code></td></tr>
+                                            <tr><td><code>tutum_init_ansible_user</code></td><td><code>""</code></td><td>SSH user (for remote hosts)</td></tr>
+                                            <tr><td><code>tutum_init_ansible_ssh_key</code></td><td><code>""</code></td><td>SSH private key path</td></tr>
+                                            <tr><td><code>tutum_init_db_mode</code></td><td><code>embedded</code></td><td><code>embedded</code> or <code>external</code></td></tr>
+                                            <tr><td><code>tutum_init_overwrite</code></td><td><code>false</code></td><td>Overwrite existing files</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -505,6 +584,7 @@ ansible-playbook site.yml --ask-vault-pass</code></pre>
 │   └── runtime.yml           # Ansible requirements
 ├── roles/
 │   └── docker/               # Docker platform roles
+│       ├── tutum_init/       # Installation file generator
 │       ├── tutum_postgres/   # PostgreSQL database
 │       ├── tutum_engine/     # Tutum Engine (+ migrations)
 │       ├── tutum_plugin/     # Volume Plugin

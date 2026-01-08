@@ -261,15 +261,19 @@ ansible localhost -m include_role -a name=tutum_pro.cicd.docker.tutum_init \
   -e tutum_init_ansible_user=ansible \
   -e tutum_init_ansible_ssh_key=~/.ssh/id_rsa
 
-# Generate for remote host with SSH password (use --ask-pass for prompt)
+# Generate for remote host with SSH password authentication
 ansible localhost -m include_role -a name=tutum_pro.cicd.docker.tutum_init \
   -e tutum_init_target_host=192.168.1.100 \
   -e tutum_init_target_hostname=docker-server-1 \
   -e tutum_init_ansible_connection=ssh \
   -e tutum_init_ansible_user=ansible \
+  -e tutum_init_ansible_ssh_pass=YourSSHPassword \
   -e tutum_init_ansible_become_password=YourSudoPassword
 
-# Run the generated playbook (with SSH password prompt)
+# Run the generated playbook
+ansible-playbook -i inventory/docker.ini tutum-install.yml
+
+# Or use --ask-pass for interactive SSH password prompt
 ansible-playbook -i inventory/docker.ini tutum-install.yml --ask-pass</code></pre>
 
                         <h4 class="mt-4">Using Collection Playbooks</h4>
@@ -483,6 +487,7 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                                             <tr><td><code>tutum_init_ansible_connection</code></td><td><code>local</code></td><td><code>local</code> or <code>ssh</code></td></tr>
                                             <tr><td><code>tutum_init_ansible_user</code></td><td><code>""</code></td><td>SSH user (for remote hosts)</td></tr>
                                             <tr><td><code>tutum_init_ansible_ssh_key</code></td><td><code>""</code></td><td>SSH private key path</td></tr>
+                                            <tr><td><code>tutum_init_ansible_ssh_pass</code></td><td><code>""</code></td><td>SSH login password (use ansible-vault in production)</td></tr>
                                             <tr><td><code>tutum_init_ansible_become_password</code></td><td><code>""</code></td><td>Sudo password (use ansible-vault in production)</td></tr>
                                             <tr><td><code>tutum_init_db_mode</code></td><td><code>embedded</code></td><td><code>embedded</code> or <code>external</code></td></tr>
                                             <tr><td><code>tutum_init_overwrite</code></td><td><code>false</code></td><td>Overwrite existing files</td></tr>

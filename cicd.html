@@ -328,7 +328,7 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
   become: true
 
   vars:
-    docker_tutum_engine_version: "3.3.5"
+    docker_tutum_engine_version: "3.4.0"
     docker_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
     docker_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
 
@@ -345,7 +345,7 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
   become: true
 
   vars:
-    docker_tutum_engine_version: "3.3.5"
+    docker_tutum_engine_version: "3.4.0"
     docker_tutum_external_db_url: "postgres://tutum:password@db.example.com:5432/tutum?sslmode=require"
     docker_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
     docker_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
@@ -406,7 +406,7 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>docker_tutum_engine_version</code></td><td><code>3.3.5</code></td><td>Engine version</td></tr>
+                                            <tr><td><code>docker_tutum_engine_version</code></td><td><code>3.4.0</code></td><td>Engine version</td></tr>
                                             <tr><td><code>docker_tutum_external_db_url</code></td><td><code>""</code></td><td>External PostgreSQL URL (skips embedded DB)</td></tr>
                                             <tr><td><code>docker_tutum_master_key</code></td><td>(generated)</td><td>32-char AES-256 encryption key</td></tr>
                                             <tr><td><code>docker_tutum_jwt_secret</code></td><td>(generated)</td><td>32-char JWT secret</td></tr>
@@ -587,6 +587,160 @@ ansible-playbook site.yml --ask-vault-pass</code></pre>
                                 <li>Master key and JWT secret must be exactly 32 characters</li>
                                 <li>Back up your keys - losing them means losing access to encrypted certificates</li>
                                 <li>Use TLS for external PostgreSQL connections (<code>sslmode=require</code>)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Migrations -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">upgrade</span>
+                            Database Migrations
+                        </h2>
+
+                        <p>tutum-engine automatically runs database migrations on startup. Migrations are idempotent and safe to run multiple times. Below is a list of all migrations with their descriptions.</p>
+
+                        <div class="alert alert-info mb-4">
+                            <h6><span class="material-symbols-outlined align-middle">info</span> Migration Behavior</h6>
+                            <ul class="mb-0">
+                                <li>Migrations run automatically when tutum-engine starts</li>
+                                <li>Each migration runs exactly once (tracked in <code>schema_migrations</code> table)</li>
+                                <li>Migrations are transactional - if one fails, it is rolled back</li>
+                                <li>New migrations are added with sequential numbering (000, 001, 002...)</li>
+                            </ul>
+                        </div>
+
+                        <h4 class="mt-4">Migration History</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th style="width: 8%">ID</th><th style="width: 30%">Name</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>000</code></td>
+                                        <td>add_pid_columns</td>
+                                        <td>Adds internal <code>pid</code> (primary id) columns to all tables for efficient foreign key relationships</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>001</code></td>
+                                        <td>add_versioning</td>
+                                        <td>Implements certificate versioning system - splits certificates into <code>certificate_metadata</code> (immutable) and <code>certificate_versions</code> (versioned content)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>002</code></td>
+                                        <td>update_audit_logs_constraints</td>
+                                        <td>Updates audit_logs table constraints for better data integrity</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>003</code></td>
+                                        <td>unique_name_per_group_namespace</td>
+                                        <td>Adds unique constraint: certificate name must be unique within (group_id, namespace)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>004</code></td>
+                                        <td>add_workload_to_audit_log</td>
+                                        <td>Adds workload tracking columns to audit_logs (workload_type, workload_name, workload_namespace)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>005</code></td>
+                                        <td>add_version_requested_to_audit_log</td>
+                                        <td>Adds <code>version_requested</code> column to track which certificate version was requested</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>006</code></td>
+                                        <td>populate_group_names</td>
+                                        <td>Backfills group names from certificate_groups to certificate_metadata for denormalization</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>007</code></td>
+                                        <td>add_pod_restart_config_to_namespaces</td>
+                                        <td>Adds pod restart configuration columns to namespaces table</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>008</code></td>
+                                        <td>add_distribution_channels</td>
+                                        <td>Creates <code>distribution_channels</code> table for certificate distribution with authentication tokens</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>009</code></td>
+                                        <td>move_channel_to_certificates</td>
+                                        <td>Moves channel association from versions to certificate_metadata for better data model</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>010</code></td>
+                                        <td>add_type_column_and_update_constraints</td>
+                                        <td>Adds <code>type</code> column (X509, secret) to support both certificates and generic secrets</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>011</code></td>
+                                        <td>add_uuid_to_audit_logs</td>
+                                        <td>Adds UUID primary key to audit_logs for better distributed system support</td>
+                                    </tr>
+                                    <tr class="table-success">
+                                        <td><code>012</code></td>
+                                        <td>add_is_effective_column</td>
+                                        <td>
+                                            <strong>NEW in v3.4.0:</strong> Adds <code>is_effective</code> and <code>effective_since</code> columns for automatic certificate version activation based on validity windows.
+                                            <br/><small class="text-muted">See <a href="engine.html#4-certificate-validity">Certificate Validity Management</a> in engine docs.</small>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 class="mt-4">Migration 012: Effective Version Management</h4>
+                        <p>This migration enables automatic certificate activation/deactivation based on validity windows (<code>not_before</code> and <code>not_after</code> dates).</p>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-success h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">Schema Changes</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <pre class="bg-light p-2 rounded mb-0"><code>-- New columns
+ALTER TABLE certificate_versions
+ADD COLUMN is_effective BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE certificate_versions
+ADD COLUMN effective_since TIMESTAMP;
+
+-- Unique constraint (only one effective per cert)
+CREATE UNIQUE INDEX
+  idx_certificate_versions_one_effective
+ON certificate_versions (certificate_metadata_pid)
+WHERE is_effective = TRUE;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-info h-100">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">New Views</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="mb-2">
+                                            <li><code>certificates_latest</code> - prefers <code>is_effective=true</code>, fallback to latest version</li>
+                                            <li><code>certificates_effective</code> - only certificates with effective version (for CSI driver)</li>
+                                        </ul>
+                                        <p class="mb-0 small text-muted">The effective version is selected by the Go algorithm in tutum-engine based on: validity window + longest time until expiry.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning mt-4">
+                            <h6><span class="material-symbols-outlined align-middle">warning</span> Upgrade Notes for v3.4.0</h6>
+                            <ul class="mb-0">
+                                <li><strong>Automatic activation:</strong> Existing certificates will have their effective version set on first scheduler run (within 5 minutes of startup)</li>
+                                <li><strong>gRPC API change:</strong> <code>ListCertificates</code> now defaults to returning only effective certificates. Use <code>include_all=true</code> for all certificates.</li>
+                                <li><strong>New audit actions:</strong> <code>ACTIVATE</code>, <code>DEACTIVATE</code>, <code>RESTART</code> appear in audit logs when certificate validity changes</li>
+                                <li><strong>Scheduler configuration:</strong> New env vars <code>TUTUM_VALIDITY_CHECKER_CRON</code> and <code>TUTUM_WORKLOAD_RESTARTER_CRON</code></li>
                             </ul>
                         </div>
                     </div>

@@ -999,13 +999,366 @@ ORDER BY timestamp DESC;</code></pre>
                 </div>
             </section>
 
-            <!-- 4. Kubernetes Deployment Restart -->
+            <!-- 4. Certificate Validity and Effective Version Management -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">verified</span>
+                            4. Certificate Validity and Effective Version Management
+                        </h2>
+
+                        <h3 class="h5 mt-4">Overview</h3>
+                        <p>tutum-engine implements an intelligent certificate validity management system that automatically activates and deactivates certificate versions based on their validity windows. This ensures that workloads always receive the correct, currently valid certificate version without manual intervention.</p>
+
+                        <div class="alert alert-info d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">lightbulb</span>
+                            <div>
+                                <strong>Key Concept:</strong> Each certificate can have multiple versions. Only <strong>one version</strong> can be marked as <code>is_effective=true</code> at any given time. This is the version that will be distributed to workloads via gRPC API.
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Effective Version Selection Algorithm</h3>
+                        <p>The algorithm runs periodically (default: every 5 minutes) and evaluates all certificate versions to determine which one should be effective. The selection criteria are:</p>
+
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title"><span class="material-symbols-outlined align-middle">filter_alt</span> Step 1: Filter Valid Candidates</h5>
+                                <p class="mb-2">Only versions meeting ALL criteria are considered:</p>
+                                <ul class="mb-0">
+                                    <li><code>not_before &lt;= NOW()</code> - Version is already valid (validity period has started)</li>
+                                    <li><code>not_after &gt;= NOW()</code> - Version has not expired yet</li>
+                                    <li><code>status NOT IN ('REVOKED', 'INVALID')</code> - Version is not revoked or marked invalid</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title"><span class="material-symbols-outlined align-middle">sort</span> Step 2: Sort by Priority</h5>
+                                <p class="mb-2">Candidates are sorted by:</p>
+                                <ol class="mb-0">
+                                    <li><strong>Longest time until expiry</strong> <code>(not_after - NOW()) DESC</code> - Prefer versions that will remain valid longest</li>
+                                    <li><strong>Highest version number</strong> <code>version DESC</code> - Tiebreaker: prefer newer versions</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title"><span class="material-symbols-outlined align-middle">check_circle</span> Step 3: Set Effective</h5>
+                                <p class="mb-0">The first candidate after sorting becomes the effective version (<code>is_effective = TRUE</code>). All other versions have <code>is_effective = FALSE</code>.</p>
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Change Types</h3>
+                        <p>When the algorithm runs, it detects one of four possible outcomes for each certificate:</p>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th style="width: 20%">Change Type</th><th style="width: 30%">Condition</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-secondary">NO_CHANGE</span></td>
+                                        <td>Same version remains effective</td>
+                                        <td>No action needed. The currently effective version is still the best choice.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-success">ACTIVATED</span></td>
+                                        <td>No version was effective → new version becomes effective</td>
+                                        <td>A certificate that had no valid versions now has one. Workloads can start using this certificate.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-danger">DEACTIVATED</span></td>
+                                        <td>Version was effective → no version is now effective</td>
+                                        <td>All versions are now expired, revoked, or invalid. Workloads will be notified that the certificate is unavailable.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-warning text-dark">VERSION_CHANGE</span></td>
+                                        <td>Different version becomes effective</td>
+                                        <td>Algorithm selected a different version (e.g., newer version entered validity window, or current version is expiring soon).</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Scheduler Architecture (Two-Phase Design)</h3>
+                        <p>The system uses two separate schedulers following the <strong>Shannon-Nyquist theorem</strong> for signal processing to ensure no changes are missed:</p>
+
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph TB
+    subgraph schedulerA["Scheduler A: Validity Checker (every 5 min)"]
+        A1["Get all certificates<br/>with versions"] --> A2["Run Go algorithm<br/>for each certificate"]
+        A2 --> A3{"Needs<br/>update?"}
+        A3 -->|Yes| A4["Update database<br/>(is_effective)"]
+        A4 --> A5["Store change<br/>in memory"]
+        A3 -->|No| A6["Skip"]
+    end
+
+    subgraph schedulerB["Scheduler B: Workload Restarter (every 2.5 min)"]
+        B1["Pop changes<br/>from store"] --> B2{"Any<br/>changes?"}
+        B2 -->|Yes| B3["For each change:<br/>trigger workload restart"]
+        B2 -->|No| B4["Sleep"]
+    end
+
+    A5 --> |"EffectiveVersionChangeStore"| B1
+
+    style A4 fill:#d4edda
+    style B3 fill:#fff3cd
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">description</span> Two-Phase Design Explanation</h5>
+                            <p><strong>Why two schedulers?</strong> Separating validity checking from workload restarting provides several benefits:</p>
+                            <ul>
+                                <li><strong>Decoupling:</strong> Database updates and Kubernetes API calls are independent operations with different failure modes</li>
+                                <li><strong>Reliability:</strong> If workload restart fails, the database state is already correct</li>
+                                <li><strong>Performance:</strong> Scheduler A can process thousands of certificates quickly; Scheduler B handles slower K8s operations</li>
+                            </ul>
+                            <p><strong>Shannon-Nyquist Theorem:</strong> To accurately detect all changes from Scheduler A (5 min interval), Scheduler B must sample at least twice as frequently (2.5 min = 5 min / 2). This ensures no certificate changes are missed.</p>
+                            <p class="mb-0"><strong>Communication:</strong> Changes are passed via an in-memory store (<code>EffectiveVersionChangeStore</code>) using thread-safe operations. Scheduler B atomically pops all pending changes on each run.</p>
+                        </div>
+
+                        <h3 class="h5 mt-4">Validity Checker Flow</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+sequenceDiagram
+    participant Cron as Cron Scheduler
+    participant VC as ValidityChecker
+    participant Algo as EffectiveVersionSelector
+    participant DB as PostgreSQL
+    participant Audit as Audit Service
+    participant Store as ChangeStore
+
+    Cron->>VC: Trigger (every 5 min)
+    VC->>DB: GetAllCertificatesWithVersions()
+    DB-->>VC: List of certificates with all versions
+
+    loop For each certificate
+        VC->>Algo: CalculateEffectiveVersionChange(versions)
+        Algo->>Algo: Filter valid candidates
+        Algo->>Algo: Sort by (not_after - now) DESC, version DESC
+        Algo->>Algo: Compare with current is_effective
+        Algo-->>VC: EffectiveVersionChangeResult
+
+        alt Needs Update
+            VC->>DB: SetEffectiveVersion() or ClearEffectiveVersion()
+            VC->>Audit: Log ACTIVATE/DEACTIVATE/UPDATE action
+            VC->>Store: Add change to store
+        end
+    end
+
+    VC->>VC: Log summary (changes detected)
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Database Schema</h3>
+                        <p>Two new columns are added to <code>certificate_versions</code> table:</p>
+                        <pre class="bg-light p-3 rounded"><code>-- Added columns
+ALTER TABLE certificate_versions
+ADD COLUMN is_effective BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE certificate_versions
+ADD COLUMN effective_since TIMESTAMP WITH TIME ZONE;
+
+-- Constraint: Only one effective version per certificate
+CREATE UNIQUE INDEX idx_certificate_versions_one_effective
+ON certificate_versions (certificate_metadata_pid)
+WHERE is_effective = TRUE;
+
+-- Index for efficient effective version queries
+CREATE INDEX idx_certificate_versions_effective_lookup
+ON certificate_versions (certificate_metadata_pid, is_effective, not_after DESC, version DESC);</code></pre>
+
+                        <h3 class="h5 mt-4">Implementation Details</h3>
+                        <div class="alert alert-warning d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">engineering</span>
+                            <div>
+                                <strong>Business Logic in Go:</strong> The effective version selection algorithm is implemented entirely in Go (not SQL stored procedures). This design choice provides:
+                                <ul class="mb-0 mt-2">
+                                    <li><strong>Testability:</strong> Full unit test coverage with injectable time for deterministic tests</li>
+                                    <li><strong>Database independence:</strong> No dependency on PostgreSQL-specific functions</li>
+                                    <li><strong>Maintainability:</strong> Algorithm logic in one place, easier to understand and modify</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <p>Key Go types and functions:</p>
+                        <pre class="bg-light p-3 rounded"><code>// VersionCandidate represents a certificate version for algorithm evaluation
+type VersionCandidate struct {
+    VersionPID  int64      // Database primary key
+    Version     int        // Version number (1, 2, 3...)
+    Status      Status     // ACTIVE, PENDING, EXPIRED, REVOKED, INVALID
+    NotBefore   *time.Time // Validity start (nil = immediately valid)
+    NotAfter    *time.Time // Validity end (nil = never expires, for secrets)
+    IsEffective bool       // Currently effective?
+}
+
+// EffectiveVersionSelector with injectable time for testing
+type EffectiveVersionSelector struct {
+    Now func() time.Time  // Inject time.Now() or fixed time for tests
+}
+
+// SelectEffectiveVersion returns the best candidate or nil
+func (s *EffectiveVersionSelector) SelectEffectiveVersion(
+    candidates []*VersionCandidate,
+) *VersionCandidate
+
+// CalculateEffectiveVersionChange determines what change (if any) is needed
+func (s *EffectiveVersionSelector) CalculateEffectiveVersionChange(
+    candidates []*VersionCandidate,
+) *EffectiveVersionChangeResult</code></pre>
+
+                        <h3 class="h5 mt-4">Configuration</h3>
+                        <pre class="bg-light p-3 rounded"><code># Validity Checker (Scheduler A)
+TUTUM_VALIDITY_CHECKER_ENABLED=true
+TUTUM_VALIDITY_CHECKER_CRON="*/5 * * * *"   # Every 5 minutes
+
+# Workload Restarter (Scheduler B)
+TUTUM_WORKLOAD_RESTARTER_ENABLED=true
+TUTUM_WORKLOAD_RESTARTER_CRON="*/2 * * * *"  # Every 2 minutes (+ 30s offset ≈ 2.5 min)</code></pre>
+
+                        <h3 class="h5 mt-4">Audit Trail</h3>
+                        <p>All effective version changes are logged to the audit service for compliance:</p>
+                        <pre class="bg-light p-3 rounded"><code>{
+  "action": "ACTIVATE",           // or "DEACTIVATE", "UPDATE"
+  "resource_type": "CERTIFICATE",
+  "resource_id": "550e8400-e29b-41d4-a716-446655440000",
+  "resource_name": "my-app-cert",
+  "user_id": "system:validity-checker",
+  "details": {
+    "change_type": "ACTIVATED",
+    "previous_version": null,
+    "new_version": 3,
+    "namespace": "production",
+    "group_id": "group-uuid",
+    "triggered_by": "validity-checker-scheduler",
+    "checked_at": "2025-01-09T12:00:00Z"
+  },
+  "success": true
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. gRPC API: include_all Parameter -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">tune</span>
+                            5. gRPC API: include_all Parameter
+                        </h2>
+
+                        <h3 class="h5 mt-4">Overview</h3>
+                        <p>The gRPC API <code>ListCertificates</code> endpoint now supports an <code>include_all</code> parameter that controls which certificates are returned:</p>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-primary">
+                                    <tr><th style="width: 20%">Parameter Value</th><th style="width: 30%">Behavior</th><th>Use Case</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>include_all=false</code><br/><span class="badge bg-secondary">default</span></td>
+                                        <td>Returns only certificates where <code>is_effective=true</code></td>
+                                        <td><strong>CSI drivers, workloads:</strong> Get only currently valid, distributable certificates</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>include_all=true</code></td>
+                                        <td>Returns all certificates (latest version for each)</td>
+                                        <td><strong>Admin CLI, debugging:</strong> See all certificates including those without effective versions</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Protocol Buffer Definition</h3>
+                        <pre class="bg-light p-3 rounded"><code>message ListCertificatesRequest {
+  // ... other fields ...
+
+  // include_all controls whether to return all versions or only effective versions.
+  // Default: false (return only certificates with is_effective=true)
+  // When true: return all certificates (for admin CLI and debugging)
+  // When false: return only effective versions (for CSI driver and workloads)
+  bool include_all = 15;
+}
+
+message Certificate {
+  // ... other fields ...
+
+  // is_effective indicates if this version is the currently effective/active version.
+  // Only one version per certificate can have is_effective=true at a time.
+  bool is_effective = 16;
+
+  // effective_since is the timestamp when this version became effective (Unix seconds).
+  // 0 if this version is not effective.
+  int64 effective_since = 17;
+}</code></pre>
+
+                        <h3 class="h5 mt-4">Usage Examples</h3>
+                        <pre class="bg-light p-3 rounded"><code>// CSI Driver - get only effective certificates (default behavior)
+resp, err := client.ListCertificates(ctx, &tutumv1.ListCertificatesRequest{
+    GroupId:   "group-uuid",
+    Namespace: "production",
+    // include_all defaults to false
+})
+// Returns: only certificates with is_effective=true
+
+// Admin CLI - get all certificates for debugging
+resp, err := client.ListCertificates(ctx, &tutumv1.ListCertificatesRequest{
+    GroupId:    "group-uuid",
+    Namespace:  "production",
+    IncludeAll: true,
+})
+// Returns: all certificates, including those without effective versions
+
+// Check if a certificate has an effective version
+for _, cert := range resp.Certificates {
+    if cert.IsEffective {
+        fmt.Printf("Certificate %s is effective since %s\n",
+            cert.Name,
+            time.Unix(cert.EffectiveSince, 0).Format(time.RFC3339))
+    } else {
+        fmt.Printf("Certificate %s has NO effective version (expired/revoked)\n", cert.Name)
+    }
+}</code></pre>
+
+                        <h3 class="h5 mt-4">REST API Equivalent</h3>
+                        <p>The REST API also supports filtering by effective status:</p>
+                        <pre class="bg-light p-3 rounded"><code># Get only effective certificates (default for CSI driver compatibility)
+curl "http://localhost:8080/api/v1/certificates?include_all=false"
+
+# Get all certificates (admin mode)
+curl "http://localhost:8080/api/v1/certificates?include_all=true"
+
+# Response includes is_effective and effective_since fields
+{
+  "certificates": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "my-app-cert",
+      "version": 3,
+      "is_effective": true,
+      "effective_since": "2025-01-09T10:30:00Z",
+      ...
+    }
+  ]
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. Kubernetes Deployment Restart -->
             <section class="mb-5">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h2 class="card-title text-primary">
                             <span class="material-symbols-outlined align-middle">restart_alt</span>
-                            4. Kubernetes Deployment Restart with Rate Limiting
+                            6. Kubernetes Deployment Restart with Rate Limiting
                         </h2>
 
                         <h3 class="h5 mt-4">Overview</h3>

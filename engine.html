@@ -2297,6 +2297,155 @@ curl http://localhost:8080/ready
                 </div>
             </section>
 
+            <!-- Bruno Integration Tests -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">bug_report</span>
+                            Bruno Integration Tests
+                        </h2>
+
+                        <p>tutum-engine includes <a href="https://www.usebruno.com/" target="_blank">Bruno</a> API tests located in <code>bruno/</code> directory.</p>
+
+                        <h3 class="h5 mt-4">Test Categories</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Folder</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>health/</code></td><td>Health and readiness endpoints</td></tr>
+                                    <tr><td><code>groups/</code></td><td>Group CRUD operations</td></tr>
+                                    <tr><td><code>namespaces/</code></td><td>Namespace management</td></tr>
+                                    <tr><td><code>certificates/</code></td><td>Certificate CRUD, X509, secrets</td></tr>
+                                    <tr class="table-info"><td><code>effective-versions/</code></td><td><strong>NEW:</strong> Effective version selection tests</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Effective Version Tests</h3>
+                        <p>Tests for automatic certificate activation based on validity windows (<code>not_before</code>/<code>not_after</code>).</p>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-warning h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0"><span class="material-symbols-outlined align-middle">key</span> Generate Test Certificates</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small">Certificates with precise validity windows are generated dynamically using Python:</p>
+                                        <pre class="bg-light p-2 rounded mb-2"><code># Install dependency
+pip install cryptography
+
+# Generate certificates
+cd bruno/effective-versions
+python3 generate-bruno-env.py</code></pre>
+                                        <p class="small mb-0 text-muted">Creates Bruno environment file with 4 certificates: future, effective, expired, and long-valid.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-success h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><span class="material-symbols-outlined align-middle">play_arrow</span> Run Tests</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <ol class="small mb-0">
+                                            <li>Open Bruno and load the tutum-engine collection</li>
+                                            <li>Select environment: <code>effective-test</code></li>
+                                            <li>Run the <code>effective-versions</code> folder</li>
+                                        </ol>
+                                        <div class="alert alert-warning mt-2 mb-0 py-2 small">
+                                            <strong>⚠️ Time-sensitive!</strong> Run tests within 3 minutes of generating certificates.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="h6 mt-4">Test Cases</h4>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead class="table-light">
+                                    <tr><th>Test</th><th>Certificate</th><th>Expected</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>01-create-cert-future</code></td>
+                                        <td><code>effective-test-future</code></td>
+                                        <td><code>is_effective=false</code></td>
+                                        <td><code>not_before</code> is 3 minutes in the future</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>02-create-cert-effective</code></td>
+                                        <td><code>effective-test-valid</code></td>
+                                        <td><code>is_effective=true</code></td>
+                                        <td>Currently within validity window</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>03-create-cert-expired</code></td>
+                                        <td><code>effective-test-expired</code></td>
+                                        <td><code>is_effective=false</code></td>
+                                        <td><code>not_after</code> is in the past (expired)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>04-create-cert-long-valid</code></td>
+                                        <td><code>effective-test-long-valid</code></td>
+                                        <td><code>is_effective=true</code></td>
+                                        <td>Longer validity (60 min) - should win selection</td>
+                                    </tr>
+                                    <tr class="table-info">
+                                        <td><code>05-list-effective-only</code></td>
+                                        <td>-</td>
+                                        <td>2 certificates</td>
+                                        <td>Default: returns only <code>is_effective=true</code></td>
+                                    </tr>
+                                    <tr class="table-info">
+                                        <td><code>06-list-include-all</code></td>
+                                        <td>-</td>
+                                        <td>4 certificates</td>
+                                        <td><code>include_all=true</code>: returns all certificates</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 class="h6 mt-4">Generated Certificate Validity Windows</h4>
+                        <div class="mermaid">
+gantt
+    title Certificate Validity Timeline
+    dateFormat HH:mm
+    axisFormat %H:%M
+
+    section cert-future
+    not yet valid     :crit, 00:00, 03m
+    validity window   :active, 03m, 10m
+
+    section cert-effective
+    validity window   :active, 00:00, 14m
+
+    section cert-expired
+    expired           :done, 00:00, 0m
+
+    section cert-long-valid
+    validity window (wins) :active, 00:00, 60m
+                        </div>
+                        <p class="small text-muted mt-2">Timeline relative to certificate generation time. <code>cert-long-valid</code> wins selection due to longest time until expiry.</p>
+
+                        <h3 class="h5 mt-4">Running All Bruno Tests</h3>
+                        <pre class="bg-light p-3 rounded"><code># Run all Bruno tests via CLI
+npx @usebruno/cli run --env local
+
+# Run specific folder
+npx @usebruno/cli run effective-versions --env effective-test
+
+# Run with verbose output
+npx @usebruno/cli run --env local --output results.json</code></pre>
+                    </div>
+                </div>
+            </section>
+
             <!-- Development -->
             <section class="mb-5">
                 <div class="card shadow-sm">

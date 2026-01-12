@@ -112,7 +112,7 @@
                         <p>
                             <strong>tutum-cicd</strong> is an Ansible Collection (<code>tutum_pro.cicd</code>) for automated deployment
                             of the Tutum Platform. It provides idempotent roles for deploying all platform components
-                            on Docker hosts, with support for both embedded and external PostgreSQL databases.
+                            on <strong>Docker hosts</strong> and <strong>Kubernetes clusters</strong>, with support for both embedded and external PostgreSQL databases.
                         </p>
 
                         <div class="row mt-4">
@@ -120,7 +120,9 @@
                                 <h5><span class="material-symbols-outlined align-middle text-success">check_circle</span> Key Features</h5>
                                 <ul>
                                     <li>Full stack deployment automation</li>
-                                    <li>Docker platform support (Kubernetes coming soon)</li>
+                                    <li><strong>Docker</strong> platform support (containers + volume plugin)</li>
+                                    <li><strong>Kubernetes</strong> platform support (Deployment + CSI Driver)</li>
+                                    <li>Multiple K8s distributions: standard, MicroK8s, K3s, RKE2, OpenShift</li>
                                     <li>Embedded or external PostgreSQL</li>
                                     <li>Automatic database migrations</li>
                                     <li>Idempotent operations</li>
@@ -133,6 +135,8 @@
                                     <li><strong>Collection:</strong> <code>tutum_pro.cicd</code></li>
                                     <li><strong>Ansible:</strong> 2.14+</li>
                                     <li><strong>Platforms:</strong> Ubuntu, Debian, RHEL/CentOS</li>
+                                    <li><strong>Kubernetes:</strong> 1.20+ (standard, MicroK8s, K3s, RKE2, OpenShift)</li>
+                                    <li><strong>Dependencies:</strong> <code>kubernetes.core</code> >= 2.4.0</li>
                                     <li><strong>License:</strong> MIT</li>
                                 </ul>
                             </div>
@@ -149,10 +153,27 @@
                             <span class="material-symbols-outlined align-middle">account_tree</span>
                             Deployment Architecture
                         </h2>
-                        <p>The collection deploys platform components using Ansible roles:</p>
+                        <p>The collection deploys platform components using Ansible roles for both Docker and Kubernetes:</p>
 
-                        <div class="architecture-diagram">
-                            <div class="mermaid">
+                        <!-- Platform Tabs -->
+                        <ul class="nav nav-tabs" id="archTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="docker-arch-tab" data-bs-toggle="tab" data-bs-target="#docker-arch" type="button" role="tab">
+                                    <span class="material-symbols-outlined align-middle me-1">deployed_code</span> Docker
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="k8s-arch-tab" data-bs-toggle="tab" data-bs-target="#k8s-arch" type="button" role="tab">
+                                    <span class="material-symbols-outlined align-middle me-1">cloud</span> Kubernetes
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content mt-3" id="archTabContent">
+                            <!-- Docker Architecture -->
+                            <div class="tab-pane fade show active" id="docker-arch" role="tabpanel">
+                                <div class="architecture-diagram">
+                                    <div class="mermaid">
 graph LR
     subgraph control["Control Node"]
         ANSIBLE["Ansible<br/>Controller"]
@@ -165,7 +186,7 @@ graph LR
         UNINSTALL["uninstall.yml<br/>(Cleanup)"]
     end
 
-    subgraph roles["Ansible Roles"]
+    subgraph roles["Docker Roles (docker.*)"]
         direction TB
         R_INIT["tutum_init<br/>(generator)"]
         R_PG["tutum_postgres"]
@@ -208,6 +229,79 @@ graph LR
     style ENGINE_CONTAINER fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
     style PLUGIN_SVC fill:#8b5cf6,stroke:#6d28d9,stroke-width:2px,color:#fff
     style CLI_CONTAINER fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#fff
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Kubernetes Architecture -->
+                            <div class="tab-pane fade" id="k8s-arch" role="tabpanel">
+                                <div class="architecture-diagram">
+                                    <div class="mermaid">
+graph LR
+    subgraph control["Control Node"]
+        ANSIBLE["Ansible Controller"]
+        COLLECTION["tutum_pro.cicd"]
+        KUBECTL["kubectl configured"]
+    end
+
+    subgraph playbooks["Playbooks"]
+        K8S_INSTALL["install-tutum-k8s.yml"]
+        K8S_UNINSTALL["uninstall-tutum-k8s.yml"]
+    end
+
+    subgraph roles["K8s Roles"]
+        K_INIT["tutum_init"]
+        K_PG["tutum_postgres"]
+        K_ENGINE["tutum_engine"]
+        K_CSI["tutum_csi"]
+    end
+
+    subgraph cluster["Kubernetes Cluster"]
+        PG_DEPLOY["tutum-postgres StatefulSet"]
+        ENGINE_DEPLOY["tutum-engine Deployment"]
+        ENGINE_SVC["tutum-engine Service"]
+        CSI_CTRL["csi-controller Deployment"]
+        CSI_NODE["csi-node DaemonSet"]
+        SC["StorageClass tutum-csi"]
+    end
+
+    subgraph external["External DB (optional)"]
+        EXT_PG["External PostgreSQL"]
+    end
+
+    ANSIBLE --> COLLECTION
+    COLLECTION --> playbooks
+    K8S_INSTALL --> roles
+
+    K_INIT -->|generates| playbooks
+    K_PG --> PG_DEPLOY
+    K_ENGINE --> ENGINE_DEPLOY
+    K_ENGINE --> ENGINE_SVC
+    K_CSI --> CSI_CTRL
+    K_CSI --> CSI_NODE
+    K_CSI --> SC
+
+    ENGINE_DEPLOY -.->|embedded| PG_DEPLOY
+    ENGINE_DEPLOY -.->|external| EXT_PG
+    CSI_NODE -.-> ENGINE_SVC
+
+    style control fill:#fef3c7,stroke:#d97706
+    style playbooks fill:#fde68a,stroke:#d97706
+    style roles fill:#fed7aa,stroke:#ea580c
+    style cluster fill:#dbeafe,stroke:#3b82f6
+    style external fill:#fef2f2,stroke:#ef4444
+    style PG_DEPLOY fill:#3b82f6,stroke:#1d4ed8,color:#fff
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> Kubernetes Requirements</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Embedded or External PostgreSQL</strong> - Default: embedded PostgreSQL deployed in cluster; or use external database</li>
+                                        <li><strong>kubectl configured</strong> - The control node must have kubectl configured to access the target cluster</li>
+                                        <li><strong>kubernetes.core collection</strong> - Required Ansible dependency (installed automatically)</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -255,6 +349,24 @@ ansible-galaxy collection install tutum_pro-cicd-1.3.0.tar.gz -p ./collections</
                             <span class="material-symbols-outlined align-middle">rocket_launch</span>
                             Quick Start
                         </h2>
+
+                        <!-- Platform Tabs -->
+                        <ul class="nav nav-tabs mt-4" id="quickStartTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="docker-tab" data-bs-toggle="tab" data-bs-target="#docker-quickstart" type="button" role="tab">
+                                    <span class="material-symbols-outlined align-middle me-1">deployed_code</span> Docker
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="k8s-tab" data-bs-toggle="tab" data-bs-target="#k8s-quickstart" type="button" role="tab">
+                                    <span class="material-symbols-outlined align-middle me-1">cloud</span> Kubernetes
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content mt-3" id="quickStartTabContent">
+                            <!-- Docker Quick Start -->
+                            <div class="tab-pane fade show active" id="docker-quickstart" role="tabpanel">
 
                         <h4 class="mt-4">Using docker_tutum_init Role (Recommended)</h4>
                         <p>The <code>docker_tutum_init</code> role generates installation playbook and inventory files:</p>
@@ -328,7 +440,7 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
   become: true
 
   vars:
-    docker_tutum_engine_version: "4.2.0"
+    docker_tutum_engine_version: "4.2.3"
     docker_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
     docker_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
 
@@ -345,7 +457,7 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
   become: true
 
   vars:
-    docker_tutum_engine_version: "4.2.0"
+    docker_tutum_engine_version: "4.2.3"
     docker_tutum_external_db_url: "postgres://tutum:password@db.example.com:5432/tutum?sslmode=require"
     docker_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
     docker_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
@@ -355,6 +467,168 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
     - role: tutum_pro.cicd.docker.tutum_engine
     - role: tutum_pro.cicd.docker.tutum_plugin
     - role: tutum_pro.cicd.docker.tutum_cli</code></pre>
+
+                            </div><!-- /docker-quickstart -->
+
+                            <!-- Kubernetes Quick Start -->
+                            <div class="tab-pane fade" id="k8s-quickstart" role="tabpanel">
+
+                        <div class="alert alert-info mb-4">
+                            <h6><span class="material-symbols-outlined align-middle">info</span> Prerequisites</h6>
+                            <ul class="mb-0">
+                                <li><strong>kubectl</strong> configured to access the target cluster</li>
+                                <li><strong>kubernetes.core</strong> Ansible collection (installed automatically as dependency)</li>
+                            </ul>
+                        </div>
+
+                        <h4 class="mt-4">Using k8s_tutum_init Role (Recommended)</h4>
+                        <p>The <code>k8s_tutum_init</code> role generates a Kubernetes installation playbook:</p>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Generate K8s installation playbook (embedded PostgreSQL - default)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init
+
+# Generate with external PostgreSQL
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init \
+  -e k8s_tutum_init_db_mode=external \
+  -e k8s_tutum_init_postgres_host=192.168.1.100 \
+  -e k8s_tutum_init_postgres_password=secure-password
+
+# For MicroK8s distribution
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init \
+  -e k8s_tutum_init_distribution=microk8s
+
+# Run the generated playbook
+ansible-playbook tutum-k8s-install.yml</code></pre>
+
+                        <h4 class="mt-4">Using Collection Playbooks</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Deploy to Kubernetes with embedded PostgreSQL (default)
+ansible-playbook playbooks/install-tutum-k8s.yml
+
+# Deploy with external PostgreSQL
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_tutum_db_mode=external \
+  -e k8s_tutum_postgres_host=192.168.1.100 \
+  -e k8s_tutum_db_password=secure-password
+
+# For MicroK8s
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_distribution=microk8s
+
+# For K3s
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_distribution=k3s
+
+# For RKE2
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_distribution=rke2
+
+# For OpenShift
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_distribution=openshift
+
+# Uninstall from Kubernetes (keeps PostgreSQL data)
+ansible-playbook playbooks/uninstall-tutum-k8s.yml
+
+# Uninstall with data removal
+ansible-playbook playbooks/uninstall-tutum-k8s.yml \
+  -e k8s_tutum_postgres_remove_data=true</code></pre>
+
+                        <h4 class="mt-4">Supported Kubernetes Distributions</h4>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead class="table-light">
+                                    <tr><th>Distribution</th><th>Value</th><th>Kubelet Path</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Standard Kubernetes</td><td><code>standard</code></td><td><code>/var/lib/kubelet</code></td></tr>
+                                    <tr><td>MicroK8s</td><td><code>microk8s</code></td><td><code>/var/snap/microk8s/common/var/lib/kubelet</code></td></tr>
+                                    <tr><td>K3s</td><td><code>k3s</code></td><td><code>/var/lib/rancher/k3s/agent</code></td></tr>
+                                    <tr><td>RKE2</td><td><code>rke2</code></td><td><code>/var/lib/rancher/rke2/agent</code></td></tr>
+                                    <tr><td>OpenShift</td><td><code>openshift</code></td><td><code>/var/lib/kubelet</code></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 class="mt-4">Custom Playbook with Embedded PostgreSQL</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># k8s-site.yml
+- name: Deploy Tutum Platform to Kubernetes
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    k8s_tutum_engine_version: "4.2.3"
+    k8s_tutum_csi_version: "3.1.0"
+    k8s_tutum_namespace: "tutum-system"
+    k8s_distribution: "standard"
+    # Security keys (auto-generated if not provided)
+    k8s_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
+    k8s_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
+
+  roles:
+    - role: tutum_pro.cicd.k8s.tutum_postgres
+    - role: tutum_pro.cicd.k8s.tutum_engine
+    - role: tutum_pro.cicd.k8s.tutum_csi</code></pre>
+
+                        <h4 class="mt-4">Custom Playbook with External PostgreSQL</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># k8s-site-external.yml
+- name: Deploy Tutum Platform to Kubernetes (External DB)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    k8s_tutum_engine_version: "4.2.3"
+    k8s_tutum_csi_version: "3.1.0"
+    k8s_tutum_namespace: "tutum-system"
+    k8s_distribution: "standard"
+    # External PostgreSQL connection
+    k8s_tutum_postgres_host: "postgres.example.com"
+    k8s_tutum_postgres_port: "5432"
+    k8s_tutum_db_name: "tutum"
+    k8s_tutum_db_user: "tutum"
+    k8s_tutum_db_password: "secure-password"
+    # Security keys (auto-generated if not provided)
+    k8s_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
+    k8s_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
+
+  roles:
+    # Note: tutum_postgres role is skipped when external DB is configured
+    - role: tutum_pro.cicd.k8s.tutum_engine
+    - role: tutum_pro.cicd.k8s.tutum_csi</code></pre>
+
+                        <h4 class="mt-4">Verify Deployment</h4>
+                        <pre class="bg-dark text-light p-3 rounded"><code># Check pods in tutum-system namespace
+kubectl get pods -n tutum-system
+
+# Check CSI driver registration
+kubectl get csidriver
+
+# Check StorageClass
+kubectl get storageclass tutum-csi
+
+# Test certificate volume (create PVC)
+kubectl apply -f - &lt;&lt;EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-cert
+  namespace: default
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: tutum-csi
+  resources:
+    requests:
+      storage: 1Mi
+  selector:
+    matchLabels:
+      tutum.io/certificate: "my-cert"
+      tutum.io/group: "my-group"
+EOF</code></pre>
+
+                            </div><!-- /k8s-quickstart -->
+                        </div><!-- /tab-content -->
+
                     </div>
                 </div>
             </section>
@@ -367,6 +641,25 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                             <span class="material-symbols-outlined align-middle">folder</span>
                             Roles Reference
                         </h2>
+
+                        <!-- Platform Tabs -->
+                        <ul class="nav nav-tabs mt-4" id="rolesTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="docker-roles-tab" data-bs-toggle="tab" data-bs-target="#docker-roles" type="button" role="tab">
+                                    <span class="material-symbols-outlined align-middle me-1">deployed_code</span> Docker Roles
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="k8s-roles-tab" data-bs-toggle="tab" data-bs-target="#k8s-roles" type="button" role="tab">
+                                    <span class="material-symbols-outlined align-middle me-1">cloud</span> Kubernetes Roles
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content mt-3" id="rolesTabContent">
+                            <!-- Docker Roles -->
+                            <div class="tab-pane fade show active" id="docker-roles" role="tabpanel">
+                                <p class="text-muted">Docker roles use <code>docker_tutum_*</code> variable prefix. Located in <code>roles/docker/</code>.</p>
 
                         <!-- tutum_postgres -->
                         <div class="card mt-4 border-primary">
@@ -406,7 +699,7 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>docker_tutum_engine_version</code></td><td><code>4.2.0</code></td><td>Engine version</td></tr>
+                                            <tr><td><code>docker_tutum_engine_version</code></td><td><code>4.2.3</code></td><td>Engine version</td></tr>
                                             <tr><td><code>docker_tutum_external_db_url</code></td><td><code>""</code></td><td>External PostgreSQL URL (skips embedded DB)</td></tr>
                                             <tr><td><code>docker_tutum_master_key</code></td><td>(generated)</td><td>32-char AES-256 encryption key</td></tr>
                                             <tr><td><code>docker_tutum_jwt_secret</code></td><td>(generated)</td><td>32-char JWT secret</td></tr>
@@ -504,6 +797,158 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                                 </div>
                             </div>
                         </div>
+
+                            </div><!-- /docker-roles -->
+
+                            <!-- Kubernetes Roles -->
+                            <div class="tab-pane fade" id="k8s-roles" role="tabpanel">
+                                <p class="text-muted">Kubernetes roles use <code>k8s_tutum_*</code> variable prefix. Located in <code>roles/k8s/</code>.</p>
+
+                        <!-- k8s_tutum_postgres -->
+                        <div class="card mt-4 border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_postgres</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Deploys embedded PostgreSQL to Kubernetes cluster. Creates Secret, PVC, Deployment and Service. Used when <code>k8s_tutum_db_mode=embedded</code>.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>k8s_tutum_postgres_version</code></td><td><code>15-alpine</code></td><td>PostgreSQL image tag</td></tr>
+                                            <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
+                                            <tr><td><code>k8s_tutum_db_name</code></td><td><code>tutum</code></td><td>Database name</td></tr>
+                                            <tr><td><code>k8s_tutum_db_user</code></td><td><code>tutum</code></td><td>Database user</td></tr>
+                                            <tr><td><code>k8s_tutum_db_password</code></td><td><code>tutum</code></td><td>Database password (use ansible-vault!)</td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_storage_size</code></td><td><code>5Gi</code></td><td>PVC storage size</td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_remove_data</code></td><td><code>false</code></td><td>Remove PVC on uninstall (data loss!)</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> Embedded Database</h6>
+                                    <p class="mb-0">
+                                        This role deploys PostgreSQL inside the Kubernetes cluster. For production use with HA requirements,
+                                        consider using an external managed database instead.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- k8s_tutum_engine -->
+                        <div class="card mt-4 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_engine</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Deploys Tutum Engine to Kubernetes cluster. Creates Namespace, ConfigMap, Secret, ServiceAccount, RBAC, Deployment and Services.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>k8s_tutum_engine_version</code></td><td><code>4.2.3</code></td><td>Tutum Engine version</td></tr>
+                                            <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
+                                            <tr><td><code>k8s_tutum_external_db_url</code></td><td><code>""</code></td><td>Full database URL (alternative to individual settings)</td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_host</code></td><td><code>""</code></td><td>External PostgreSQL host (if not using embedded)</td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_port</code></td><td><code>5432</code></td><td>PostgreSQL port</td></tr>
+                                            <tr><td><code>k8s_tutum_db_name</code></td><td><code>tutum</code></td><td>Database name</td></tr>
+                                            <tr><td><code>k8s_tutum_db_user</code></td><td><code>tutum</code></td><td>Database user</td></tr>
+                                            <tr><td><code>k8s_tutum_db_password</code></td><td><code>tutum</code></td><td>Database password</td></tr>
+                                            <tr><td><code>k8s_tutum_master_key</code></td><td>(generated)</td><td>32-char AES-256 encryption key</td></tr>
+                                            <tr><td><code>k8s_tutum_jwt_secret</code></td><td>(generated)</td><td>32-char JWT secret</td></tr>
+                                            <tr><td><code>k8s_tutum_log_level</code></td><td><code>info</code></td><td>Log level</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_replicas</code></td><td><code>1</code></td><td>Number of replicas</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> Database Connection</h6>
+                                    <p class="mb-0">
+                                        If neither <code>k8s_tutum_external_db_url</code> nor <code>k8s_tutum_postgres_host</code> is set,
+                                        the engine connects to embedded PostgreSQL at <code>tutum-postgres.{{ k8s_tutum_namespace }}.svc.cluster.local</code>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- k8s_tutum_csi -->
+                        <div class="card mt-4 border-purple" style="border-color: #8b5cf6 !important;">
+                            <div class="card-header text-white" style="background-color: #8b5cf6;">
+                                <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_csi</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Deploys Tutum CSI Driver to Kubernetes. Creates RBAC, CSIDriver, Controller (Deployment), Node (DaemonSet), and StorageClass.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>k8s_tutum_csi_version</code></td><td><code>3.1.0</code></td><td>CSI Driver version</td></tr>
+                                            <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
+                                            <tr><td><code>k8s_distribution</code></td><td><code>standard</code></td><td>K8s distribution: <code>standard</code>, <code>microk8s</code>, <code>k3s</code>, <code>rke2</code>, <code>openshift</code></td></tr>
+                                            <tr><td><code>k8s_tutum_engine_url</code></td><td><code>tutum-engine.{{ k8s_tutum_namespace }}.svc.cluster.local:9090</code></td><td>Tutum Engine gRPC URL</td></tr>
+                                            <tr><td><code>k8s_tutum_csi_storage_class_name</code></td><td><code>tutum-csi</code></td><td>StorageClass name</td></tr>
+                                            <tr><td><code>k8s_tutum_csi_controller_replicas</code></td><td><code>1</code></td><td>CSI controller replicas</td></tr>
+                                            <tr><td><code>k8s_tutum_csi_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> Distribution-Specific Kubelet Paths</h6>
+                                    <p class="mb-0">
+                                        The CSI driver mounts kubelet directory for volume operations. The path is automatically configured based on
+                                        <code>k8s_distribution</code>: standard (<code>/var/lib/kubelet</code>), MicroK8s (<code>/var/snap/microk8s/common/var/lib/kubelet</code>),
+                                        K3s (<code>/var/lib/rancher/k3s/agent</code>), RKE2 (<code>/var/lib/rancher/rke2/agent</code>).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- k8s_tutum_init -->
+                        <div class="card mt-4 border-secondary">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_init</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Generates Kubernetes installation playbook. Run directly with <code>ansible localhost -m include_role</code>.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>k8s_tutum_init_output_path</code></td><td><code>.</code></td><td>Output directory</td></tr>
+                                            <tr><td><code>k8s_tutum_init_playbook_file</code></td><td><code>tutum-k8s-install.yml</code></td><td>Playbook filename</td></tr>
+                                            <tr><td><code>k8s_tutum_init_overwrite</code></td><td><code>false</code></td><td>Overwrite existing files</td></tr>
+                                            <tr><td><code>k8s_tutum_init_distribution</code></td><td><code>standard</code></td><td>K8s distribution</td></tr>
+                                            <tr><td><code>k8s_tutum_init_db_mode</code></td><td><code>embedded</code></td><td><code>embedded</code> or <code>external</code></td></tr>
+                                            <tr><td><code>k8s_tutum_init_postgres_host</code></td><td><code>""</code></td><td>PostgreSQL host (required for external mode)</td></tr>
+                                            <tr><td><code>k8s_tutum_init_postgres_port</code></td><td><code>5432</code></td><td>PostgreSQL port</td></tr>
+                                            <tr><td><code>k8s_tutum_init_postgres_db</code></td><td><code>tutum</code></td><td>Database name</td></tr>
+                                            <tr><td><code>k8s_tutum_init_postgres_user</code></td><td><code>tutum</code></td><td>Database user</td></tr>
+                                            <tr><td><code>k8s_tutum_init_postgres_password</code></td><td><code>tutum</code></td><td>Database password</td></tr>
+                                            <tr><td><code>k8s_tutum_init_external_db_url</code></td><td><code>""</code></td><td>Full DB URL (alternative to individual settings)</td></tr>
+                                            <tr><td><code>k8s_tutum_init_master_key</code></td><td><code>""</code></td><td>Master key (empty = auto-generate)</td></tr>
+                                            <tr><td><code>k8s_tutum_init_jwt_secret</code></td><td><code>""</code></td><td>JWT secret (empty = auto-generate)</td></tr>
+                                            <tr><td><code>k8s_tutum_init_generate_postgres</code></td><td><code>true</code></td><td>Generate Postgres role (only when db_mode=embedded)</td></tr>
+                                            <tr><td><code>k8s_tutum_init_generate_engine</code></td><td><code>true</code></td><td>Generate Engine role</td></tr>
+                                            <tr><td><code>k8s_tutum_init_generate_csi</code></td><td><code>true</code></td><td>Generate CSI role</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                            </div><!-- /k8s-roles -->
+                        </div><!-- /tab-content -->
+
                     </div>
                 </div>
             </section>
@@ -517,6 +962,8 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                             Database Modes
                         </h2>
 
+                        <p>Both Docker and Kubernetes deployments support embedded and external PostgreSQL modes:</p>
+
                         <div class="row mt-4">
                             <div class="col-md-6">
                                 <div class="card h-100 border-success">
@@ -524,14 +971,24 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                                         <h5 class="mb-0">Embedded PostgreSQL (Default)</h5>
                                     </div>
                                     <div class="card-body">
-                                        <p>PostgreSQL runs as a Docker container managed by the collection.</p>
+                                        <p>PostgreSQL managed by the collection.</p>
+
+                                        <h6 class="mt-3">Docker</h6>
                                         <ul>
-                                            <li>Automatic container deployment</li>
-                                            <li>Data persistence in <code>/var/lib/tutum/postgres</code></li>
-                                            <li>Health checks configured</li>
-                                            <li>Migrations applied automatically</li>
+                                            <li>PostgreSQL as Docker container</li>
+                                            <li>Data in <code>/var/lib/tutum/postgres</code></li>
+                                            <li>Use <code>docker.tutum_postgres</code> role</li>
                                         </ul>
-                                        <p class="mb-0"><strong>Use when:</strong> Development, testing, single-node deployments</p>
+
+                                        <h6 class="mt-3">Kubernetes</h6>
+                                        <ul>
+                                            <li>PostgreSQL as Deployment + PVC</li>
+                                            <li>Data in PersistentVolumeClaim</li>
+                                            <li>Use <code>k8s.tutum_postgres</code> role</li>
+                                            <li>Set <code>k8s_tutum_db_mode: embedded</code></li>
+                                        </ul>
+
+                                        <p class="mb-0"><strong>Use when:</strong> Development, testing, single-node/cluster deployments</p>
                                     </div>
                                 </div>
                             </div>
@@ -542,12 +999,21 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                                     </div>
                                     <div class="card-body">
                                         <p>Connect to existing PostgreSQL instance.</p>
+
+                                        <h6 class="mt-3">Docker</h6>
                                         <ul>
                                             <li>Set <code>docker_tutum_external_db_url</code></li>
                                             <li><code>tutum_postgres</code> role is skipped</li>
-                                            <li>Migrations still applied by <code>tutum_engine</code></li>
-                                            <li>Requires <code>postgresql-client</code> on target host</li>
+                                            <li>Requires <code>postgresql-client</code></li>
                                         </ul>
+
+                                        <h6 class="mt-3">Kubernetes</h6>
+                                        <ul>
+                                            <li>Set <code>k8s_tutum_db_mode: external</code></li>
+                                            <li>Set <code>k8s_tutum_external_db_url</code> or <code>k8s_tutum_postgres_host</code></li>
+                                            <li><code>tutum_postgres</code> role is skipped</li>
+                                        </ul>
+
                                         <p class="mb-0"><strong>Use when:</strong> Production, HA setups, managed databases (RDS, Cloud SQL)</p>
                                     </div>
                                 </div>
@@ -761,20 +1227,27 @@ WHERE is_effective = TRUE;</code></pre>
 ├── meta/
 │   └── runtime.yml           # Ansible requirements
 ├── roles/
-│   └── docker/               # Docker platform roles
-│       ├── tutum_init/       # Installation file generator
-│       ├── tutum_postgres/   # PostgreSQL database
-│       ├── tutum_engine/     # Tutum Engine (+ migrations)
-│       ├── tutum_plugin/     # Volume Plugin
-│       ├── tutum_cli/        # Admin CLI
-│       └── tutum_report/     # Version report
+│   ├── docker/               # Docker platform roles (docker_tutum_* vars)
+│   │   ├── tutum_init/       # Installation file generator
+│   │   ├── tutum_postgres/   # PostgreSQL database
+│   │   ├── tutum_engine/     # Tutum Engine (+ migrations)
+│   │   ├── tutum_plugin/     # Volume Plugin
+│   │   ├── tutum_cli/        # Admin CLI
+│   │   └── tutum_report/     # Version report
+│   └── k8s/                  # Kubernetes platform roles (k8s_tutum_* vars)
+│       ├── tutum_init/       # K8s playbook generator
+│       ├── tutum_postgres/   # Embedded PostgreSQL (Deployment + PVC)
+│       ├── tutum_engine/     # Tutum Engine Deployment
+│       └── tutum_csi/        # CSI Driver (controller + node)
 ├── playbooks/
-│   ├── site.yml              # Full stack installation
-│   ├── engine.yml            # Engine only
-│   ├── plugin.yml            # Plugin only
-│   ├── cli.yml               # CLI only
-│   ├── report.yml            # Version report
-│   └── uninstall.yml         # Full stack uninstall
+│   ├── site.yml              # Docker: Full stack installation
+│   ├── engine.yml            # Docker: Engine only
+│   ├── plugin.yml            # Docker: Plugin only
+│   ├── cli.yml               # Docker: CLI only
+│   ├── report.yml            # Docker: Version report
+│   ├── uninstall.yml         # Docker: Full stack uninstall
+│   ├── install-tutum-k8s.yml    # K8s: Full installation (embedded DB default)
+│   └── uninstall-tutum-k8s.yml  # K8s: Full uninstall
 └── docs/
     └── examples/             # Example configurations</code></pre>
                     </div>
@@ -797,6 +1270,7 @@ WHERE is_effective = TRUE;</code></pre>
                     <p class="mb-1"><strong>Technology Stack:</strong></p>
                     <span class="badge bg-secondary me-1">Ansible 2.14+</span>
                     <span class="badge bg-secondary me-1">Docker</span>
+                    <span class="badge bg-secondary me-1">Kubernetes</span>
                     <span class="badge bg-secondary me-1">PostgreSQL</span>
                 </div>
             </div>
@@ -840,6 +1314,15 @@ WHERE is_effective = TRUE;</code></pre>
                 initMermaid('dark');
                 mermaid.run();
             }
+
+            // Re-render mermaid diagrams when switching tabs (for hidden diagrams)
+            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(tab) {
+                tab.addEventListener('shown.bs.tab', function() {
+                    setTimeout(function() {
+                        mermaid.run();
+                    }, 100);
+                });
+            });
         });
     </script>
 </body>

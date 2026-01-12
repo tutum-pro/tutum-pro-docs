@@ -581,6 +581,830 @@ sequenceDiagram
                 </div>
             </section>
 
+            <!-- 1.4 Secret Architecture - Design Assumptions -->
+            <section class="mb-5">
+                <div class="card shadow-sm border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h2 class="card-title mb-0">
+                            <span class="material-symbols-outlined align-middle">security</span>
+                            1.4 Secret Architecture - Design Assumptions
+                        </h2>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- Introduction -->
+                        <div class="alert alert-danger d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">gpp_maybe</span>
+                            <div>
+                                <strong>Security by Design:</strong> This section describes the fundamental security assumptions behind the secret management architecture. Understanding these assumptions is critical for proper deployment and operation of the Tutum Platform.
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Dual Role of Secrets</h3>
+                        <p>In the Tutum Platform, secrets serve <strong>two distinct purposes</strong>, each with different security requirements:</p>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-primary mb-3 h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <span class="material-symbols-outlined align-middle">password</span> Role 1: Certificate Passphrases
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Purpose:</strong> Passwords protecting X.509 private keys</p>
+                                        <p><strong>Relationship:</strong> Linked to X.509 certificates via matching <code>name/namespace/group</code></p>
+                                        <p><strong>Lifecycle:</strong> Synchronized with certificate validity period</p>
+                                        <p><strong>Example use cases:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>PKCS#12/PFX export passwords</li>
+                                            <li>Encrypted private key passphrases</li>
+                                            <li>HSM PIN codes</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <span class="material-symbols-outlined align-middle">database</span> Role 2: Standalone Secrets
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Purpose:</strong> Generic confidential data unrelated to certificates</p>
+                                        <p><strong>Relationship:</strong> Independent objects (no linked X.509)</p>
+                                        <p><strong>Lifecycle:</strong> User-defined or default +100 years</p>
+                                        <p><strong>Example use cases:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>Database connection passwords</li>
+                                            <li>Message queue credentials (RabbitMQ, Kafka)</li>
+                                            <li>External API keys and tokens</li>
+                                            <li>Kubernetes Secrets compatible distribution</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Architecture -->
+                        <h3 class="h5 mt-4">Security Architecture: Channel Separation</h3>
+
+                        <div class="alert alert-warning d-flex align-items-start mb-4" role="alert">
+                            <span class="material-symbols-outlined me-2">key</span>
+                            <div>
+                                <strong>Core Security Principle:</strong> Certificates and their protecting secrets (passphrases) are treated as <strong>separate objects</strong> distributed through <strong>independent channels</strong>. This is analogous to <strong>Multi-Factor Authentication (MFA)</strong> - compromise of one channel does not compromise the entire secret.
+                            </div>
+                        </div>
+
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+flowchart TB
+    subgraph attacker["Attacker Perspective"]
+        ATK[Attacker]
+    end
+
+    subgraph channels["Distribution Channels"]
+        CH1["Channel A<br/>(e.g., CSI Driver)"]
+        CH2["Channel B<br/>(e.g., REST API)"]
+    end
+
+    subgraph data["Protected Data"]
+        CERT["X.509 Certificate<br/>+ Encrypted Private Key"]
+        SECRET["Secret<br/>(Passphrase)"]
+    end
+
+    subgraph combined["Combined Access"]
+        DECRYPT["Decrypted<br/>Private Key"]
+    end
+
+    ATK -.->|"Compromise Channel A"| CH1
+    ATK -.->|"Must also compromise"| CH2
+    CH1 --> CERT
+    CH2 --> SECRET
+    CERT -->|"Requires"| DECRYPT
+    SECRET -->|"Enables"| DECRYPT
+
+    style ATK fill:#ff6666,stroke:#cc0000
+    style DECRYPT fill:#66ff66,stroke:#00cc00
+    style CH1 fill:#e6f2ff,stroke:#3182ce
+    style CH2 fill:#fff3e6,stroke:#ed8936
+                            </div>
+                        </div>
+
+                        <h4 class="h6 mt-4">Why Separate Objects?</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Security Aspect</th>
+                                        <th>Embedded Passphrase (Single Object)</th>
+                                        <th>Separate Secret (Current Design)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Cryptographic Isolation</strong></td>
+                                        <td class="table-danger">Same DEK encrypts both certificate and passphrase</td>
+                                        <td class="table-success">Separate DEK for certificate and secret</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Access Control Granularity</strong></td>
+                                        <td class="table-danger">Single permission grants access to both</td>
+                                        <td class="table-success">Independent permissions (can grant cert without secret)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Audit Trail</strong></td>
+                                        <td class="table-warning">Combined access logged as single event</td>
+                                        <td class="table-success">Separate audit entries for cert and secret access</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Separation of Duties</strong></td>
+                                        <td class="table-danger">Same team manages both</td>
+                                        <td class="table-success">Different teams can manage certs vs secrets</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Rotation Independence</strong></td>
+                                        <td class="table-danger">Passphrase change requires cert update</td>
+                                        <td class="table-success">Passphrase can rotate independently</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Channel Distribution</strong></td>
+                                        <td class="table-danger">Single channel delivers everything</td>
+                                        <td class="table-success">Different channels for certs vs secrets (MFA-like)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Attack Surface</strong></td>
+                                        <td class="table-warning">Simpler but single point of failure</td>
+                                        <td class="table-success">Attacker must compromise multiple paths</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- MFA Analogy -->
+                        <h3 class="h5 mt-4">MFA Analogy: Defense in Depth</h3>
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <p>The separate distribution of certificates and secrets follows the same principle as Multi-Factor Authentication:</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><span class="material-symbols-outlined align-middle text-primary">login</span> Traditional MFA</h6>
+                                        <ul>
+                                            <li><strong>Factor 1:</strong> Password (something you know)</li>
+                                            <li><strong>Factor 2:</strong> Phone/Token (something you have)</li>
+                                            <li><strong>Result:</strong> Attacker needs both to authenticate</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><span class="material-symbols-outlined align-middle text-success">verified_user</span> Tutum Secret Distribution</h6>
+                                        <ul>
+                                            <li><strong>Channel 1:</strong> X.509 Certificate (via CSI Driver / gRPC)</li>
+                                            <li><strong>Channel 2:</strong> Passphrase Secret (via REST API / different token)</li>
+                                            <li><strong>Result:</strong> Attacker needs both to decrypt private key</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <strong>Practical Example:</strong> A Kubernetes workload receives the X.509 certificate via the CSI driver (gRPC channel with workload authentication), while the passphrase is injected via a separate Kubernetes Secret synchronized from Tutum (REST API channel with different token). An attacker who compromises the CSI communication cannot decrypt the private key without also compromising the secret distribution path.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kubernetes Secrets Compatibility -->
+                        <h3 class="h5 mt-4">Kubernetes Secrets Compatibility</h3>
+                        <p>Standalone secrets (Role 2) are designed to be compatible with native Kubernetes Secrets, enabling seamless integration:</p>
+
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+flowchart LR
+    subgraph tutum["Tutum Platform"]
+        ENGINE["tutum-engine"]
+        SECRET_DB[("Secrets<br/>(Encrypted)")]
+    end
+
+    subgraph k8s["Kubernetes Cluster"]
+        SYNC["tutum-k8s-sync<br/>(Operator)"]
+        K8S_SECRET["K8s Secret"]
+        POD["Application Pod"]
+    end
+
+    ENGINE --> SECRET_DB
+    ENGINE -->|"REST API"| SYNC
+    SYNC -->|"Create/Update"| K8S_SECRET
+    K8S_SECRET -->|"Volume Mount"| POD
+
+    style ENGINE fill:#e6f2ff,stroke:#3182ce
+    style SYNC fill:#fff3e6,stroke:#ed8936
+    style K8S_SECRET fill:#e6ffe6,stroke:#48bb78
+                            </div>
+                        </div>
+
+                        <h4 class="h6 mt-4">Use Cases for K8s Secrets Integration</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card border-info mb-3 h-100">
+                                    <div class="card-header bg-info text-white">
+                                        <span class="material-symbols-outlined align-middle">storage</span> Database Credentials
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Store database passwords in Tutum and synchronize to K8s Secrets:</p>
+                                        <pre class="bg-light p-2 rounded"><code>apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+type: Opaque
+data:
+  password: [from Tutum]</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning mb-3 h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <span class="material-symbols-outlined align-middle">email</span> Message Queue Auth
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Centralized management of MQ credentials across clusters:</p>
+                                        <pre class="bg-light p-2 rounded"><code># RabbitMQ
+RABBITMQ_USER: admin
+RABBITMQ_PASS: [from Tutum]
+
+# Kafka
+KAFKA_SASL_PASS: [from Tutum]</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <span class="material-symbols-outlined align-middle">api</span> External API Keys
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Manage third-party API keys with automatic rotation:</p>
+                                        <pre class="bg-light p-2 rounded"><code># Payment Gateway
+STRIPE_API_KEY: [from Tutum]
+
+# Cloud Provider
+AWS_SECRET_KEY: [from Tutum]</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Linking Mechanism -->
+                        <h3 class="h5 mt-4">Linking Secrets to Certificates</h3>
+                        <p>When a secret should function as a certificate passphrase, it is linked by <strong>naming convention</strong>:</p>
+
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <pre><code>Certificate Identity:
+  name:      "my-app-tls"
+  namespace: "production"
+  group_id:  "web-servers"
+
+Linked Secret Identity (must match all three):
+  name:      "my-app-tls"        ← same name
+  namespace: "production"        ← same namespace
+  group_id:  "web-servers"       ← same group</code></pre>
+                                <p class="mt-3 mb-0"><strong>Effect:</strong> When both exist, the secret's validity period is automatically constrained to the X.509 certificate's bounds (see <a href="#secret-validity-rules">Validity Period Rules</a>).</p>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">lightbulb</span>
+                            <div>
+                                <strong>Design Rationale:</strong> Using naming convention instead of explicit foreign keys provides flexibility - secrets can exist before their certificates (useful in CI/CD pipelines), and the relationship is automatically discovered. This loose coupling also enables the two-channel distribution model.
+                            </div>
+                        </div>
+
+                        <!-- Encryption Architecture -->
+                        <h3 class="h5 mt-4">Encryption Architecture</h3>
+                        <p>Both X.509 private keys and secrets use <strong>envelope encryption</strong>, but with <strong>independent Data Encryption Keys (DEKs)</strong>:</p>
+
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+flowchart TB
+    subgraph master["Key Management"]
+        MK["Master Key<br/>(TUTUM_MASTER_KEY)"]
+    end
+
+    subgraph cert["X.509 Certificate"]
+        DEK1["DEK-1<br/>(Certificate-specific)"]
+        PRIV["Encrypted<br/>Private Key"]
+    end
+
+    subgraph secret["Secret"]
+        DEK2["DEK-2<br/>(Secret-specific)"]
+        DATA["Encrypted<br/>Secret Data"]
+    end
+
+    MK -->|"Encrypts"| DEK1
+    MK -->|"Encrypts"| DEK2
+    DEK1 -->|"AES-256-GCM"| PRIV
+    DEK2 -->|"AES-256-GCM"| DATA
+
+    style MK fill:#ff6666,stroke:#cc0000
+    style DEK1 fill:#e6f2ff,stroke:#3182ce
+    style DEK2 fill:#fff3e6,stroke:#ed8936
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mt-3">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Encryption</th>
+                                        <th>Key</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Certificate Private Key</td>
+                                        <td>AES-256-GCM</td>
+                                        <td>Unique DEK per certificate version</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Secret Data</td>
+                                        <td>AES-256-GCM</td>
+                                        <td>Unique DEK per secret version</td>
+                                    </tr>
+                                    <tr>
+                                        <td>All DEKs</td>
+                                        <td>AES-256-GCM</td>
+                                        <td>Master Key (environment variable)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-danger d-flex align-items-start mt-3" role="alert">
+                            <span class="material-symbols-outlined me-2">warning</span>
+                            <div>
+                                <strong>Cryptographic Isolation:</strong> Even if an attacker extracts a single DEK, they can only decrypt one specific object (either one certificate version OR one secret version), not both. Compromise of the Master Key is required to decrypt all data.
+                            </div>
+                        </div>
+
+                        <!-- Summary -->
+                        <h3 class="h5 mt-4">Summary: Design Decisions</h3>
+                        <div class="card border-dark">
+                            <div class="card-body">
+                                <ol>
+                                    <li class="mb-2"><strong>Secrets as separate objects</strong> - Not embedded in certificates, enabling independent access control, audit, and distribution channels.</li>
+                                    <li class="mb-2"><strong>Channel separation (MFA model)</strong> - Certificates and secrets distributed via different APIs/tokens, requiring compromise of multiple paths for full access.</li>
+                                    <li class="mb-2"><strong>Independent encryption keys</strong> - Each object (cert/secret) has its own DEK, limiting blast radius of key compromise.</li>
+                                    <li class="mb-2"><strong>Naming-based linking</strong> - Flexible association via name/namespace/group matching, enabling loose coupling and CI/CD-friendly workflows.</li>
+                                    <li class="mb-2"><strong>Validity period synchronization</strong> - Passphrase secrets automatically inherit certificate validity bounds, preventing orphaned credentials.</li>
+                                    <li class="mb-0"><strong>K8s Secrets compatibility</strong> - Standalone secrets can be synchronized to native Kubernetes Secrets for standard workload consumption.</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1.5 Secret Management -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary" id="secret-validity-rules">
+                            <span class="material-symbols-outlined align-middle">key</span>
+                            1.5 Secret Management - Validity Period Rules
+                        </h2>
+
+                        <h3 class="h5 mt-4">Overview</h3>
+                        <p>Tutum Platform supports not only X.509 certificates but also generic secrets (passwords, API keys, tokens, etc.). Secrets are stored encrypted using the same envelope encryption mechanism as certificates, but with specialized validity period rules that can be linked to associated X.509 certificates.</p>
+
+                        <div class="alert alert-info d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">info</span>
+                            <div>
+                                <strong>Key Concept:</strong> Secrets can share the same <code>name</code>, <code>namespace</code>, and <code>group</code> as an X.509 certificate. When this happens, the secret's validity period is automatically linked to the certificate's validity bounds.
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Secret Types vs X.509 Certificates</h3>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Aspect</th>
+                                        <th>X.509 Certificate</th>
+                                        <th>Secret</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Type Parameter</strong></td>
+                                        <td><code>type=X509</code> (default)</td>
+                                        <td><code>type=secret</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Payload</strong></td>
+                                        <td><code>x509.certificate</code>, <code>x509.private_key</code>, <code>x509.ca_chain</code></td>
+                                        <td><code>secret.data</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Validity Period</strong></td>
+                                        <td>Extracted from X.509 certificate (<code>notBefore</code>, <code>notAfter</code>)</td>
+                                        <td>Defined in payload or derived from linked X.509</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Metadata</strong></td>
+                                        <td>Automatically extracted (subject, issuer, SANs, fingerprint, etc.)</td>
+                                        <td>Only custom_metadata (user-defined)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Encryption</strong></td>
+                                        <td>Private key encrypted with envelope encryption</td>
+                                        <td>Entire secret data encrypted with envelope encryption</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Secret Validity Period Rules</h3>
+                        <p>The validity period of a secret is determined by a set of business rules that consider whether an X.509 certificate with the same identity (name, namespace, group) exists.</p>
+
+                        <div class="alert alert-warning d-flex align-items-start mb-4" role="alert">
+                            <span class="material-symbols-outlined me-2">priority_high</span>
+                            <div>
+                                <strong>Important:</strong> These rules ensure that secrets don't outlive their associated X.509 certificates, maintaining security consistency across the platform.
+                            </div>
+                        </div>
+
+                        <!-- Decision Matrix -->
+                        <h4 class="h6 mt-4 mb-3">Decision Matrix</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Scenario</th>
+                                        <th>X.509 Certificate Exists?</th>
+                                        <th>Validity Period in Request?</th>
+                                        <th>Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-secondary">Rule 1</span></td>
+                                        <td><span class="text-danger">No</span></td>
+                                        <td><span class="text-danger">No</span></td>
+                                        <td>Default: <strong>+100 years</strong> (effectively never expires)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-secondary">Rule 2</span></td>
+                                        <td><span class="text-danger">No</span></td>
+                                        <td><span class="text-success">Yes</span></td>
+                                        <td>Use requested period (validate <code>not_before &lt; not_after</code>)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-secondary">Rule 3</span></td>
+                                        <td><span class="text-success">Yes</span></td>
+                                        <td><span class="text-danger">No</span></td>
+                                        <td>Copy validity from <strong>effective</strong> X.509 version (or +100 years if no effective)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-secondary">Rule 4</span></td>
+                                        <td><span class="text-success">Yes</span></td>
+                                        <td><span class="text-success">Yes</span></td>
+                                        <td>Constrain to X.509 bounds (intersection with matching versions)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Rule Details -->
+                        <h4 class="h6 mt-4">Rule 1: No X.509, No Period Defined</h4>
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <p><strong>Condition:</strong> Secret created without a matching X.509 certificate, and no <code>not_before</code>/<code>not_after</code> specified.</p>
+                                <p><strong>Behavior:</strong> Secret is assigned a validity period of <strong>now to now+100 years</strong>, effectively making it permanent.</p>
+                                <p class="mb-0"><strong>Use Case:</strong> Standalone secrets like API keys that don't expire.</p>
+                            </div>
+                        </div>
+
+                        <h4 class="h6 mt-3">Rule 2: No X.509, Period Defined</h4>
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <p><strong>Condition:</strong> Secret created without a matching X.509 certificate, but with <code>not_before</code> and/or <code>not_after</code> specified.</p>
+                                <p><strong>Behavior:</strong> Uses the requested validity period after validation.</p>
+                                <p><strong>Validation:</strong> <code>not_before</code> must be strictly before <code>not_after</code>. Otherwise, returns error <code>ErrSecretInvalidPeriod</code>.</p>
+                                <p class="mb-0"><strong>Use Case:</strong> Time-limited secrets like temporary access tokens.</p>
+                            </div>
+                        </div>
+
+                        <h4 class="h6 mt-3">Rule 3: X.509 Exists, No Period Defined</h4>
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <p><strong>Condition:</strong> X.509 certificate with matching (name, namespace, group) exists, and no validity period specified in secret request.</p>
+                                <p><strong>Behavior:</strong></p>
+                                <ul>
+                                    <li>If X.509 has an <strong>effective version</strong> (version with <code>is_effective=true</code>): Copy <code>not_before</code> and <code>not_after</code> from that version.</li>
+                                    <li>If X.509 has no effective version: Fall back to default +100 years.</li>
+                                </ul>
+                                <p class="mb-0"><strong>Use Case:</strong> Private key passwords or decryption keys that should share the same lifecycle as the certificate.</p>
+                            </div>
+                        </div>
+
+                        <h4 class="h6 mt-3">Rule 4: X.509 Exists, Period Defined</h4>
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <p><strong>Condition:</strong> X.509 certificate exists AND validity period specified in secret request.</p>
+                                <p><strong>Behavior:</strong></p>
+                                <ol>
+                                    <li>Find all X.509 versions whose validity periods <strong>overlap</strong> with the requested secret period.</li>
+                                    <li>If no overlapping versions found: Return error <code>ErrSecretNoMatchingX509</code>.</li>
+                                    <li>If overlapping versions found: <strong>Merge</strong> their periods (earliest <code>not_before</code> to latest <code>not_after</code>).</li>
+                                    <li><strong>Constrain</strong> the secret's period to the intersection with merged X.509 bounds.</li>
+                                </ol>
+                                <p class="mb-0"><strong>Use Case:</strong> Secrets that must be valid only during specific certificate versions' validity windows.</p>
+                            </div>
+                        </div>
+
+                        <!-- Visual Diagram -->
+                        <h3 class="h5 mt-4">Validity Period Calculation Flow</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+flowchart TD
+    START[Create Secret Request] --> CHECK_PERIOD{Validity period<br/>in request?}
+
+    CHECK_PERIOD -->|No| FIND_X509_A[Find matching X.509<br/>same name/ns/group]
+    CHECK_PERIOD -->|Yes| VALIDATE[Validate:<br/>not_before < not_after]
+
+    VALIDATE -->|Invalid| ERROR_PERIOD[Error:<br/>ErrSecretInvalidPeriod]
+    VALIDATE -->|Valid| FIND_X509_B[Find matching X.509<br/>same name/ns/group]
+
+    FIND_X509_A -->|Not found| RULE1[Rule 1:<br/>Default +100 years]
+    FIND_X509_A -->|Found| CHECK_EFFECTIVE{Has effective<br/>version?}
+
+    CHECK_EFFECTIVE -->|No| RULE3_DEFAULT[Default +100 years]
+    CHECK_EFFECTIVE -->|Yes| RULE3[Rule 3:<br/>Copy from effective X.509]
+
+    FIND_X509_B -->|Not found| RULE2[Rule 2:<br/>Use requested period]
+    FIND_X509_B -->|Found| FIND_OVERLAP[Find overlapping<br/>X.509 versions]
+
+    FIND_OVERLAP -->|None overlap| ERROR_X509[Error:<br/>ErrSecretNoMatchingX509]
+    FIND_OVERLAP -->|1 version| RULE4_SINGLE[Rule 4:<br/>Constrain to X.509 bounds]
+    FIND_OVERLAP -->|Multiple versions| RULE4_MERGE[Rule 4:<br/>Merge periods, then constrain]
+
+    RULE1 --> SAVE[Save Secret]
+    RULE2 --> SAVE
+    RULE3 --> SAVE
+    RULE3_DEFAULT --> SAVE
+    RULE4_SINGLE --> SAVE
+    RULE4_MERGE --> SAVE
+
+    style ERROR_PERIOD fill:#ffcccc,stroke:#cc0000
+    style ERROR_X509 fill:#ffcccc,stroke:#cc0000
+    style RULE1 fill:#e6ffe6,stroke:#00cc00
+    style RULE2 fill:#e6ffe6,stroke:#00cc00
+    style RULE3 fill:#e6ffe6,stroke:#00cc00
+    style RULE3_DEFAULT fill:#fff3cd,stroke:#cc9900
+    style RULE4_SINGLE fill:#cce6ff,stroke:#0066cc
+    style RULE4_MERGE fill:#cce6ff,stroke:#0066cc
+                            </div>
+                        </div>
+
+                        <!-- Period Overlap Visualization -->
+                        <h3 class="h5 mt-4">Period Overlap and Merging (Rule 4)</h3>
+                        <p>When a secret has a defined validity period and an X.509 certificate exists, the system finds all X.509 versions that overlap with the requested period and merges them.</p>
+
+                        <div class="card bg-light mb-3">
+                            <div class="card-header">
+                                <strong>Example: Multiple X.509 Versions</strong>
+                            </div>
+                            <div class="card-body">
+                                <pre class="mb-3"><code>X.509 Versions:
+  Version 1: 2024-01-01 ──────────── 2024-06-30
+  Version 2:              2024-05-01 ──────────── 2024-12-31
+  Version 3:                                       2025-01-01 ── 2025-06-30
+
+Timeline:
+  Jan       Feb       Mar       Apr       May       Jun       Jul       Aug       Sep       Oct       Nov       Dec       Jan       Feb       ...
+  |─────────|─────────|─────────|─────────|─────────|─────────|─────────|─────────|─────────|─────────|─────────|─────────|─────────|─────────|
+  [==========V1==========]                         [==overlap==]
+                                        [=====================V2=====================]
+                                                                                                                              [=====V3=====]</code></pre>
+                                <p><strong>Scenario A:</strong> Secret requests <code>2024-04-01</code> to <code>2024-08-01</code></p>
+                                <ul>
+                                    <li>Overlaps with: V1 (ends 2024-06-30) and V2 (starts 2024-05-01)</li>
+                                    <li>Merged X.509 bounds: <code>2024-01-01</code> to <code>2024-12-31</code></li>
+                                    <li>Final secret period: <code>2024-04-01</code> to <code>2024-08-01</code> (no adjustment needed)</li>
+                                    <li>Adjustment reason: <code>NONE</code></li>
+                                </ul>
+                                <p><strong>Scenario B:</strong> Secret requests <code>2024-01-01</code> to <code>2025-03-01</code></p>
+                                <ul>
+                                    <li>Overlaps with: V1, V2, and V3</li>
+                                    <li>Merged X.509 bounds: <code>2024-01-01</code> to <code>2025-06-30</code></li>
+                                    <li>Final secret period: <code>2024-01-01</code> to <code>2025-03-01</code> (no adjustment needed)</li>
+                                    <li>Adjustment reason: <code>NONE</code></li>
+                                </ul>
+                                <p class="mb-0"><strong>Scenario C:</strong> Secret requests <code>2024-01-01</code> to <code>2026-01-01</code></p>
+                                <ul class="mb-0">
+                                    <li>Overlaps with: V1, V2, V3</li>
+                                    <li>Merged X.509 bounds: <code>2024-01-01</code> to <code>2025-06-30</code></li>
+                                    <li>Final secret period: <code>2024-01-01</code> to <code>2025-06-30</code> (<strong>adjusted!</strong>)</li>
+                                    <li>Adjustment reason: <code>MERGED_X509_VERSIONS</code></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- API Response -->
+                        <h3 class="h5 mt-4">API Response: Validity Adjustment</h3>
+                        <p>When creating or updating a secret, the API response includes a <code>validity_adjustment</code> field that explains how the validity period was determined:</p>
+                        <pre class="bg-light p-3 rounded"><code>{
+  "status": "success",
+  "certificate": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "my-secret",
+    "type": "secret",
+    "version": 1,
+    "secret": {
+      "data": "my-secret-value",
+      "not_before": 1704067200,
+      "not_after": 1735689600
+    },
+    "validity_adjustment": {
+      "original_not_before": 1701388800,
+      "original_not_after": 1767225600,
+      "adjusted_not_before": 1704067200,
+      "adjusted_not_after": 1735689600,
+      "reason": "CONSTRAINED_TO_X509_BOUNDS",
+      "message": "Secret validity period constrained to X509 certificate bounds (version 2)",
+      "matched_x509_versions": [2]
+    }
+  }
+}</code></pre>
+
+                        <h4 class="h6 mt-3">Adjustment Reasons</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Reason Code</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>""</code> (empty)</td>
+                                        <td>No adjustment was made; requested period was used as-is</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>DEFAULT_100_YEAR_PERIOD</code></td>
+                                        <td>Default +100 years applied (no X.509 exists or no effective version)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>COPIED_FROM_EFFECTIVE_X509</code></td>
+                                        <td>Period copied from the effective X.509 certificate version</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>CONSTRAINED_TO_X509_BOUNDS</code></td>
+                                        <td>Period was adjusted to fit within a single X.509 version's bounds</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>MERGED_X509_VERSIONS</code></td>
+                                        <td>Period spans multiple X.509 versions; merged and constrained</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Create Secret Example -->
+                        <h3 class="h5 mt-4">API Examples</h3>
+                        <h4 class="h6">Create Secret (with explicit validity)</h4>
+                        <pre class="bg-light p-3 rounded"><code>POST /api/v1/certificates?type=secret
+Content-Type: application/json
+
+{
+  "name": "my-app-password",
+  "group_name": "production",
+  "namespace": "default",
+  "secret": {
+    "data": "SuperSecretPassword123!",
+    "not_before": 1704067200,
+    "not_after": 1735689600
+  },
+  "custom_metadata": {
+    "purpose": "database-password",
+    "rotation_policy": "90-days"
+  }
+}</code></pre>
+
+                        <h4 class="h6 mt-3">Create Secret (inherit from X.509)</h4>
+                        <pre class="bg-light p-3 rounded"><code>POST /api/v1/certificates?type=secret
+Content-Type: application/json
+
+{
+  "name": "my-app-cert",
+  "group_name": "production",
+  "namespace": "default",
+  "secret": {
+    "data": "PrivateKeyPassphrase"
+  }
+}
+
+// If X.509 certificate "my-app-cert" exists in the same group/namespace,
+// the secret will inherit its validity period from the effective X.509 version.</code></pre>
+
+                        <h4 class="h6 mt-3">Update Secret</h4>
+                        <pre class="bg-light p-3 rounded"><code>PUT /api/v1/certificates/{uuid}
+Content-Type: application/json
+
+{
+  "secret": {
+    "data": "NewSecretValue",
+    "not_before": 1704067200,
+    "not_after": 1735689600
+  }
+}</code></pre>
+
+                        <!-- Runtime Validity Enforcement -->
+                        <h3 class="h5 mt-4">Runtime Validity Enforcement</h3>
+                        <div class="alert alert-danger d-flex align-items-start mb-3" role="alert">
+                            <span class="material-symbols-outlined me-2">gpp_maybe</span>
+                            <div>
+                                <strong>Security Feature:</strong> The gRPC API enforces secret validity at runtime. Secrets outside their validity window (<code>not_before</code> to <code>not_after</code>) are <strong>not returned</strong> to clients.
+                            </div>
+                        </div>
+
+                        <p>When a client (e.g., CSI driver) requests a secret via gRPC:</p>
+                        <ol>
+                            <li>The system checks if the secret has <code>is_effective = true</code></li>
+                            <li>For secrets, additionally checks if <code>now()</code> is between <code>not_before</code> and <code>not_after</code></li>
+                            <li>If the secret is outside its validity window, an error is returned instead of the secret data</li>
+                        </ol>
+
+                        <div class="card bg-light mb-3">
+                            <div class="card-header">
+                                <strong>Example: Expired Secret Request</strong>
+                            </div>
+                            <div class="card-body">
+                                <pre class="mb-0"><code>// gRPC Request
+GetCertificate(name: "my-app-password", group_id: "...", namespace: "...")
+
+// If secret has:
+//   not_before: 2024-01-01
+//   not_after:  2024-06-30
+//   current time: 2024-08-15 (after not_after)
+
+// Response: Error
+{
+  "code": "CERT_EXPIRED",
+  "message": "secret has expired (current time is after not_after)"
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Errors -->
+                        <h3 class="h5 mt-4">Error Handling</h3>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Error Code</th>
+                                        <th>Message</th>
+                                        <th>Cause</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="table-warning">
+                                        <td><code>CERT_INVALID</code></td>
+                                        <td>secret is not yet valid (current time is before not_before)</td>
+                                        <td>Attempt to retrieve secret before its validity period starts</td>
+                                    </tr>
+                                    <tr class="table-danger">
+                                        <td><code>CERT_EXPIRED</code></td>
+                                        <td>secret has expired (current time is after not_after)</td>
+                                        <td>Attempt to retrieve secret after its validity period ended</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>INVALID_INPUT</code></td>
+                                        <td>secret validity period is invalid: not_before must be before not_after</td>
+                                        <td><code>not_before >= not_after</code> in request</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>INVALID_INPUT</code></td>
+                                        <td>secret validity period does not overlap with any X509 certificate version</td>
+                                        <td>Requested period doesn't overlap with any X.509 version's validity</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>INVALID_INPUT</code></td>
+                                        <td>secret data is required for type=secret</td>
+                                        <td>Missing <code>secret.data</code> field</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info d-flex align-items-start mt-4" role="alert">
+                            <span class="material-symbols-outlined me-2">tips_and_updates</span>
+                            <div>
+                                <strong>Best Practice:</strong> When storing secrets that are related to X.509 certificates (like private key passphrases), use the same <code>name</code>, <code>namespace</code>, and <code>group</code> to automatically link their lifecycles. This ensures secrets don't outlive their associated certificates.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- 2. Certificate Retrieval -->
             <section class="mb-5">
                 <div class="card shadow-sm">

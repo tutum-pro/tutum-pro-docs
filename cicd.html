@@ -893,19 +893,28 @@ EOF</code></pre>
                                             <tr><td><code>k8s_tutum_csi_version</code></td><td><code>3.1.0</code></td><td>CSI Driver version</td></tr>
                                             <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
                                             <tr><td><code>k8s_distribution</code></td><td><code>standard</code></td><td>K8s distribution: <code>standard</code>, <code>microk8s</code>, <code>k3s</code>, <code>rke2</code>, <code>openshift</code></td></tr>
-                                            <tr><td><code>k8s_tutum_engine_url</code></td><td><code>tutum-engine.{{ k8s_tutum_namespace }}.svc.cluster.local:9090</code></td><td>Tutum Engine gRPC URL</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_url</code></td><td><code>tutum-engine.{{ k8s_tutum_namespace }}.svc.cluster.local:9090</code></td><td>Tutum Engine gRPC URL (used in StorageClass <code>engineUrl</code> parameter)</td></tr>
                                             <tr><td><code>k8s_tutum_csi_storage_class_name</code></td><td><code>tutum-csi</code></td><td>StorageClass name</td></tr>
+                                            <tr><td><code>k8s_tutum_csi_driver_name</code></td><td><code>csi.tutum.io</code></td><td>CSI driver name</td></tr>
                                             <tr><td><code>k8s_tutum_csi_controller_replicas</code></td><td><code>1</code></td><td>CSI controller replicas</td></tr>
                                             <tr><td><code>k8s_tutum_csi_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="alert alert-info mt-3 mb-0">
+                                <div class="alert alert-info mt-3">
                                     <h6><span class="material-symbols-outlined align-middle">info</span> Distribution-Specific Kubelet Paths</h6>
                                     <p class="mb-0">
                                         The CSI driver mounts kubelet directory for volume operations. The path is automatically configured based on
                                         <code>k8s_distribution</code>: standard (<code>/var/lib/kubelet</code>), MicroK8s (<code>/var/snap/microk8s/common/var/lib/kubelet</code>),
                                         K3s (<code>/var/lib/rancher/k3s/agent</code>), RKE2 (<code>/var/lib/rancher/rke2/agent</code>).
+                                    </p>
+                                </div>
+                                <div class="alert alert-warning mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">architecture</span> Engine URL in StorageClass</h6>
+                                    <p class="mb-0">
+                                        The <code>engineUrl</code> is configured in StorageClass parameters (not in Driver deployment). This design allows
+                                        multiple Tutum Engine instances per cluster, each with its own StorageClass. For ephemeral inline volumes,
+                                        <code>engineUrl</code> must be provided in <code>volumeAttributes</code>.
                                     </p>
                                 </div>
                             </div>

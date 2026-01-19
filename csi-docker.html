@@ -57,6 +57,7 @@
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
                 <li class="nav-item"><a class="nav-link active d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="operator-k8s.html"><span class="material-symbols-outlined me-2">smart_toy</span>Kubernetes Operator</a></li>
                 <li class="nav-item border-top mt-2 pt-2"><a class="nav-link d-flex align-items-center" href="cli.html"><span class="material-symbols-outlined me-2">terminal</span>tutum-admin-cli</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="cicd.html"><span class="material-symbols-outlined me-2">deployed_code</span>tutum-cicd</a></li>
             </ul>
@@ -320,12 +321,17 @@ volumes:
       group-id: production-group-uuid
       namespace: production</code></pre>
 
-                        <h3 class="h5 mt-4">Mounted Files</h3>
+                        <h3 class="h5 mt-4">Mounted Files (Semantic Consistency)</h3>
+                        <p>When X509 and secret share the same name, <strong>both are mounted together</strong>:</p>
                         <pre class="bg-light p-3 rounded"><code>/etc/ssl/certs/my-app/
-├── tls.crt          # Certificate (PEM)
-├── tls.key          # Private key (PEM)
-├── ca.crt           # CA chain (PEM)
-└── metadata.json    # Certificate metadata</code></pre>
+├── my-cert.crt       # X509 Certificate (PEM)
+├── my-cert.key       # X509 Private key (PEM)
+├── my-cert-ca.crt    # X509 CA chain (PEM)
+└── my-cert.txt       # Secret data (e.g., password)</code></pre>
+                        <div class="alert alert-info mt-2" role="alert">
+                            <span class="material-symbols-outlined me-2">info</span>
+                            <strong>Semantic Consistency:</strong> GetCertificate returns 0-2 certificates (X509 and/or secret) with the same name. Docker driver mounts all returned files. See <a href="engine.html#semantic-consistency">Semantic Consistency</a> for details.
+                        </div>
                     </div>
                 </div>
             </section>

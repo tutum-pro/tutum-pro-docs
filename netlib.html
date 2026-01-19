@@ -57,6 +57,7 @@
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="operator-k8s.html"><span class="material-symbols-outlined me-2">smart_toy</span>Kubernetes Operator</a></li>
                 <li class="nav-item border-top mt-2 pt-2"><a class="nav-link d-flex align-items-center" href="cli.html"><span class="material-symbols-outlined me-2">terminal</span>tutum-admin-cli</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="cicd.html"><span class="material-symbols-outlined me-2">deployed_code</span>tutum-cicd</a></li>
             </ul>
@@ -211,30 +212,43 @@ func Connect(endpoint string, opts ...ConnectOption) (*Client, error)
 func (c *Client) Close() error</code></pre>
 
                         <h3 class="h5 mt-4">Certificate Retrieval</h3>
-                        <pre class="bg-light p-3 rounded"><code>// GetCertificate retrieves a certificate by name
-func (c *Client) GetCertificate(ctx context.Context, req *GetCertificateRequest) (*Certificate, error)
+                        <div class="alert alert-warning mb-2" role="alert">
+                            <span class="material-symbols-outlined me-2">warning</span>
+                            <strong>Breaking Change (v1.5.0):</strong> <code>GetCertificate</code> now returns <code>[]*Certificate</code> (slice) instead of singular <code>*Certificate</code> to support semantic consistency.
+                        </div>
+                        <pre class="bg-light p-3 rounded"><code>// GetCertificate retrieves certificates by name (returns 0-2 certificates)
+// Semantic consistency: X509 and secret with same name/group/namespace
+// are returned together when both exist and have is_effective=true
+func (c *Client) GetCertificate(ctx context.Context, name, groupID, namespace string) ([]*Certificate, error)
 
-// GetCertificateRequest contains the parameters for certificate retrieval
-type GetCertificateRequest struct {
-    Name              string  // Certificate name
-    GroupID           string  // Group UUID
-    Namespace         string  // Namespace name
-    Version           int32   // Specific version (0 = latest)
-    Channel           string  // Distribution channel
-    AuthToken         string  // Authentication token
-    WorkloadType      string  // k8s-pod, k8s-deployment, docker-container
-    WorkloadName      string  // Name of the workload
-    WorkloadNamespace string  // Workload's namespace
+// GetCertificateVersionWithAuth retrieves certificates with version, channel, and auth token
+func (c *Client) GetCertificateVersionWithAuth(ctx context.Context, name, groupID, namespace string,
+    version int, workload *WorkloadContext, channel, authToken string) ([]*Certificate, error)
+
+// WorkloadContext provides workload info for audit logging
+type WorkloadContext struct {
+    Type      string  // k8s-pod, k8s-deployment, docker-container
+    Name      string  // Name of the workload
+    Namespace string  // Workload's namespace
+    UID       string  // Unique workload identifier
 }
 
 // Certificate contains the retrieved certificate data
 type Certificate struct {
-    CertificatePEM string    // PEM-encoded certificate
-    PrivateKeyPEM  string    // PEM-encoded private key
-    CAChainPEM     string    // PEM-encoded CA chain
+    ID             string    // Certificate UUID
+    Name           string    // Certificate name
+    GroupID        string    // Group UUID
+    GroupName      string    // Group name
+    Namespace      string    // Namespace
     Version        int32     // Certificate version
-    NotBefore      time.Time // Validity start
-    NotAfter       time.Time // Validity end
+    Type           string    // "X509" or "secret"
+    CertificatePEM string    // PEM-encoded certificate (or secret data)
+    PrivateKeyPEM  string    // PEM-encoded private key (empty for secrets)
+    CAChainPEM     string    // PEM-encoded CA chain
+    IsEffective    bool      // Whether this is the effective version
+    EffectiveSince time.Time // When version became effective
+    CreatedAt      time.Time // Creation timestamp
+    UpdatedAt      time.Time // Last update timestamp
 }</code></pre>
 
                         <h3 class="h5 mt-4">Connection Options</h3>

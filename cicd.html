@@ -57,6 +57,7 @@
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="operator-k8s.html"><span class="material-symbols-outlined me-2">smart_toy</span>Kubernetes Operator</a></li>
                 <li class="nav-item border-top mt-2 pt-2"><a class="nav-link d-flex align-items-center" href="cli.html"><span class="material-symbols-outlined me-2">terminal</span>tutum-admin-cli</a></li>
                 <li class="nav-item"><a class="nav-link active d-flex align-items-center" href="cicd.html"><span class="material-symbols-outlined me-2">deployed_code</span>tutum-cicd</a></li>
             </ul>
@@ -155,25 +156,10 @@
                         </h2>
                         <p>The collection deploys platform components using Ansible roles for both Docker and Kubernetes:</p>
 
-                        <!-- Platform Tabs -->
-                        <ul class="nav nav-tabs" id="archTabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="docker-arch-tab" data-bs-toggle="tab" data-bs-target="#docker-arch" type="button" role="tab">
-                                    <span class="material-symbols-outlined align-middle me-1">deployed_code</span> Docker
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="k8s-arch-tab" data-bs-toggle="tab" data-bs-target="#k8s-arch" type="button" role="tab">
-                                    <span class="material-symbols-outlined align-middle me-1">cloud</span> Kubernetes
-                                </button>
-                            </li>
-                        </ul>
-
-                        <div class="tab-content mt-3" id="archTabContent">
-                            <!-- Docker Architecture -->
-                            <div class="tab-pane fade show active" id="docker-arch" role="tabpanel">
-                                <div class="architecture-diagram">
-                                    <div class="mermaid">
+                        <!-- Docker Architecture -->
+                        <h4 class="mt-4"><span class="material-symbols-outlined align-middle me-1">deployed_code</span> Docker Deployment</h4>
+                        <div class="architecture-diagram">
+                            <pre class="mermaid">
 graph LR
     subgraph control["Control Node"]
         ANSIBLE["Ansible<br/>Controller"]
@@ -229,14 +215,13 @@ graph LR
     style ENGINE_CONTAINER fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
     style PLUGIN_SVC fill:#8b5cf6,stroke:#6d28d9,stroke-width:2px,color:#fff
     style CLI_CONTAINER fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#fff
-                                    </div>
-                                </div>
-                            </div>
+                            </pre>
+                        </div>
 
-                            <!-- Kubernetes Architecture -->
-                            <div class="tab-pane fade" id="k8s-arch" role="tabpanel">
-                                <div class="architecture-diagram">
-                                    <div class="mermaid">
+                        <!-- Kubernetes Architecture -->
+                        <h4 class="mt-4"><span class="material-symbols-outlined align-middle me-1">cloud</span> Kubernetes Deployment</h4>
+                        <div class="architecture-diagram">
+                            <pre class="mermaid">
 graph LR
     subgraph control["Control Node"]
         ANSIBLE["Ansible Controller"]
@@ -291,18 +276,16 @@ graph LR
     style cluster fill:#dbeafe,stroke:#3b82f6
     style external fill:#fef2f2,stroke:#ef4444
     style PG_DEPLOY fill:#3b82f6,stroke:#1d4ed8,color:#fff
-                                    </div>
-                                </div>
+                            </pre>
+                        </div>
 
-                                <div class="alert alert-info mt-3 mb-0">
-                                    <h6><span class="material-symbols-outlined align-middle">info</span> Kubernetes Requirements</h6>
-                                    <ul class="mb-0">
-                                        <li><strong>Embedded or External PostgreSQL</strong> - Default: embedded PostgreSQL deployed in cluster; or use external database</li>
-                                        <li><strong>kubectl configured</strong> - The control node must have kubectl configured to access the target cluster</li>
-                                        <li><strong>kubernetes.core collection</strong> - Required Ansible dependency (installed automatically)</li>
-                                    </ul>
-                                </div>
-                            </div>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <h6><span class="material-symbols-outlined align-middle">info</span> Kubernetes Requirements</h6>
+                            <ul class="mb-0">
+                                <li><strong>Embedded or External PostgreSQL</strong> - Default: embedded PostgreSQL deployed in cluster; or use external database</li>
+                                <li><strong>kubectl configured</strong> - The control node must have kubectl configured to access the target cluster</li>
+                                <li><strong>kubernetes.core collection</strong> - Required Ansible dependency (installed automatically)</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -318,25 +301,25 @@ graph LR
                         </h2>
 
                         <h4 class="mt-4">From Ansible Galaxy</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code>ansible-galaxy collection install tutum_pro.cicd</code></pre>
+                        <pre class="bg-body-secondary p-3 rounded"><code>ansible-galaxy collection install tutum_pro.cicd</code></pre>
 
                         <h4 class="mt-4">Using requirements.yml</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># requirements.yml
+                        <pre class="bg-body-secondary p-3 rounded"><code># requirements.yml
 collections:
   - name: tutum_pro.cicd
-    version: ">=1.3.0"</code></pre>
-                        <pre class="bg-dark text-light p-3 rounded"><code>ansible-galaxy collection install -r requirements.yml</code></pre>
+    version: ">=1.6.4"</code></pre>
+                        <pre class="bg-body-secondary p-3 rounded"><code>ansible-galaxy collection install -r requirements.yml</code></pre>
 
                         <h4 class="mt-4">From Git</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code>ansible-galaxy collection install git+https://github.com/tutum-pro/tutum-cicd.git</code></pre>
+                        <pre class="bg-body-secondary p-3 rounded"><code>ansible-galaxy collection install git+https://github.com/tutum-pro/tutum-cicd.git</code></pre>
 
                         <h4 class="mt-4">From Local Archive (Offline Installation)</h4>
                         <p>Download the collection archive from <a href="https://galaxy.ansible.com/ui/repo/published/tutum_pro/cicd/" target="_blank">Ansible Galaxy</a> and install locally:</p>
-                        <pre class="bg-dark text-light p-3 rounded"><code># Install from downloaded tar.gz archive
-ansible-galaxy collection install tutum_pro-cicd-1.3.0.tar.gz
+                        <pre class="bg-body-secondary p-3 rounded"><code># Install from downloaded tar.gz archive
+ansible-galaxy collection install tutum_pro-cicd-1.6.4.tar.gz
 
 # Or specify custom installation path
-ansible-galaxy collection install tutum_pro-cicd-1.3.0.tar.gz -p ./collections</code></pre>
+ansible-galaxy collection install tutum_pro-cicd-1.6.4.tar.gz -p ./collections</code></pre>
                     </div>
                 </div>
             </section>
@@ -370,7 +353,7 @@ ansible-galaxy collection install tutum_pro-cicd-1.3.0.tar.gz -p ./collections</
 
                         <h4 class="mt-4">Using docker_tutum_init Role (Recommended)</h4>
                         <p>The <code>docker_tutum_init</code> role generates installation playbook and inventory files:</p>
-                        <pre class="bg-dark text-light p-3 rounded"><code># Generate installation files for localhost
+                        <pre class="bg-body-secondary p-3 rounded"><code># Generate installation files for localhost
 ansible localhost -m include_role -a name=tutum_pro.cicd.docker.tutum_init
 
 # Generate for remote host with SSH key authentication
@@ -397,7 +380,7 @@ ansible-playbook -i inventory/docker.ini tutum-install.yml
 ansible-playbook -i inventory/docker.ini tutum-install.yml --ask-pass</code></pre>
 
                         <h4 class="mt-4">Using Collection Playbooks</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># Install full stack
+                        <pre class="bg-body-secondary p-3 rounded"><code># Install full stack
 ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.site
 
 # Install individual components
@@ -417,7 +400,7 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                         <div class="alert alert-danger mt-3">
                             <h6><span class="material-symbols-outlined align-middle">warning</span> Complete Uninstallation</h6>
                             <p>To completely remove Tutum Platform including all data, volumes, and certificates:</p>
-                            <pre class="bg-dark text-light p-3 rounded mb-2"><code>ansible-playbook -i inventory/docker.ini tutum_pro.cicd.uninstall \
+                            <pre class="bg-body-secondary p-3 rounded mb-2"><code>ansible-playbook -i inventory/docker.ini tutum_pro.cicd.uninstall \
   -e docker_tutum_engine_remove_data=true \
   -e docker_tutum_postgres_remove_data=true \
   -e docker_tutum_plugin_remove_volumes=true</code></pre>
@@ -434,13 +417,13 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
                         </div>
 
                         <h4 class="mt-4">Custom Playbook with Embedded PostgreSQL</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># site.yml
+                        <pre class="bg-body-secondary p-3 rounded"><code># site.yml
 - name: Deploy Tutum Platform
   hosts: docker_servers
   become: true
 
   vars:
-    docker_tutum_engine_version: "4.2.3"
+    docker_tutum_engine_version: "5.1.5"
     docker_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
     docker_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
 
@@ -451,13 +434,13 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
     - role: tutum_pro.cicd.docker.tutum_cli</code></pre>
 
                         <h4 class="mt-4">Custom Playbook with External PostgreSQL</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># site.yml
+                        <pre class="bg-body-secondary p-3 rounded"><code># site.yml
 - name: Deploy Tutum Platform (External DB)
   hosts: docker_servers
   become: true
 
   vars:
-    docker_tutum_engine_version: "4.2.3"
+    docker_tutum_engine_version: "5.1.5"
     docker_tutum_external_db_url: "postgres://tutum:password@db.example.com:5432/tutum?sslmode=require"
     docker_tutum_master_key: "YourSecure32CharacterKeyHere!!!"
     docker_tutum_jwt_secret: "YourSecure32CharacterJwtSecret!"
@@ -483,7 +466,7 @@ ansible-playbook -i inventory/hosts.yml tutum_pro.cicd.uninstall \
 
                         <h4 class="mt-4">Using k8s_tutum_init Role (Recommended)</h4>
                         <p>The <code>k8s_tutum_init</code> role generates a Kubernetes installation playbook:</p>
-                        <pre class="bg-dark text-light p-3 rounded"><code># Generate K8s installation playbook (embedded PostgreSQL - default)
+                        <pre class="bg-body-secondary p-3 rounded"><code># Generate K8s installation playbook (embedded PostgreSQL - default)
 ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init
 
 # Generate with external PostgreSQL
@@ -496,11 +479,23 @@ ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init \
 ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init \
   -e k8s_tutum_init_distribution=microk8s
 
+# Using Operator instead of CSI driver (rootless)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init \
+  -e k8s_tutum_init_injection_mode=operator \
+  -e k8s_tutum_init_distribution=microk8s
+
 # Run the generated playbook
-ansible-playbook tutum-k8s-install.yml</code></pre>
+ansible-playbook -i inventory/k8s.ini tutum-k8s-install.yml
+
+# Test operator certificate delivery (after installation)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_test_operator \
+  -e k8s_tutum_test_deploy_namespace=my-app-namespace \
+  -e k8s_tutum_test_cert_name=my-certificate \
+  -e k8s_tutum_test_cert_tree_mode=true \
+  -e k8s_tutum_test_cert_secret_type=Opaque</code></pre>
 
                         <h4 class="mt-4">Using Collection Playbooks</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># Deploy to Kubernetes with embedded PostgreSQL (default)
+                        <pre class="bg-body-secondary p-3 rounded"><code># Deploy to Kubernetes with embedded PostgreSQL (default)
 ansible-playbook playbooks/install-tutum-k8s.yml
 
 # Deploy with external PostgreSQL
@@ -549,15 +544,15 @@ ansible-playbook playbooks/uninstall-tutum-k8s.yml \
                         </div>
 
                         <h4 class="mt-4">Custom Playbook with Embedded PostgreSQL</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># k8s-site.yml
+                        <pre class="bg-body-secondary p-3 rounded"><code># k8s-site.yml
 - name: Deploy Tutum Platform to Kubernetes
   hosts: localhost
   connection: local
   gather_facts: false
 
   vars:
-    k8s_tutum_engine_version: "4.2.3"
-    k8s_tutum_csi_version: "3.1.0"
+    k8s_tutum_engine_version: "5.1.5"
+    k8s_tutum_csi_version: "4.0.0"
     k8s_tutum_namespace: "tutum-system"
     k8s_distribution: "standard"
     # Security keys (auto-generated if not provided)
@@ -570,15 +565,15 @@ ansible-playbook playbooks/uninstall-tutum-k8s.yml \
     - role: tutum_pro.cicd.k8s.tutum_csi</code></pre>
 
                         <h4 class="mt-4">Custom Playbook with External PostgreSQL</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># k8s-site-external.yml
+                        <pre class="bg-body-secondary p-3 rounded"><code># k8s-site-external.yml
 - name: Deploy Tutum Platform to Kubernetes (External DB)
   hosts: localhost
   connection: local
   gather_facts: false
 
   vars:
-    k8s_tutum_engine_version: "4.2.3"
-    k8s_tutum_csi_version: "3.1.0"
+    k8s_tutum_engine_version: "5.1.5"
+    k8s_tutum_csi_version: "4.0.0"
     k8s_tutum_namespace: "tutum-system"
     k8s_distribution: "standard"
     # External PostgreSQL connection
@@ -597,7 +592,7 @@ ansible-playbook playbooks/uninstall-tutum-k8s.yml \
     - role: tutum_pro.cicd.k8s.tutum_csi</code></pre>
 
                         <h4 class="mt-4">Verify Deployment</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># Check pods in tutum-system namespace
+                        <pre class="bg-body-secondary p-3 rounded"><code># Check pods in tutum-system namespace
 kubectl get pods -n tutum-system
 
 # Check CSI driver registration
@@ -699,7 +694,7 @@ EOF</code></pre>
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>docker_tutum_engine_version</code></td><td><code>4.2.3</code></td><td>Engine version</td></tr>
+                                            <tr><td><code>docker_tutum_engine_version</code></td><td><code>5.1.5</code></td><td>Engine version</td></tr>
                                             <tr><td><code>docker_tutum_external_db_url</code></td><td><code>""</code></td><td>External PostgreSQL URL (skips embedded DB)</td></tr>
                                             <tr><td><code>docker_tutum_master_key</code></td><td>(generated)</td><td>32-char AES-256 encryption key</td></tr>
                                             <tr><td><code>docker_tutum_jwt_secret</code></td><td>(generated)</td><td>32-char JWT secret</td></tr>
@@ -734,7 +729,7 @@ EOF</code></pre>
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>docker_tutum_plugin_version</code></td><td><code>2.1.6</code></td><td>Plugin version</td></tr>
+                                            <tr><td><code>docker_tutum_plugin_version</code></td><td><code>3.0.0</code></td><td>Plugin version</td></tr>
                                             <tr><td><code>docker_tutum_engine_url</code></td><td><code>localhost:9090</code></td><td>tutum-engine gRPC URL</td></tr>
                                             <tr><td><code>docker_tutum_volume_dir</code></td><td><code>/var/lib/tutum/volumes</code></td><td>Volume mount directory</td></tr>
                                             <tr><td><code>docker_tutum_plugin_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
@@ -757,7 +752,7 @@ EOF</code></pre>
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>docker_tutum_cli_version</code></td><td><code>0.1.76</code></td><td>CLI version</td></tr>
+                                            <tr><td><code>docker_tutum_cli_version</code></td><td><code>0.2.1</code></td><td>CLI version</td></tr>
                                             <tr><td><code>docker_tutum_cli_container_name</code></td><td><code>tutum-admin-cli</code></td><td>Container name</td></tr>
                                             <tr><td><code>docker_tutum_engine_url</code></td><td><code>localhost:9090</code></td><td>tutum-engine gRPC URL</td></tr>
                                             <tr><td><code>docker_tutum_cli_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
@@ -851,7 +846,7 @@ EOF</code></pre>
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>k8s_tutum_engine_version</code></td><td><code>4.2.3</code></td><td>Tutum Engine version</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_version</code></td><td><code>5.1.5</code></td><td>Tutum Engine version</td></tr>
                                             <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
                                             <tr><td><code>k8s_tutum_external_db_url</code></td><td><code>""</code></td><td>Full database URL (alternative to individual settings)</td></tr>
                                             <tr><td><code>k8s_tutum_postgres_host</code></td><td><code>""</code></td><td>External PostgreSQL host (if not using embedded)</td></tr>
@@ -890,7 +885,7 @@ EOF</code></pre>
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>k8s_tutum_csi_version</code></td><td><code>3.1.0</code></td><td>CSI Driver version</td></tr>
+                                            <tr><td><code>k8s_tutum_csi_version</code></td><td><code>4.0.0</code></td><td>CSI Driver version</td></tr>
                                             <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
                                             <tr><td><code>k8s_distribution</code></td><td><code>standard</code></td><td>K8s distribution: <code>standard</code>, <code>microk8s</code>, <code>k3s</code>, <code>rke2</code>, <code>openshift</code></td></tr>
                                             <tr><td><code>k8s_tutum_engine_url</code></td><td><code>tutum-engine.{{ k8s_tutum_namespace }}.svc.cluster.local:9090</code></td><td>Tutum Engine gRPC URL (used in StorageClass <code>engineUrl</code> parameter)</td></tr>
@@ -920,13 +915,90 @@ EOF</code></pre>
                             </div>
                         </div>
 
+                        <!-- k8s_tutum_operator -->
+                        <div id="k8s_tutum_operator" class="card mt-4 border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_operator</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Deploys Tutum Operator to Kubernetes. Creates CRD (TutumCertificate), RBAC, Deployment and Service. Alternative to CSI driver for rootless certificate delivery.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>k8s_tutum_operator_version</code></td><td><code>0.1.11</code></td><td>Operator version</td></tr>
+                                            <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_url</code></td><td><code>tutum-engine.{{ namespace }}.svc.cluster.local:9090</code></td><td>Tutum Engine gRPC URL</td></tr>
+                                            <tr><td><code>k8s_tutum_operator_sync_interval</code></td><td><code>5m</code></td><td>Certificate sync interval</td></tr>
+                                            <tr><td><code>k8s_tutum_operator_log_level</code></td><td><code>info</code></td><td>Log level (debug, info, warn, error)</td></tr>
+                                            <tr><td><code>k8s_tutum_operator_watch_namespaces</code></td><td><code>""</code></td><td>Namespaces to watch (empty = all namespaces)</td></tr>
+                                            <tr><td><code>k8s_tutum_operator_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-3">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> CSI vs Operator</h6>
+                                    <p class="mb-0">
+                                        <strong>CSI Driver:</strong> Real-time certificate mounts, requires privileged containers, uses ephemeral volumes.<br>
+                                        <strong>Operator:</strong> Syncs certificates to Kubernetes Secrets, rootless, works with Ingress and any workload. Choose based on your security requirements.
+                                    </p>
+                                </div>
+                                <div class="alert alert-warning mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">warning</span> Uninstall Order</h6>
+                                    <p class="mb-0">
+                                        When uninstalling, the operator automatically removes finalizers from TutumCertificate resources before deleting the CRD.
+                                        This prevents stuck resources when the operator deployment is removed.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- k8s_tutum_test_operator -->
+                        <div class="card mt-4 border-info">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_test_operator</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Creates a test TutumCertificate CR and Deployment (busybox) to verify operator certificate delivery works correctly.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Namespace where Tutum Engine is installed (for API URL)</td></tr>
+                                            <tr><td><code>k8s_tutum_test_deploy_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace where test app will be deployed</td></tr>
+                                            <tr><td><code>k8s_tutum_test_app_name</code></td><td><code>tutum-test-app</code></td><td>Test application name</td></tr>
+                                            <tr><td><code>k8s_tutum_test_cert_name</code></td><td><code>ksef-digital-fp-cert</code></td><td>Certificate name in Tutum Engine</td></tr>
+                                            <tr><td><code>k8s_tutum_test_cert_group_id</code></td><td><code>default</code></td><td>Group ID in Tutum Engine</td></tr>
+                                            <tr><td><code>k8s_tutum_test_cert_namespace</code></td><td><code>default</code></td><td>Namespace in Tutum Engine</td></tr>
+                                            <tr><td><code>k8s_tutum_test_cert_secret_name</code></td><td><code>ksef-digital-fp-cert-secret</code></td><td>Secret name to create</td></tr>
+                                            <tr><td><code>k8s_tutum_test_cert_tree_mode</code></td><td><code>false</code></td><td>Use tree structure for files (certs/, private/, ca/)</td></tr>
+                                            <tr><td><code>k8s_tutum_test_cert_secret_type</code></td><td><code>kubernetes.io/tls</code></td><td>Secret type (<code>kubernetes.io/tls</code> or <code>Opaque</code>)</td></tr>
+                                            <tr><td><code>k8s_tutum_test_cert_mount_path</code></td><td><code>/etc/ssl/certs/ksef</code></td><td>Mount path in test pod</td></tr>
+                                            <tr><td><code>k8s_tutum_test_operator_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-warning mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">warning</span> treeMode and secretType</h6>
+                                    <p class="mb-0">
+                                        When <code>treeMode=true</code>, secret keys have path prefixes (<code>certs/tls.crt</code>, <code>private/tls.key</code>).
+                                        The <code>kubernetes.io/tls</code> type requires flat structure, so use <code>secretType=Opaque</code> when <code>treeMode=true</code>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- k8s_tutum_init -->
                         <div class="card mt-4 border-secondary">
                             <div class="card-header bg-secondary text-white">
                                 <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_init</h5>
                             </div>
                             <div class="card-body">
-                                <p>Generates Kubernetes installation playbook. Run directly with <code>ansible localhost -m include_role</code>.</p>
+                                <p>Generates Kubernetes installation playbook and inventory. Run directly with <code>ansible localhost -m include_role</code>.</p>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-striped">
                                         <thead class="table-light">
@@ -948,9 +1020,20 @@ EOF</code></pre>
                                             <tr><td><code>k8s_tutum_init_jwt_secret</code></td><td><code>""</code></td><td>JWT secret (empty = auto-generate)</td></tr>
                                             <tr><td><code>k8s_tutum_init_generate_postgres</code></td><td><code>true</code></td><td>Generate Postgres role (only when db_mode=embedded)</td></tr>
                                             <tr><td><code>k8s_tutum_init_generate_engine</code></td><td><code>true</code></td><td>Generate Engine role</td></tr>
-                                            <tr><td><code>k8s_tutum_init_generate_csi</code></td><td><code>true</code></td><td>Generate CSI role</td></tr>
+                                            <tr><td><code>k8s_tutum_init_injection_mode</code></td><td><code>csi</code></td><td>Certificate injection: <code>csi</code> or <code>operator</code></td></tr>
+                                            <tr><td><code>k8s_tutum_operator_version</code></td><td><code>0.1.11</code></td><td>Operator version (when injection_mode=operator)</td></tr>
+                                            <tr><td><code>k8s_tutum_operator_sync_interval</code></td><td><code>5m</code></td><td>Sync interval (when injection_mode=operator)</td></tr>
+                                            <tr><td><code>k8s_tutum_operator_watch_namespaces</code></td><td><code>""</code></td><td>Namespaces to watch (empty = all)</td></tr>
+                                            <tr><td><code>k8s_tutum_test_deploy_namespace</code></td><td><code>tutum-system</code></td><td>Namespace for test operator deployment</td></tr>
                                         </tbody>
                                     </table>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> Certificate Injection Mode</h6>
+                                    <p class="mb-0">
+                                        Use <code>k8s_tutum_init_injection_mode=operator</code> for rootless certificate delivery via Kubernetes Secrets.
+                                        Use <code>k8s_tutum_init_injection_mode=csi</code> (default) for real-time volume mounts via CSI driver.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -1042,17 +1125,17 @@ EOF</code></pre>
                         </h2>
 
                         <h4 class="mt-4">Generate Secure Keys</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># Generate 32-character keys
+                        <pre class="bg-body-secondary p-3 rounded"><code># Generate 32-character keys
 openssl rand -base64 32 | head -c 32</code></pre>
 
                         <h4 class="mt-4">Using Ansible Vault</h4>
-                        <pre class="bg-dark text-light p-3 rounded"><code># Create encrypted vars file
+                        <pre class="bg-body-secondary p-3 rounded"><code># Create encrypted vars file
 ansible-vault create inventory/group_vars/vault.yml</code></pre>
-                        <pre class="bg-dark text-light p-3 rounded"><code># vault.yml contents
+                        <pre class="bg-body-secondary p-3 rounded"><code># vault.yml contents
 docker_tutum_master_key: "your-32-char-key-here-exactly!!"
 docker_tutum_jwt_secret: "another-32-char-secret-here!!!!"
 docker_tutum_db_password: "secure-database-password"</code></pre>
-                        <pre class="bg-dark text-light p-3 rounded"><code># Run with vault
+                        <pre class="bg-body-secondary p-3 rounded"><code># Run with vault
 ansible-playbook site.yml --ask-vault-pass</code></pre>
 
                         <div class="alert alert-warning mt-4">
@@ -1156,12 +1239,44 @@ ansible-playbook site.yml --ask-vault-pass</code></pre>
                                         <td>add_uuid_to_audit_logs</td>
                                         <td>Adds UUID primary key to audit_logs for better distributed system support</td>
                                     </tr>
-                                    <tr class="table-success">
+                                    <tr>
                                         <td><code>012</code></td>
                                         <td>add_is_effective_column</td>
                                         <td>
-                                            <strong>NEW in v4.2.0:</strong> Adds <code>is_effective</code> and <code>effective_since</code> columns for automatic certificate version activation based on validity windows.
+                                            Adds <code>is_effective</code> and <code>effective_since</code> columns for automatic certificate version activation based on validity windows.
                                             <br/><small class="text-muted">See <a href="engine.html#4-certificate-validity">Certificate Validity Management</a> in engine docs.</small>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>013</code></td>
+                                        <td>migrate_certificates_data</td>
+                                        <td>
+                                            Migrates data from old <code>certificates</code> table to new versioning tables (<code>certificate_metadata</code> + <code>certificate_versions</code>).
+                                            Idempotent - skips if already migrated.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>014</code></td>
+                                        <td>drop_certificates_table</td>
+                                        <td>
+                                            Drops the old <code>certificates</code> table after successful data migration.
+                                            Includes safety checks to prevent data loss.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>015</code></td>
+                                        <td>add_password_secret_reference</td>
+                                        <td>
+                                            Adds <code>password_secret_pid</code> column to <code>certificate_metadata</code> for X509 certificates with encrypted private keys.
+                                            Links X509 certificate to a password secret that stores the passphrase.
+                                        </td>
+                                    </tr>
+                                    <tr class="table-success">
+                                        <td><code>016</code></td>
+                                        <td>move_password_secret_to_versions</td>
+                                        <td>
+                                            <strong>NEW in v5.1.0:</strong> Adds <code>password_secret_version_pid</code> to <code>certificate_versions</code> for version-level password association.
+                                            X509 version N is linked to password_secret version N (synchronized versioning).
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1321,17 +1436,8 @@ WHERE is_effective = TRUE;</code></pre>
             if (savedDark) {
                 document.body.setAttribute('data-bs-theme', 'dark');
                 initMermaid('dark');
-                mermaid.run();
             }
 
-            // Re-render mermaid diagrams when switching tabs (for hidden diagrams)
-            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(tab) {
-                tab.addEventListener('shown.bs.tab', function() {
-                    setTimeout(function() {
-                        mermaid.run();
-                    }, 100);
-                });
-            });
         });
     </script>
 </body>

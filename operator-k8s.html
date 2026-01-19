@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Operator - Tutum Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        function initMermaid(theme) {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: theme || 'neutral',
+                flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+                sequence: { useMaxWidth: true }
+            });
+        }
+        initMermaid('neutral');
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">security</span>
+                </button>
+                <a class="navbar-brand d-flex align-items-center mb-0" href="index.html">
+                    <div>
+                        <div class="fw-bold">Tutum Platform</div>
+                        <small class="d-block" style="font-size: 0.75rem; opacity: 0.9;">X.509 Certificate Management</small>
+                    </div>
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#settingsMenu">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">settings</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">menu_book</span> Documentation</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="index.html"><span class="material-symbols-outlined me-2">home</span>Overview</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="architecture.html"><span class="material-symbols-outlined me-2">architecture</span>Architecture</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="engine.html"><span class="material-symbols-outlined me-2">dns</span>tutum-engine</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="netlib.html"><span class="material-symbols-outlined me-2">library_books</span>tutum-netlib</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link active d-flex align-items-center" href="operator-k8s.html"><span class="material-symbols-outlined me-2">smart_toy</span>Kubernetes Operator</a></li>
+                <li class="nav-item border-top mt-2 pt-2"><a class="nav-link d-flex align-items-center" href="cli.html"><span class="material-symbols-outlined me-2">terminal</span>tutum-admin-cli</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="cicd.html"><span class="material-symbols-outlined me-2">deployed_code</span>tutum-cicd</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="settingsMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title"><span class="material-symbols-outlined align-middle">settings</span> Settings</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="setting-item mb-4 pb-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">format_textdirection_r_to_l</span>RTL Mode</h6><small class="text-muted">Right-to-left text direction</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="rtlSwitch" onchange="toggleRTL()"></div>
+                </div>
+            </div>
+            <div class="setting-item mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><h6 class="mb-1"><span class="material-symbols-outlined align-middle me-2">dark_mode</span>Dark Mode</h6><small class="text-muted">Use dark color scheme</small></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active">Kubernetes Operator</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-primary mb-4">
+                <span class="material-symbols-outlined align-middle">smart_toy</span>
+                Kubernetes Operator (tutum-operator-k8s)
+            </h1>
+
+            <p class="lead">Kubernetes Operator for automatic synchronization of X.509 certificates from tutum-engine to Kubernetes Secrets</p>
+
+            <!-- Overview -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">info</span>
+                            Overview
+                        </h2>
+                        <p><strong>tutum-operator-k8s</strong> is a Kubernetes Operator that manages the lifecycle of X.509 certificates in Kubernetes. It introduces a custom resource <code>TutumCertificate</code> that declaratively defines which certificates should be synchronized from tutum-engine to Kubernetes Secrets.</p>
+
+                        <div class="alert alert-info d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">lightbulb</span>
+                            <div>
+                                <strong>Key Benefit:</strong> Unlike the CSI driver approach, the operator creates native Kubernetes Secrets that can be used by any workload without special volume configuration - including Ingress controllers, service meshes, and legacy applications.
+                            </div>
+                        </div>
+
+                        <h4 class="mt-4">Key Features</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Custom Resource Definition (CRD) for declarative management</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Automatic synchronization with configurable refresh interval</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Real-time updates via webhook notifications</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Tree mode for fetching all certificates by name</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Support for kubernetes.io/tls and Opaque secrets</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>gRPC communication with tutum-engine</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Channel and token-based authentication</li>
+                                    <li class="mb-2"><span class="material-symbols-outlined text-success me-2">check_circle</span>Status conditions and certificate expiry tracking</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">account_tree</span>
+                            Architecture
+                        </h2>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+graph TB
+    subgraph k8s["Kubernetes Cluster"]
+        subgraph ctrl["Control Plane"]
+            API["kube-apiserver"]
+            CRD["TutumCertificate<br/>CRD"]
+        end
+
+        subgraph op["tutum-operator-k8s"]
+            CTRL["Controller<br/>Manager"]
+            WH["Webhook<br/>Server :8082"]
+        end
+
+        SECRET["Kubernetes<br/>Secret"]
+        POD["Application<br/>Pod"]
+    end
+
+    REST["REST Client<br/>(curl, CI/CD)"]
+    ENGINE["tutum-engine<br/>REST :8080<br/>gRPC :9090"]
+
+    REST -->|"POST /certificates"| ENGINE
+    ENGINE -->|"webhook notification"| WH
+    WH -->|"trigger reconcile"| CTRL
+    CTRL -->|"gRPC GetCertificate"| ENGINE
+    CTRL -->|"watch TutumCertificate"| API
+    CTRL -->|"create/update Secret"| SECRET
+    POD -->|"mount secret"| SECRET
+    CRD --> API
+
+    style op fill:#e6f2ff,stroke:#3182ce,stroke-width:3px
+    style ENGINE fill:#e6ffe6,stroke:#48bb78,stroke-width:2px
+    style SECRET fill:#fff5e6,stroke:#ed8936,stroke-width:2px
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">sync</span> Synchronization Flow</h5>
+                            <p class="mb-0">The operator watches for TutumCertificate resources and reconciles them by fetching certificates from tutum-engine via gRPC. When tutum-engine receives a certificate update via REST API, it sends a webhook notification to the operator, triggering immediate reconciliation without waiting for the next polling interval.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Certificate Update Flow -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">swap_horiz</span>
+                            Certificate Update Flow
+                        </h2>
+                        <p>The following sequence diagram shows the complete flow when a certificate is created or updated:</p>
+
+                        <div class="mermaid">
+sequenceDiagram
+    participant Client as REST Client
+    participant Engine as tutum-engine
+    participant Webhook as Operator Webhook
+    participant Controller as Operator Controller
+    participant K8s as Kubernetes API
+    participant Pod as Application Pod
+
+    Client->>Engine: POST /api/v1/certificates
+    Engine->>Engine: Store certificate in DB
+    Engine-->>Client: 201 Created
+
+    Engine->>Webhook: POST /webhook/certificate-change
+    Note over Webhook: Async notification
+    Webhook->>Webhook: Find matching TutumCertificates
+    Webhook->>Controller: Trigger reconcile
+
+    Controller->>Engine: gRPC GetCertificate
+    Engine-->>Controller: Certificate data
+    Controller->>K8s: Create/Update Secret
+    K8s-->>Controller: Secret updated
+
+    K8s->>Pod: Volume refresh (if mounted)
+    Note over Pod: Certificate available
+                        </div>
+
+                        <h4 class="mt-4">Synchronization Triggers</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Trigger</th>
+                                    <th>Description</th>
+                                    <th>Latency</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-success">Webhook</span></td>
+                                    <td>tutum-engine sends notification when certificate changes</td>
+                                    <td>~100ms</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-primary">Polling</span></td>
+                                    <td>Periodic reconciliation based on <code>refreshInterval</code></td>
+                                    <td>configurable (default 5m)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info">CR Change</span></td>
+                                    <td>TutumCertificate resource is created or modified</td>
+                                    <td>immediate</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-warning">Secret Change</span></td>
+                                    <td>Managed Secret is modified externally (drift correction)</td>
+                                    <td>immediate</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TutumCertificate CRD -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">description</span>
+                            TutumCertificate Custom Resource
+                        </h2>
+
+                        <h4>Spec Fields</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>certificateName</code></td>
+                                    <td>string</td>
+                                    <td>Yes</td>
+                                    <td>Name of the certificate in tutum-engine</td>
+                                </tr>
+                                <tr>
+                                    <td><code>secretName</code></td>
+                                    <td>string</td>
+                                    <td>Yes</td>
+                                    <td>Name of the K8s Secret to create/update</td>
+                                </tr>
+                                <tr>
+                                    <td><code>groupId</code></td>
+                                    <td>string</td>
+                                    <td>Single mode</td>
+                                    <td>Group ID in tutum-engine (required when treeMode=false)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>namespace</code></td>
+                                    <td>string</td>
+                                    <td>Single mode</td>
+                                    <td>Tutum namespace (not K8s namespace)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>treeMode</code></td>
+                                    <td>boolean</td>
+                                    <td>No</td>
+                                    <td>Fetch all certificates with given name (default: false)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>refreshInterval</code></td>
+                                    <td>string</td>
+                                    <td>No</td>
+                                    <td>Polling interval (default: "5m")</td>
+                                </tr>
+                                <tr>
+                                    <td><code>secretType</code></td>
+                                    <td>string</td>
+                                    <td>No</td>
+                                    <td><code>kubernetes.io/tls</code> or <code>Opaque</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>includeCA</code></td>
+                                    <td>boolean</td>
+                                    <td>No</td>
+                                    <td>Include CA certificate chain (default: true)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>channel</code></td>
+                                    <td>string</td>
+                                    <td>No</td>
+                                    <td>Distribution channel (default: "default")</td>
+                                </tr>
+                                <tr>
+                                    <td><code>authToken</code></td>
+                                    <td>string</td>
+                                    <td>No</td>
+                                    <td>Authentication token for non-default channels</td>
+                                </tr>
+                                <tr>
+                                    <td><code>engineUrl</code></td>
+                                    <td>string</td>
+                                    <td>No</td>
+                                    <td>Override default tutum-engine URL</td>
+                                </tr>
+                                <tr>
+                                    <td><code>version</code></td>
+                                    <td>integer</td>
+                                    <td>No</td>
+                                    <td>Specific version to fetch (0 = latest)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>secretLabels</code></td>
+                                    <td>map</td>
+                                    <td>No</td>
+                                    <td>Additional labels for the Secret</td>
+                                </tr>
+                                <tr>
+                                    <td><code>secretAnnotations</code></td>
+                                    <td>map</td>
+                                    <td>No</td>
+                                    <td>Additional annotations for the Secret</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4 class="mt-4">Status Fields</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>lastSyncTime</code></td>
+                                    <td>Timestamp of last successful synchronization</td>
+                                </tr>
+                                <tr>
+                                    <td><code>currentVersion</code></td>
+                                    <td>Certificate version currently in the Secret</td>
+                                </tr>
+                                <tr>
+                                    <td><code>certificateExpiry</code></td>
+                                    <td>Expiration time of the certificate</td>
+                                </tr>
+                                <tr>
+                                    <td><code>certificateCount</code></td>
+                                    <td>Number of certificates (tree mode)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>conditions</code></td>
+                                    <td>Standard Kubernetes conditions (Synced, Ready, SecretCreated)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Examples -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">code</span>
+                            Examples
+                        </h2>
+
+                        <h4>Single Certificate Mode</h4>
+                        <p>Fetch a specific certificate by name, group, and namespace:</p>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: tutum.io/v1
+kind: TutumCertificate
+metadata:
+  name: my-app-cert
+  namespace: production
+spec:
+  certificateName: my-app-tls
+  secretName: my-app-tls-secret
+  groupId: "550e8400-e29b-41d4-a716-446655440000"
+  namespace: production
+  secretType: kubernetes.io/tls
+  refreshInterval: 5m
+  includeCA: true</code></pre>
+
+                        <h4 class="mt-4">Tree Mode</h4>
+                        <p>Fetch all certificates with a given name across all groups and namespaces:</p>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: tutum.io/v1
+kind: TutumCertificate
+metadata:
+  name: all-ksef-certs
+  namespace: certificates
+spec:
+  certificateName: ksef-digital-fp-cert
+  secretName: ksef-all-certs
+  treeMode: true
+  secretType: Opaque
+  refreshInterval: 10m</code></pre>
+                        <p class="text-muted">In tree mode, Secret keys are structured as: <code>{namespace}_{groupName}_{certName}.crt</code></p>
+
+                        <h4 class="mt-4">With Channel Authentication</h4>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: tutum.io/v1
+kind: TutumCertificate
+metadata:
+  name: secure-channel-cert
+  namespace: secure-apps
+spec:
+  certificateName: api-gateway-tls
+  secretName: api-gateway-secret
+  groupId: "group-uuid"
+  namespace: secure
+  channel: secure-channel
+  authToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  secretType: kubernetes.io/tls</code></pre>
+
+                        <h4 class="mt-4">Using the Secret in a Pod</h4>
+                        <pre class="bg-light p-3 rounded"><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app
+spec:
+  containers:
+  - name: app
+    image: my-app:latest
+    volumeMounts:
+    - name: tls-certs
+      mountPath: /etc/tls
+      readOnly: true
+  volumes:
+  - name: tls-certs
+    secret:
+      secretName: my-app-tls-secret</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CSI vs Operator Comparison -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">compare</span>
+                            CSI Driver vs Operator Comparison
+                        </h2>
+
+                        <p>Both approaches integrate with tutum-engine but serve different use cases:</p>
+
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Aspect</th>
+                                    <th><span class="material-symbols-outlined align-middle">cloud</span> CSI Driver</th>
+                                    <th><span class="material-symbols-outlined align-middle">smart_toy</span> Operator</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Certificate Storage</strong></td>
+                                    <td>tmpfs (memory only, ephemeral)</td>
+                                    <td>Kubernetes Secret (etcd, persistent)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Configuration</strong></td>
+                                    <td>PVC + StorageClass + volumeAttributes</td>
+                                    <td>Custom Resource (TutumCertificate)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Security Model</strong></td>
+                                    <td>Highest - never written to disk</td>
+                                    <td>Standard K8s Secret encryption (etcd)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Use with Ingress</strong></td>
+                                    <td><span class="text-danger">Not supported</span></td>
+                                    <td><span class="text-success">Native support</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Service Mesh (Istio)</strong></td>
+                                    <td>Requires workarounds</td>
+                                    <td><span class="text-success">Native support</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Certificate Refresh</strong></td>
+                                    <td>In-place file update</td>
+                                    <td>Secret update + pod restart (configurable)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Real-time Updates</strong></td>
+                                    <td>Watch stream (gRPC)</td>
+                                    <td>Webhook notifications</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Multiple Pods Sharing</strong></td>
+                                    <td>Each pod mounts separately</td>
+                                    <td>Single Secret, multiple pod mounts</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Audit Trail</strong></td>
+                                    <td>Per-pod mount tracking</td>
+                                    <td>CR-level tracking</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Backup/Restore</strong></td>
+                                    <td>Not applicable (ephemeral)</td>
+                                    <td>Standard K8s backup tools work</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>GitOps Friendly</strong></td>
+                                    <td>PVC manifests only</td>
+                                    <td><span class="text-success">Full declarative CRD</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4 class="mt-4">When to Use CSI Driver</h4>
+                        <ul>
+                            <li>Maximum security requirements (certificates never persisted)</li>
+                            <li>Applications that can handle in-place certificate file updates</li>
+                            <li>Direct pod-to-certificate binding with fine-grained audit</li>
+                            <li>Environments where etcd encryption is not configured</li>
+                        </ul>
+
+                        <h4 class="mt-4">When to Use Operator</h4>
+                        <ul>
+                            <li>Ingress controller TLS termination</li>
+                            <li>Service mesh integration (Istio, Linkerd)</li>
+                            <li>Legacy applications expecting standard K8s Secrets</li>
+                            <li>GitOps workflows with declarative configuration</li>
+                            <li>Sharing certificates across multiple pods efficiently</li>
+                            <li>Environments with existing Secret management workflows</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Installation -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">download</span>
+                            Installation
+                        </h2>
+
+                        <h4>Prerequisites</h4>
+                        <ul>
+                            <li>Kubernetes 1.21+</li>
+                            <li>tutum-engine running and accessible via gRPC</li>
+                            <li>kubectl configured with cluster admin access</li>
+                        </ul>
+
+                        <h4 class="mt-4">Deploy CRD</h4>
+                        <pre class="bg-light p-3 rounded"><code>kubectl apply -f config/crd/tutum.io_tutumcertificates.yaml</code></pre>
+
+                        <h4 class="mt-4">Deploy Operator</h4>
+                        <pre class="bg-light p-3 rounded"><code>kubectl apply -f config/manager/deployment.yaml</code></pre>
+
+                        <h4 class="mt-4">Enable Webhooks in tutum-engine</h4>
+                        <p>Configure tutum-engine to send webhook notifications:</p>
+                        <pre class="bg-light p-3 rounded"><code># In tutum-engine deployment
+env:
+  - name: WEBHOOK_ENABLED
+    value: "true"
+  - name: WEBHOOK_ENDPOINTS
+    value: "http://tutum-operator-webhook.tutum-system.svc:8082/webhook/certificate-change"</code></pre>
+
+                        <h4 class="mt-4">Verify Installation</h4>
+                        <pre class="bg-light p-3 rounded"><code># Check operator is running
+kubectl get pods -n tutum-system -l app.kubernetes.io/name=tutum-operator
+
+# Check CRD is installed
+kubectl get crd tutumcertificates.tutum.io
+
+# Check webhook service
+kubectl get svc tutum-operator-webhook -n tutum-system</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configuration -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">settings</span>
+                            Configuration
+                        </h2>
+
+                        <h4>Operator Flags</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Flag</th>
+                                    <th>Default</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>--tutum-engine-url</code></td>
+                                    <td>tutum-engine.tutum-system.svc:9090</td>
+                                    <td>gRPC address of tutum-engine</td>
+                                </tr>
+                                <tr>
+                                    <td><code>--sync-interval</code></td>
+                                    <td>5m</td>
+                                    <td>Default refresh interval for certificates</td>
+                                </tr>
+                                <tr>
+                                    <td><code>--webhook-bind-address</code></td>
+                                    <td>:8082</td>
+                                    <td>Address for webhook server</td>
+                                </tr>
+                                <tr>
+                                    <td><code>--metrics-bind-address</code></td>
+                                    <td>:8080</td>
+                                    <td>Address for metrics endpoint</td>
+                                </tr>
+                                <tr>
+                                    <td><code>--health-probe-bind-address</code></td>
+                                    <td>:8081</td>
+                                    <td>Address for health probes</td>
+                                </tr>
+                                <tr>
+                                    <td><code>--leader-elect</code></td>
+                                    <td>false</td>
+                                    <td>Enable leader election for HA</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4 class="mt-4">tutum-engine Webhook Configuration</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Environment Variable</th>
+                                    <th>Default</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>WEBHOOK_ENABLED</code></td>
+                                    <td>false</td>
+                                    <td>Enable webhook notifications</td>
+                                </tr>
+                                <tr>
+                                    <td><code>WEBHOOK_ENDPOINTS</code></td>
+                                    <td>-</td>
+                                    <td>Comma-separated list of webhook URLs</td>
+                                </tr>
+                                <tr>
+                                    <td><code>WEBHOOK_RETRY_ATTEMPTS</code></td>
+                                    <td>3</td>
+                                    <td>Number of retry attempts</td>
+                                </tr>
+                                <tr>
+                                    <td><code>WEBHOOK_RETRY_INTERVAL</code></td>
+                                    <td>5s</td>
+                                    <td>Interval between retries</td>
+                                </tr>
+                                <tr>
+                                    <td><code>WEBHOOK_TIMEOUT</code></td>
+                                    <td>10s</td>
+                                    <td>HTTP request timeout</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Webhook API -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">webhook</span>
+                            Webhook API
+                        </h2>
+
+                        <h4>Endpoint</h4>
+                        <pre class="bg-light p-3 rounded"><code>POST /webhook/certificate-change</code></pre>
+
+                        <h4 class="mt-4">Request Payload</h4>
+                        <pre class="bg-light p-3 rounded"><code>{
+  "certificateName": "my-app-tls",
+  "groupId": "550e8400-e29b-41d4-a716-446655440000",
+  "namespace": "production",
+  "action": "updated",
+  "version": 5,
+  "channel": "default",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "certificateId": "cert-uuid",
+  "type": "X509"
+}</code></pre>
+
+                        <h4 class="mt-4">Response</h4>
+                        <pre class="bg-light p-3 rounded"><code>{
+  "status": "ok",
+  "message": "Triggered reconciliation for 2 resources",
+  "affected": 2
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Troubleshooting -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">bug_report</span>
+                            Troubleshooting
+                        </h2>
+
+                        <h4>Check TutumCertificate Status</h4>
+                        <pre class="bg-light p-3 rounded"><code>kubectl get tutumcertificates -A
+kubectl describe tutumcertificate my-app-cert -n production</code></pre>
+
+                        <h4 class="mt-4">View Operator Logs</h4>
+                        <pre class="bg-light p-3 rounded"><code>kubectl logs -n tutum-system -l app.kubernetes.io/name=tutum-operator -f</code></pre>
+
+                        <h4 class="mt-4">Common Issues</h4>
+                        <div class="accordion" id="troubleshootingAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#issue1">
+                                        Certificate not syncing
+                                    </button>
+                                </h2>
+                                <div id="issue1" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li>Verify tutum-engine is accessible: <code>kubectl exec -it operator-pod -- nc -zv tutum-engine.tutum-system.svc 9090</code></li>
+                                            <li>Check TutumCertificate conditions for errors</li>
+                                            <li>Verify groupId and namespace match exactly in tutum-engine</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#issue2">
+                                        Webhook not triggering
+                                    </button>
+                                </h2>
+                                <div id="issue2" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li>Verify WEBHOOK_ENABLED=true in tutum-engine</li>
+                                            <li>Check webhook service is accessible: <code>kubectl get svc tutum-operator-webhook -n tutum-system</code></li>
+                                            <li>Check tutum-engine logs for webhook delivery errors</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#issue3">
+                                        Tree mode only shows some certificates
+                                    </button>
+                                </h2>
+                                <div id="issue3" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li>Tree mode fetches all certificates with matching <code>certificateName</code></li>
+                                            <li>Certificates with different names in different groups won't be included</li>
+                                            <li>Check tutum-engine REST API: <code>GET /api/v1/certificates?name=&lt;name&gt;</code></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-1 text-muted">&copy; 2024 Tutum Platform. All rights reserved.</p>
+            <small class="text-muted">Enterprise X.509 Certificate Management</small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="settings.js"></script>
+</body>
+</html>

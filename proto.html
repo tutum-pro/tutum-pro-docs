@@ -57,6 +57,7 @@
                 <li class="nav-item"><a class="nav-link active d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="operator-k8s.html"><span class="material-symbols-outlined me-2">smart_toy</span>Kubernetes Operator</a></li>
                 <li class="nav-item border-top mt-2 pt-2"><a class="nav-link d-flex align-items-center" href="cli.html"><span class="material-symbols-outlined me-2">terminal</span>tutum-admin-cli</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="cicd.html"><span class="material-symbols-outlined me-2">deployed_code</span>tutum-cicd</a></li>
             </ul>
@@ -247,8 +248,15 @@ service CertificateService {
 }</code></pre>
 
                         <h3 class="h5 mt-4">GetCertificateResponse</h3>
+                        <div class="alert alert-warning mb-2" role="alert">
+                            <span class="material-symbols-outlined me-2">warning</span>
+                            <strong>Breaking Change (v1.5.0):</strong> Response changed from singular <code>certificate</code> to <code>repeated certificates</code> for semantic consistency support.
+                        </div>
                         <pre class="bg-light p-3 rounded"><code>message GetCertificateResponse {
-  Certificate certificate = 1;
+  // Returns 0-2 certificates with is_effective=true
+  // Semantic consistency: X509 and secret with same name/group/namespace
+  // are returned together in a single response
+  repeated Certificate certificates = 1;
 }
 
 message Certificate {
@@ -258,14 +266,17 @@ message Certificate {
   string group_name = 4;              // Group name
   string namespace = 5;               // Namespace
   int32 version = 6;                  // Version number
-  CertificateStatus status = 7;       // Current status
-  string certificate_pem = 8;         // PEM-encoded certificate
-  string private_key_pem = 9;         // PEM-encoded private key
-  string ca_chain_pem = 10;           // PEM-encoded CA chain
-  X509Metadata x509_metadata = 11;    // X.509 metadata
-  google.protobuf.Timestamp created_at = 12;
-  google.protobuf.Timestamp updated_at = 13;
-  map<string, string> custom_metadata = 14;
+  CertificateType type = 7;           // X509 or SECRET
+  CertificateStatus status = 8;       // Current status
+  string certificate_pem = 9;         // PEM-encoded certificate (or secret data)
+  string private_key_pem = 10;        // PEM-encoded private key (empty for secrets)
+  string ca_chain_pem = 11;           // PEM-encoded CA chain
+  X509Metadata x509_metadata = 12;    // X.509 metadata (null for secrets)
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp updated_at = 14;
+  map<string, string> custom_metadata = 15;
+  bool is_effective = 16;             // Whether this is the effective version
+  google.protobuf.Timestamp effective_since = 17; // When version became effective
 }</code></pre>
 
                         <h3 class="h5 mt-4">X509Metadata</h3>

@@ -57,6 +57,7 @@
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="proto.html"><span class="material-symbols-outlined me-2">code</span>Protocol Buffers</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-docker.html"><span class="material-symbols-outlined me-2">storage</span>Docker CSI Driver</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="csi-k8s.html"><span class="material-symbols-outlined me-2">cloud</span>Kubernetes CSI Driver</a></li>
+                <li class="nav-item"><a class="nav-link d-flex align-items-center" href="operator-k8s.html"><span class="material-symbols-outlined me-2">smart_toy</span>Kubernetes Operator</a></li>
                 <li class="nav-item border-top mt-2 pt-2"><a class="nav-link d-flex align-items-center" href="cli.html"><span class="material-symbols-outlined me-2">terminal</span>tutum-admin-cli</a></li>
                 <li class="nav-item"><a class="nav-link d-flex align-items-center" href="cicd.html"><span class="material-symbols-outlined me-2">deployed_code</span>tutum-cicd</a></li>
             </ul>
@@ -510,7 +511,7 @@ sequenceDiagram
                             <p class="mb-0">Finally, the API returns a 201 Created response with the certificate details (excluding the decrypted private key in the response for security).</p>
                         </div>
 
-                        <h3 class="h5 mt-4">Request Payload</h3>
+                        <h3 class="h5 mt-4">Request Payload (X509)</h3>
                         <pre class="bg-light p-3 rounded"><code>{
   "name": "my-app-cert",
   "group_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -519,9 +520,12 @@ sequenceDiagram
   "channel_id": "660e8400-e29b-41d4-a716-446655440001",
   "channel_name": "internal",          // Alternative to channel_id
   "type": "X509",
-  "certificate_pem": "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----",
-  "private_key_pem": "-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----",
-  "ca_chain_pem": "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----",
+  "x509": {
+    "certificate": "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----",
+    "ca_chain": "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----",
+    "password": "optional-passphrase"  // Optional: for encrypted private keys
+  },
   "custom_metadata": {
     "environment": "production",
     "team": "platform",
@@ -553,6 +557,46 @@ sequenceDiagram
                                 </tbody>
                             </table>
                         </div>
+
+                        <h3 class="h5 mt-4">Response Payload (X509)</h3>
+                        <pre class="bg-light p-3 rounded"><code>{
+  "certificate": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "my-app-cert",
+    "group_id": "660e8400-e29b-41d4-a716-446655440001",
+    "group_name": "production",
+    "namespace": "default",
+    "type": "X509",
+    "version": 1,
+    "status": "ACTIVE",
+    "days_until_expiry": 365,
+    "is_effective": true,
+    "effective_since": "2026-01-19T10:00:00Z",
+    "x509": {
+      "certificate": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+      "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----",
+      "ca_chain": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+      "subject": "CN=my-app.example.com,O=Example Inc",
+      "issuer": "CN=Example CA,O=Example Inc",
+      "serial_number": "1234567890abcdef",
+      "not_before": "2026-01-19T00:00:00Z",
+      "not_after": "2027-01-19T00:00:00Z",
+      "fingerprint_sha256": "ab:cd:ef:...",
+      "subject_alt_names": ["my-app.example.com", "*.example.com"],
+      "key_usage": ["Digital Signature", "Key Encipherment"],
+      "extended_key_usage": ["TLS Web Server Authentication"],
+      "is_ca": false,
+      "password": "optional-passphrase"  // Only present if password was set
+    },
+    "custom_metadata": {
+      "environment": "production"
+    },
+    "created_at": "2026-01-19T10:00:00Z",
+    "created_by": "admin@example.com",
+    "updated_at": "2026-01-19T10:00:00Z"
+  },
+  "status": "success"
+}</code></pre>
 
                         <h3 class="h5 mt-4">Versioning</h3>
                         <p>Each certificate update creates a new version:</p>
@@ -1399,6 +1443,234 @@ GetCertificate(name: "my-app-password", group_id: "...", namespace: "...")
                             <span class="material-symbols-outlined me-2">tips_and_updates</span>
                             <div>
                                 <strong>Best Practice:</strong> When storing secrets that are related to X.509 certificates (like private key passphrases), use the same <code>name</code>, <code>namespace</code>, and <code>group</code> to automatically link their lifecycles. This ensures secrets don't outlive their associated certificates.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1.5 Semantic Consistency -->
+            <section class="mb-5">
+                <div class="card shadow-sm border-info">
+                    <div class="card-header bg-info text-white">
+                        <h2 class="card-title mb-0">
+                            <span class="material-symbols-outlined align-middle">link</span>
+                            1.5 Semantic Consistency
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">lightbulb</span>
+                            <div>
+                                <strong>Key Principle:</strong> X509 certificate and its associated secret (e.g., password) share the same <code>name</code>, <code>namespace</code>, and <code>group</code>. They differ only by the <code>type</code> field.
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Database Constraint</h3>
+                        <pre class="bg-light p-3 rounded"><code>UNIQUE (name, group_pid, namespace_pid, type)</code></pre>
+                        <p>This constraint enables coexistence of:</p>
+                        <ul>
+                            <li><code>(my-cert, group-1, ns-1, X509)</code> - X509 certificate</li>
+                            <li><code>(my-cert, group-1, ns-1, secret)</code> - associated secret (e.g., password)</li>
+                        </ul>
+
+                        <h3 class="h5 mt-4">GetCertificate Returns Both</h3>
+                        <p>Calling <code>GetCertificate("my-cert", group, namespace)</code> returns an <strong>array of 0-2 certificates</strong>:</p>
+                        <ul>
+                            <li>X509 certificate (if exists and <code>is_effective=true</code>)</li>
+                            <li>Secret (if exists and <code>is_effective=true</code>)</li>
+                        </ul>
+                        <div class="alert alert-warning mt-2" role="alert">
+                            <span class="material-symbols-outlined me-2">warning</span>
+                            <strong>Breaking Change (v1.5.0):</strong> <code>GetCertificateResponse</code> changed from singular <code>certificate</code> to <code>repeated certificates</code>.
+                        </div>
+
+                        <h3 class="h5 mt-4">X509 with Password</h3>
+                        <p>When creating X509 with <code>password</code> field:</p>
+                        <pre class="bg-light p-3 rounded"><code>POST /api/v1/certificates
+{
+  "name": "my-cert",
+  "group_id": "...",
+  "namespace": "production",
+  "x509": {
+    "certificate": "-----BEGIN CERTIFICATE-----...",
+    "private_key": "-----BEGIN ENCRYPTED PRIVATE KEY-----...",
+    "password": "my-secret-password"
+  }
+}</code></pre>
+                        <p>The system automatically creates:</p>
+                        <ol>
+                            <li>X509 certificate: <code>(my-cert, group, ns, X509)</code></li>
+                            <li>Password secret: <code>(my-cert, group, ns, secret)</code> - <strong>same name!</strong></li>
+                        </ol>
+
+                        <h3 class="h5 mt-4">Mounted Files (CSI Driver)</h3>
+                        <p>When X509 and secret share the same name, <strong>both are mounted together</strong>:</p>
+                        <pre class="bg-light p-3 rounded"><code>/etc/ssl/certs/my-app/
+├── my-cert.crt       # X509 Certificate (PEM)
+├── my-cert.key       # X509 Private key (PEM)
+├── my-cert-ca.crt    # X509 CA chain (PEM)
+└── my-cert.txt       # Secret data (e.g., password)</code></pre>
+
+                        <div class="alert alert-danger d-flex align-items-start mt-4" role="alert">
+                            <span class="material-symbols-outlined me-2">error</span>
+                            <div>
+                                <strong>Conflict Warning:</strong> If a secret with the same name already exists when creating X509 with password, the operation will fail. The existing secret blocks automatic password secret creation.
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">PUT vs PATCH - Update Semantics</h3>
+                        <p>The API supports two update methods following REST semantics:</p>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-primary mb-3 h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <strong>PUT</strong> - Full Update
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Replaces the entire certificate content. All provided fields are updated.</p>
+                                        <pre class="bg-light p-2 rounded"><code>PUT /api/v1/certificates/{id}
+{
+  "x509": {
+    "certificate": "-----BEGIN CERTIFICATE-----...",
+    "private_key": "-----BEGIN PRIVATE KEY-----...",
+    "ca_chain": "-----BEGIN CERTIFICATE-----...",
+    "password": "new-password"
+  }
+}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-success mb-3 h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <strong>PATCH</strong> - Partial Update
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Updates only provided fields. Non-provided fields retain their current values.</p>
+                                        <pre class="bg-light p-2 rounded"><code>PATCH /api/v1/certificates/{id}
+{
+  "x509": {
+    "password": "new-password"
+  }
+}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="h6 mt-3">PATCH Request Examples</h4>
+                        <p>Each field can be updated independently:</p>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Scenario</th><th>Payload</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Update certificate only</td>
+                                        <td><code>{"x509": {"certificate": "-----BEGIN CERTIFICATE-----..."}}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Update private key only</td>
+                                        <td><code>{"x509": {"private_key": "-----BEGIN PRIVATE KEY-----..."}}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Update CA chain only</td>
+                                        <td><code>{"x509": {"ca_chain": "-----BEGIN CERTIFICATE-----..."}}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Update password only</td>
+                                        <td><code>{"x509": {"password": "new-passphrase"}}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Update secret data</td>
+                                        <td><code>{"secret": {"data": "new-secret-value"}}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Update custom metadata</td>
+                                        <td><code>{"custom_metadata": {"env": "production"}}</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info d-flex align-items-start mt-3" role="alert">
+                            <span class="material-symbols-outlined me-2">info</span>
+                            <div>
+                                <strong>Version Creation:</strong> Both PUT and PATCH create a new version when content changes (certificate, private_key, ca_chain, password, or secret data). Metadata-only changes (custom_metadata) do not create new versions.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1.6 Effective Version Management -->
+            <section class="mb-5">
+                <div class="card shadow-sm border-success">
+                    <div class="card-header bg-success text-white">
+                        <h2 class="card-title mb-0">
+                            <span class="material-symbols-outlined align-middle">check_circle</span>
+                            1.6 Effective Version Management (is_effective)
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Each certificate can have multiple versions, but only one is <strong>effective</strong> at any given time.</p>
+
+                        <h3 class="h5 mt-4">Version Fields</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>is_effective</code></td><td>boolean</td><td>Whether this version is currently active</td></tr>
+                                    <tr><td><code>effective_since</code></td><td>timestamp</td><td>When this version became effective</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="h5 mt-4">Selection Algorithm</h3>
+                        <ol>
+                            <li>Version must have <code>status = ACTIVE</code> (<code>not_before ≤ now ≤ not_after</code>)</li>
+                            <li>Among active versions, the one with the highest version number is selected</li>
+                            <li>Scheduler periodically recalculates effective versions</li>
+                        </ol>
+
+                        <h3 class="h5 mt-4">Version Lifecycle</h3>
+                        <div class="architecture-diagram">
+                            <div class="mermaid">
+stateDiagram-v2
+    [*] --> PENDING: Created with future not_before
+    [*] --> ACTIVE: Created with current validity
+    PENDING --> ACTIVE: not_before reached
+    ACTIVE --> EXPIRED: not_after passed
+    ACTIVE --> REVOKED: Manual revocation
+    PENDING --> REVOKED: Manual revocation
+    EXPIRED --> [*]
+    REVOKED --> [*]
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">API Filtering</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-primary">
+                                    <tr><th>Parameter</th><th>Default</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>include_all=false</code></td><td>Yes</td><td>Returns only <code>is_effective=true</code> certificates</td></tr>
+                                    <tr><td><code>include_all=true</code></td><td>No</td><td>Returns all versions regardless of effective status</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info d-flex align-items-start mt-4" role="alert">
+                            <span class="material-symbols-outlined me-2">info</span>
+                            <div>
+                                <strong>CSI Driver Behavior:</strong> CSI drivers use <code>include_all=false</code> by default, ensuring only effective certificate versions are mounted to containers.
                             </div>
                         </div>
                     </div>
@@ -2451,7 +2723,8 @@ tutum_rate_limiter_queue_depth{workload="my-service"}</code></pre>
                                     <tr><td><code>/api/v1/certificates</code></td><td>POST</td><td>Create certificate</td></tr>
                                     <tr><td><code>/api/v1/certificates</code></td><td>GET</td><td>List certificates with filters</td></tr>
                                     <tr><td><code>/api/v1/certificates/{name}</code></td><td>GET</td><td>Get certificate (optionally specific version)</td></tr>
-                                    <tr><td><code>/api/v1/certificates/{name}</code></td><td>PUT</td><td>Update certificate (creates new version)</td></tr>
+                                    <tr><td><code>/api/v1/certificates/{name}</code></td><td>PUT</td><td>Full update certificate (creates new version)</td></tr>
+                                    <tr><td><code>/api/v1/certificates/{name}</code></td><td>PATCH</td><td>Partial update certificate (creates new version)</td></tr>
                                     <tr><td><code>/api/v1/certificates/{name}</code></td><td>DELETE</td><td>Delete certificate</td></tr>
                                     <tr><td><code>/api/v1/certificates/{name}/invalidate</code></td><td>POST</td><td>Invalidate certificate</td></tr>
                                     <tr><td><code>/api/v1/certificates/{name}/status</code></td><td>GET</td><td>Get certificate status</td></tr>
@@ -2688,6 +2961,7 @@ const (
     KeyUsage          []string  // Key usage extensions
     ExtendedKeyUsage  []string  // Extended key usage
     IsCA              bool      // Is certificate authority
+    Password          string    // Password for encrypted private key (optional)
 }</code></pre>
 
                         <h3 class="h5 mt-4">Group</h3>
@@ -3011,6 +3285,122 @@ export TOKEN_CHECKER_CRON="* * * * *"  # Every minute</code></pre>
                             <li><code>ACTIVATE</code>, <code>DEACTIVATE</code>, <code>EXPIRE</code> - Status transitions</li>
                             <li><code>REVOKE</code> - Token revocation</li>
                         </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Webhook Notifications for Kubernetes Operator -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">webhook</span>
+                            Webhook Notifications (tutum-operator-k8s Integration)
+                        </h2>
+
+                        <p>tutum-engine supports webhook notifications for real-time certificate change propagation to the <a href="operator-k8s.html">Kubernetes Operator</a>. When a certificate is created, updated, or deleted, tutum-engine can notify external systems immediately.</p>
+
+                        <div class="alert alert-info d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">sync</span>
+                            <div>
+                                <strong>Real-time Sync:</strong> Webhooks enable the Kubernetes Operator to update Secrets within milliseconds of a certificate change, without waiting for the polling interval.
+                            </div>
+                        </div>
+
+                        <h3 class="h5 mt-4">Architecture Flow</h3>
+                        <div class="mermaid">
+sequenceDiagram
+    participant Client as REST Client
+    participant Engine as tutum-engine
+    participant Webhook as Operator Webhook
+    participant Controller as Operator Controller
+    participant K8s as Kubernetes API
+    participant Pod as Application Pod
+
+    Client->>Engine: POST /api/v1/certificates
+    Engine->>Engine: Store certificate in DB
+    Engine-->>Client: 201 Created
+
+    Engine->>Webhook: POST /webhook/certificate-change
+    Note over Webhook: Async, with retry
+    Webhook->>Controller: Trigger reconcile
+    Controller->>Engine: gRPC GetCertificate
+    Engine-->>Controller: Certificate data
+    Controller->>K8s: Update Secret
+    K8s->>Pod: Volume refresh
+                        </div>
+
+                        <h3 class="h5 mt-4">Webhook Configuration</h3>
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Environment Variable</th>
+                                    <th>Default</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>WEBHOOK_ENABLED</code></td>
+                                    <td><code>false</code></td>
+                                    <td>Enable webhook notifications</td>
+                                </tr>
+                                <tr>
+                                    <td><code>WEBHOOK_ENDPOINTS</code></td>
+                                    <td>-</td>
+                                    <td>Comma-separated list of webhook URLs</td>
+                                </tr>
+                                <tr>
+                                    <td><code>WEBHOOK_RETRY_ATTEMPTS</code></td>
+                                    <td><code>3</code></td>
+                                    <td>Number of retry attempts on failure</td>
+                                </tr>
+                                <tr>
+                                    <td><code>WEBHOOK_RETRY_INTERVAL</code></td>
+                                    <td><code>5s</code></td>
+                                    <td>Interval between retry attempts</td>
+                                </tr>
+                                <tr>
+                                    <td><code>WEBHOOK_TIMEOUT</code></td>
+                                    <td><code>10s</code></td>
+                                    <td>HTTP request timeout</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3 class="h5 mt-4">Example Configuration</h3>
+                        <pre class="bg-light p-3 rounded"><code># Enable webhooks for Kubernetes Operator
+WEBHOOK_ENABLED=true
+WEBHOOK_ENDPOINTS=http://tutum-operator-webhook.tutum-system.svc:8082/webhook/certificate-change
+
+# Optional: Multiple endpoints
+WEBHOOK_ENDPOINTS=http://operator1.svc:8082/webhook,http://operator2.svc:8082/webhook</code></pre>
+
+                        <h3 class="h5 mt-4">Webhook Payload</h3>
+                        <p>tutum-engine sends a POST request with the following JSON payload:</p>
+                        <pre class="bg-light p-3 rounded"><code>{
+  "certificateName": "my-app-tls",
+  "groupId": "550e8400-e29b-41d4-a716-446655440000",
+  "namespace": "production",
+  "action": "updated",
+  "version": 5,
+  "channel": "default",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "certificateId": "cert-uuid",
+  "type": "X509"
+}</code></pre>
+
+                        <p><strong>Action Values:</strong></p>
+                        <ul>
+                            <li><code>created</code> - New certificate was created</li>
+                            <li><code>updated</code> - Existing certificate was updated (new version)</li>
+                            <li><code>deleted</code> - Certificate was deleted</li>
+                        </ul>
+
+                        <div class="alert alert-secondary mt-3" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">info</span> See Also</h5>
+                            <p class="mb-0">For complete documentation on the Kubernetes Operator including installation, CRD reference, and CSI comparison, see <a href="operator-k8s.html">tutum-operator-k8s Documentation</a>.</p>
+                        </div>
                     </div>
                 </div>
             </section>

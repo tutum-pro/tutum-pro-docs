@@ -484,6 +484,14 @@ ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init \
   -e k8s_tutum_init_injection_mode=operator \
   -e k8s_tutum_init_distribution=microk8s
 
+# Production setup: Operator + CNPG + Ingress (recommended for production)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init \
+  -e k8s_tutum_init_injection_mode=operator \
+  -e k8s_tutum_init_distribution=microk8s \
+  -e k8s_tutum_init_db_mode=cnpg \
+  -e k8s_tutum_rest_base_path=/instance1/api \
+  -e k8s_tutum_init_ingress_enabled=true
+
 # Run the generated playbook
 ansible-playbook -i inventory/k8s.ini tutum-k8s-install.yml
 
@@ -992,6 +1000,211 @@ EOF</code></pre>
                             </div>
                         </div>
 
+                        <!-- k8s_tutum_manifests -->
+                        <div class="card mt-4 border-info">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_manifests</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Generates static Kubernetes YAML manifests for Tutum Platform deployment. Outputs files to a specified directory for GitOps workflows, manual review, or custom deployment pipelines.</p>
+                                <h6>Usage</h6>
+<pre class="bg-body-secondary p-3 rounded"><code># Basic usage (embedded PostgreSQL + operator)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_manifests \
+  -e k8s_tutum_manifests_output_path=./manifests
+
+# Production setup (CNPG + operator)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_manifests \
+  -e k8s_tutum_manifests_output_path=./manifests \
+  -e k8s_tutum_manifests_db_mode=cnpg \
+  -e k8s_tutum_manifests_injection_mode=operator
+
+# OpenShift with Route and Ingress
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_manifests \
+  -e k8s_tutum_manifests_output_path=./manifests \
+  -e k8s_distribution=openshift \
+  -e k8s_tutum_manifests_ingress_enabled=true \
+  -e k8s_tutum_engine_route_host=tutum.apps.example.com \
+  -e k8s_tutum_rest_base_path=/api
+
+# Apply generated manifests
+kubectl apply -k ./manifests</code></pre>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>k8s_tutum_manifests_output_path</code></td><td><code>./manifests</code></td><td>Output directory for generated manifests</td></tr>
+                                            <tr><td><code>k8s_tutum_manifests_create_dir</code></td><td><code>true</code></td><td>Create output directory if not exists</td></tr>
+                                            <tr><td><code>k8s_tutum_manifests_overwrite</code></td><td><code>false</code></td><td>Overwrite existing files</td></tr>
+                                            <tr><td><code>k8s_tutum_manifests_db_mode</code></td><td><code>embedded</code></td><td>Database mode: <code>embedded</code>, <code>cnpg</code>, <code>external</code></td></tr>
+                                            <tr><td><code>k8s_tutum_manifests_injection_mode</code></td><td><code>operator</code></td><td>Injection mode: <code>csi</code> or <code>operator</code></td></tr>
+                                            <tr><td><code>k8s_tutum_manifests_ingress_enabled</code></td><td><code>false</code></td><td>Generate Ingress/Route manifests</td></tr>
+                                            <tr><td><code>k8s_distribution</code></td><td><code>standard</code></td><td>K8s distribution: <code>standard</code>, <code>microk8s</code>, <code>k3s</code>, <code>rke2</code>, <code>openshift</code></td></tr>
+                                            <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Namespace for Tutum components</td></tr>
+                                            <tr><td><code>k8s_tutum_rest_base_path</code></td><td><code>""</code></td><td>REST API base path (for multi-instance deployments)</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_route_host</code></td><td><code>""</code></td><td>OpenShift Route/Ingress hostname</td></tr>
+                                            <tr><td><code>k8s_tutum_master_key</code></td><td>auto-generated</td><td>AES-256 master key (32 chars)</td></tr>
+                                            <tr><td><code>k8s_tutum_jwt_secret</code></td><td>auto-generated</td><td>JWT signing secret (32 chars)</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <h6 class="mt-3">Generated Files</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>File</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>00-namespace.yml</code></td><td>Tutum namespace</td></tr>
+                                            <tr><td><code>10-*.yml</code></td><td>Database manifests (PostgreSQL or CNPG)</td></tr>
+                                            <tr><td><code>20-engine-*.yml</code></td><td>Tutum Engine manifests (ConfigMap, Secret, RBAC, Deployment, Service)</td></tr>
+                                            <tr><td><code>25-engine-ingress.yml</code></td><td>Ingress (all distributions, with OpenShift HAProxy annotations)</td></tr>
+                                            <tr><td><code>26-engine-route.yml</code></td><td>OpenShift Route (only for openshift distribution)</td></tr>
+                                            <tr><td><code>30-csi-*.yml</code></td><td>CSI driver manifests (when injection_mode=csi)</td></tr>
+                                            <tr><td><code>30-operator-*.yml</code></td><td>Operator manifests (when injection_mode=operator)</td></tr>
+                                            <tr><td><code>kustomization.yaml</code></td><td>Kustomize configuration for <code>kubectl apply -k</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> OpenShift Support</h6>
+                                    <p class="mb-0">
+                                        When <code>k8s_distribution=openshift</code>, both Ingress and Route manifests are generated.
+                                        Ingress includes HAProxy annotations (<code>route.openshift.io/termination</code>, <code>haproxy.router.openshift.io/ssl-redirect</code>).
+                                        Route uses <code>edge</code> TLS termination by default.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- k8s_tutum_certificate -->
+                        <div class="card mt-4 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_certificate</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Generates TutumCertificate CR (Custom Resource) manifest for operator-based certificate delivery. Use this role to create certificate request specs.</p>
+                                <h6>Usage</h6>
+<pre class="bg-body-secondary p-3 rounded"><code># Generate TutumCertificate manifest (tree mode - all certificates)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_certificate \
+  -e k8s_tutum_cert_name=my-app-cert \
+  -e k8s_tutum_cert_secret_name=my-app-tls \
+  -e k8s_tutum_cert_tree_mode=true \
+  -e k8s_tutum_cert_output_path=./manifests
+
+# Generate TutumCertificate manifest (single certificate)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_certificate \
+  -e k8s_tutum_cert_name=my-cert \
+  -e k8s_tutum_cert_secret_name=my-cert-secret \
+  -e k8s_tutum_cert_tree_mode=false \
+  -e k8s_tutum_cert_group_id=default \
+  -e k8s_tutum_cert_namespace=production \
+  -e k8s_tutum_cert_secret_type=kubernetes.io/tls \
+  -e k8s_tutum_cert_output_path=./manifests</code></pre>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>k8s_tutum_cert_name</code></td><td><strong>required</strong></td><td>Certificate name in Tutum Engine</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_secret_name</code></td><td><strong>required</strong></td><td>Kubernetes Secret name to create</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_tree_mode</code></td><td><code>true</code></td><td>Fetch all certificates in tree structure</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_group_id</code></td><td><code>""</code></td><td>Group ID (required when treeMode=false)</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_namespace</code></td><td><code>""</code></td><td>Namespace in Tutum Engine (required when treeMode=false)</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_deploy_namespace</code></td><td><code>default</code></td><td>K8s namespace for TutumCertificate CR</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_secret_type</code></td><td><code>Opaque</code></td><td><code>Opaque</code> or <code>kubernetes.io/tls</code></td></tr>
+                                            <tr><td><code>k8s_tutum_cert_include_ca</code></td><td><code>true</code></td><td>Include CA certificate in secret</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_refresh_interval</code></td><td><code>5m</code></td><td>Certificate sync interval</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_output_path</code></td><td><code>.</code></td><td>Output directory for manifest</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_output_file</code></td><td><code>""</code></td><td>Custom output filename (empty = auto-generated)</td></tr>
+                                            <tr><td><code>k8s_tutum_cert_apply</code></td><td><code>false</code></td><td>Apply manifest to cluster</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-warning mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">warning</span> treeMode and secretType</h6>
+                                    <p class="mb-0">
+                                        When <code>treeMode=true</code>, secret keys have path prefixes (<code>certs/tls.crt</code>, <code>private/tls.key</code>, <code>ca/ca.crt</code>).
+                                        Use <code>secretType=Opaque</code> when <code>treeMode=true</code> because <code>kubernetes.io/tls</code> requires flat structure.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- k8s_tutum_offline_bundle -->
+                        <div class="card mt-4 border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">tutum_pro.cicd.k8s.tutum_offline_bundle</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Prepares an offline installation bundle for air-gapped (disconnected) environments. Downloads all Docker images, retags them for internal registry, downloads Ansible collection, and packages everything into a portable archive.</p>
+                                <h6>Usage</h6>
+<pre class="bg-body-secondary p-3 rounded"><code># Basic usage (embedded PostgreSQL + CSI driver)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_offline_bundle \
+  -e k8s_tutum_offline_output_path=./tutum-bundle
+
+# With CNPG and operator
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_offline_bundle \
+  -e k8s_tutum_offline_output_path=./tutum-bundle \
+  -e k8s_tutum_offline_db_mode=cnpg \
+  -e k8s_tutum_offline_injection_mode=operator
+
+# From existing inventory
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_offline_bundle \
+  -e k8s_tutum_offline_output_path=./tutum-bundle \
+  -e k8s_tutum_offline_inventory_path=./inventory/k8s.ini
+
+# With internal registry retagging
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_offline_bundle \
+  -e k8s_tutum_offline_output_path=./tutum-bundle \
+  -e k8s_tutum_offline_internal_registry=registry.example.com \
+  -e k8s_tutum_offline_internal_prefix=tutum</code></pre>
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td><code>k8s_tutum_offline_output_path</code></td><td><code>./tutum-offline-bundle</code></td><td>Output directory for bundle</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_db_mode</code></td><td><code>embedded</code></td><td>Database mode: <code>embedded</code>, <code>cnpg</code>, <code>external</code></td></tr>
+                                            <tr><td><code>k8s_tutum_offline_injection_mode</code></td><td><code>csi</code></td><td>Injection mode: <code>csi</code> or <code>operator</code></td></tr>
+                                            <tr><td><code>k8s_tutum_offline_inventory_path</code></td><td><code>""</code></td><td>Read versions from existing inventory file</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_internal_registry</code></td><td><code>""</code></td><td>Internal registry address for retagging</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_internal_prefix</code></td><td><code>tutum</code></td><td>Prefix for internal registry images</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_save_retagged</code></td><td><code>true</code></td><td>Save retagged images as separate tar files</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_include_collection</code></td><td><code>true</code></td><td>Include Ansible collection in bundle</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_collection_source</code></td><td><code>galaxy</code></td><td>Collection source: <code>galaxy</code>, <code>git</code>, <code>local</code></td></tr>
+                                            <tr><td><code>k8s_tutum_offline_collection_version</code></td><td><code>""</code></td><td>Collection version (empty = latest)</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_archive_name</code></td><td><code>tutum-offline-bundle</code></td><td>Archive filename prefix</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_archive_timestamp</code></td><td><code>true</code></td><td>Add date timestamp to archive name</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-3">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> Bundle Contents</h6>
+                                    <p class="mb-2">The generated bundle includes:</p>
+                                    <ul class="mb-0">
+                                        <li><strong>images/</strong> - Docker images as tar files (based on db_mode and injection_mode)</li>
+                                        <li><strong>collection/</strong> - Ansible collection tarballs (tutum_pro.cicd + dependencies like kubernetes.core)</li>
+                                        <li><strong>scripts/</strong> - load-images.sh, push-images.sh, install-collection.sh</li>
+                                        <li><strong>images-manifest.yml</strong> - Full list of images with versions</li>
+                                        <li><strong>sample-inventory.ini</strong> - Pre-configured inventory template</li>
+                                        <li><strong>README.md</strong> - Installation instructions</li>
+                                    </ul>
+                                </div>
+                                <div class="alert alert-warning mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">warning</span> Requirements</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Docker</strong> must be installed and running on the machine creating the bundle</li>
+                                        <li><strong>Internet access</strong> is required to pull images and download collections</li>
+                                        <li><strong>Disk space</strong> - typically 1-3 GB depending on configuration (CNPG images are larger)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- k8s_tutum_init -->
                         <div class="card mt-4 border-secondary">
                             <div class="card-header bg-secondary text-white">
@@ -1382,7 +1595,7 @@ WHERE is_effective = TRUE;</code></pre>
     </main>
 
     <!-- Footer -->
-    <footer class="footer bg-dark text-light py-4 mt-5">
+    <footer class="footer bg-body-secondary py-4 mt-5">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-6">

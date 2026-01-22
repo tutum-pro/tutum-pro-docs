@@ -307,7 +307,7 @@ graph LR
                         <pre class="bg-body-secondary p-3 rounded"><code># requirements.yml
 collections:
   - name: tutum_pro.cicd
-    version: ">=1.6.6"</code></pre>
+    version: ">=1.8.2"</code></pre>
                         <pre class="bg-body-secondary p-3 rounded"><code>ansible-galaxy collection install -r requirements.yml</code></pre>
 
                         <h4 class="mt-4">From Git</h4>
@@ -316,10 +316,10 @@ collections:
                         <h4 class="mt-4">From Local Archive (Offline Installation)</h4>
                         <p>Download the collection archive from <a href="https://galaxy.ansible.com/ui/repo/published/tutum_pro/cicd/" target="_blank">Ansible Galaxy</a> and install locally:</p>
                         <pre class="bg-body-secondary p-3 rounded"><code># Install from downloaded tar.gz archive
-ansible-galaxy collection install tutum_pro-cicd-1.6.6.tar.gz
+ansible-galaxy collection install tutum_pro-cicd-1.8.2.tar.gz
 
 # Or specify custom installation path
-ansible-galaxy collection install tutum_pro-cicd-1.6.6.tar.gz -p ./collections</code></pre>
+ansible-galaxy collection install tutum_pro-cicd-1.8.2.tar.gz -p ./collections</code></pre>
                     </div>
                 </div>
             </section>
@@ -560,7 +560,7 @@ ansible-playbook playbooks/uninstall-tutum-k8s.yml \
 
   vars:
     k8s_tutum_engine_version: "5.1.5"
-    k8s_tutum_csi_version: "4.0.0"
+    k8s_tutum_csi_version: "4.0.1"
     k8s_tutum_namespace: "tutum-system"
     k8s_distribution: "standard"
     # Security keys (auto-generated if not provided)
@@ -581,7 +581,7 @@ ansible-playbook playbooks/uninstall-tutum-k8s.yml \
 
   vars:
     k8s_tutum_engine_version: "5.1.5"
-    k8s_tutum_csi_version: "4.0.0"
+    k8s_tutum_csi_version: "4.0.1"
     k8s_tutum_namespace: "tutum-system"
     k8s_distribution: "standard"
     # External PostgreSQL connection
@@ -893,7 +893,7 @@ EOF</code></pre>
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>k8s_tutum_csi_version</code></td><td><code>4.0.0</code></td><td>CSI Driver version</td></tr>
+                                            <tr><td><code>k8s_tutum_csi_version</code></td><td><code>4.0.1</code></td><td>CSI Driver version</td></tr>
                                             <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
                                             <tr><td><code>k8s_distribution</code></td><td><code>standard</code></td><td>K8s distribution: <code>standard</code>, <code>microk8s</code>, <code>k3s</code>, <code>rke2</code>, <code>openshift</code></td></tr>
                                             <tr><td><code>k8s_tutum_engine_url</code></td><td><code>tutum-engine.{{ k8s_tutum_namespace }}.svc.cluster.local:9090</code></td><td>Tutum Engine gRPC URL (used in StorageClass <code>engineUrl</code> parameter)</td></tr>
@@ -936,7 +936,7 @@ EOF</code></pre>
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>k8s_tutum_operator_version</code></td><td><code>0.1.11</code></td><td>Operator version</td></tr>
+                                            <tr><td><code>k8s_tutum_operator_version</code></td><td><code>0.1.12</code></td><td>Operator version</td></tr>
                                             <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
                                             <tr><td><code>k8s_tutum_engine_url</code></td><td><code>tutum-engine.{{ namespace }}.svc.cluster.local:9090</code></td><td>Tutum Engine gRPC URL</td></tr>
                                             <tr><td><code>k8s_tutum_operator_sync_interval</code></td><td><code>5m</code></td><td>Certificate sync interval</td></tr>
@@ -1026,6 +1026,18 @@ ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_manifests \
   -e k8s_tutum_engine_route_host=tutum.apps.example.com \
   -e k8s_tutum_rest_base_path=/api
 
+# Generate from existing inventory (recommended)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_manifests \
+  -e k8s_tutum_manifests_output_path=./manifests \
+  -e k8s_tutum_manifests_inventory_path=./inventory/k8s.ini
+
+# Generate with private registry credentials
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_manifests \
+  -e k8s_tutum_manifests_output_path=./manifests \
+  -e k8s_tutum_registry_url=harbor.corp.local/tutum \
+  -e k8s_tutum_registry_username=deploy-user \
+  -e k8s_tutum_registry_password=secret123
+
 # Apply generated manifests
 kubectl apply -k ./manifests</code></pre>
                                 <div class="table-responsive">
@@ -1035,6 +1047,7 @@ kubectl apply -k ./manifests</code></pre>
                                         </thead>
                                         <tbody>
                                             <tr><td><code>k8s_tutum_manifests_output_path</code></td><td><code>./manifests</code></td><td>Output directory for generated manifests</td></tr>
+                                            <tr><td><code>k8s_tutum_manifests_inventory_path</code></td><td><code>""</code></td><td>Path to existing inventory file to import configuration</td></tr>
                                             <tr><td><code>k8s_tutum_manifests_create_dir</code></td><td><code>true</code></td><td>Create output directory if not exists</td></tr>
                                             <tr><td><code>k8s_tutum_manifests_overwrite</code></td><td><code>false</code></td><td>Overwrite existing files</td></tr>
                                             <tr><td><code>k8s_tutum_manifests_db_mode</code></td><td><code>embedded</code></td><td>Database mode: <code>embedded</code>, <code>cnpg</code>, <code>external</code></td></tr>
@@ -1046,6 +1059,12 @@ kubectl apply -k ./manifests</code></pre>
                                             <tr><td><code>k8s_tutum_engine_route_host</code></td><td><code>""</code></td><td>OpenShift Route/Ingress hostname</td></tr>
                                             <tr><td><code>k8s_tutum_master_key</code></td><td>auto-generated</td><td>AES-256 master key (32 chars)</td></tr>
                                             <tr><td><code>k8s_tutum_jwt_secret</code></td><td>auto-generated</td><td>JWT signing secret (32 chars)</td></tr>
+                                            <tr class="table-info"><td colspan="3"><strong>Image Registry Credentials</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_registry_url</code></td><td><code>""</code></td><td>Private registry URL (e.g., registry.example.com)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_username</code></td><td><code>""</code></td><td>Registry username</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_password</code></td><td><code>""</code></td><td>Registry password</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_email</code></td><td><code>""</code></td><td>Registry email (optional)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_secret_name</code></td><td><code>tutum-registry-secret</code></td><td>Name of imagePullSecret</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -1057,6 +1076,7 @@ kubectl apply -k ./manifests</code></pre>
                                         </thead>
                                         <tbody>
                                             <tr><td><code>00-namespace.yml</code></td><td>Tutum namespace</td></tr>
+                                            <tr><td><code>01-registry-secret.yml</code></td><td>Image pull secret (only when registry credentials configured)</td></tr>
                                             <tr><td><code>10-*.yml</code></td><td>Database manifests (PostgreSQL or CNPG)</td></tr>
                                             <tr><td><code>20-engine-*.yml</code></td><td>Tutum Engine manifests (ConfigMap, Secret, RBAC, Deployment, Service)</td></tr>
                                             <tr><td><code>25-engine-ingress.yml</code></td><td>Ingress (all distributions, with OpenShift HAProxy annotations)</td></tr>
@@ -1179,6 +1199,16 @@ ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_offline_bundl
                                             <tr><td><code>k8s_tutum_offline_collection_version</code></td><td><code>""</code></td><td>Collection version (empty = latest)</td></tr>
                                             <tr><td><code>k8s_tutum_offline_archive_name</code></td><td><code>tutum-offline-bundle</code></td><td>Archive filename prefix</td></tr>
                                             <tr><td><code>k8s_tutum_offline_archive_timestamp</code></td><td><code>true</code></td><td>Add date timestamp to archive name</td></tr>
+                                            <tr class="table-info"><td colspan="3"><strong>Source Registry Credentials (for pulling images)</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_offline_dockerhub_username</code></td><td><code>""</code></td><td>Docker Hub username (for rate limit bypass)</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_dockerhub_password</code></td><td><code>""</code></td><td>Docker Hub password/token</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_ghcr_username</code></td><td><code>""</code></td><td>GitHub Container Registry username</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_ghcr_token</code></td><td><code>""</code></td><td>GitHub Container Registry token (PAT)</td></tr>
+                                            <tr class="table-info"><td colspan="3"><strong>Target Registry Credentials (for sample-inventory.ini)</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_offline_target_registry_username</code></td><td><code>""</code></td><td>Internal registry username</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_target_registry_password</code></td><td><code>""</code></td><td>Internal registry password</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_target_registry_email</code></td><td><code>""</code></td><td>Internal registry email (optional)</td></tr>
+                                            <tr><td><code>k8s_tutum_offline_registry_secret_name</code></td><td><code>tutum-registry-secret</code></td><td>Name of imagePullSecret in target cluster</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -1234,10 +1264,16 @@ ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_offline_bundl
                                             <tr><td><code>k8s_tutum_init_generate_postgres</code></td><td><code>true</code></td><td>Generate Postgres role (only when db_mode=embedded)</td></tr>
                                             <tr><td><code>k8s_tutum_init_generate_engine</code></td><td><code>true</code></td><td>Generate Engine role</td></tr>
                                             <tr><td><code>k8s_tutum_init_injection_mode</code></td><td><code>csi</code></td><td>Certificate injection: <code>csi</code> or <code>operator</code></td></tr>
-                                            <tr><td><code>k8s_tutum_operator_version</code></td><td><code>0.1.11</code></td><td>Operator version (when injection_mode=operator)</td></tr>
+                                            <tr><td><code>k8s_tutum_operator_version</code></td><td><code>0.1.12</code></td><td>Operator version (when injection_mode=operator)</td></tr>
                                             <tr><td><code>k8s_tutum_operator_sync_interval</code></td><td><code>5m</code></td><td>Sync interval (when injection_mode=operator)</td></tr>
                                             <tr><td><code>k8s_tutum_operator_watch_namespaces</code></td><td><code>""</code></td><td>Namespaces to watch (empty = all)</td></tr>
                                             <tr><td><code>k8s_tutum_test_deploy_namespace</code></td><td><code>tutum-system</code></td><td>Namespace for test operator deployment</td></tr>
+                                            <tr class="table-info"><td colspan="3"><strong>Image Registry Credentials</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_init_registry_url</code></td><td><code>""</code></td><td>Private registry URL (e.g., registry.example.com)</td></tr>
+                                            <tr><td><code>k8s_tutum_init_registry_username</code></td><td><code>""</code></td><td>Registry username</td></tr>
+                                            <tr><td><code>k8s_tutum_init_registry_password</code></td><td><code>""</code></td><td>Registry password</td></tr>
+                                            <tr><td><code>k8s_tutum_init_registry_email</code></td><td><code>""</code></td><td>Registry email (optional)</td></tr>
+                                            <tr><td><code>k8s_tutum_init_registry_secret_name</code></td><td><code>tutum-registry-secret</code></td><td>Name of imagePullSecret</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -1358,6 +1394,116 @@ ansible-playbook site.yml --ask-vault-pass</code></pre>
                                 <li>Master key and JWT secret must be exactly 32 characters</li>
                                 <li>Back up your keys - losing them means losing access to encrypted certificates</li>
                                 <li>Use TLS for external PostgreSQL connections (<code>sslmode=require</code>)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Image Registry Credentials -->
+            <section class="mb-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-primary">
+                            <span class="material-symbols-outlined align-middle">cloud_sync</span>
+                            Image Registry Credentials
+                        </h2>
+
+                        <p>
+                            For private or on-premises image registries, you can configure authentication credentials.
+                            The collection will create a <code>kubernetes.io/dockerconfigjson</code> Secret and configure
+                            <code>imagePullSecrets</code> in all deployments.
+                        </p>
+
+                        <h4 class="mt-4">When to Use</h4>
+                        <ul>
+                            <li><strong>Air-gapped environments</strong> - images pushed to internal registry after offline bundle import</li>
+                            <li><strong>Private registries</strong> - corporate registries with authentication</li>
+                            <li><strong>Harbor, Nexus, GitLab Registry</strong> - enterprise container registries</li>
+                            <li><strong>Docker Hub (rate limits)</strong> - authenticated access for higher pull limits</li>
+                        </ul>
+
+                        <h4 class="mt-4">Configuration Variables</h4>
+                        <p>These variables are available in <code>tutum_init</code>, <code>tutum_offline_bundle</code>, <code>tutum_manifests</code>, and all deployment roles:</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead class="table-light">
+                                    <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>k8s_tutum_registry_url</code></td><td><code>""</code></td><td>Registry URL (e.g., <code>registry.example.com</code>, <code>harbor.corp.local/tutum</code>)</td></tr>
+                                    <tr><td><code>k8s_tutum_registry_username</code></td><td><code>""</code></td><td>Registry username</td></tr>
+                                    <tr><td><code>k8s_tutum_registry_password</code></td><td><code>""</code></td><td>Registry password (use ansible-vault!)</td></tr>
+                                    <tr><td><code>k8s_tutum_registry_email</code></td><td><code>""</code></td><td>Email address (optional)</td></tr>
+                                    <tr><td><code>k8s_tutum_registry_secret_name</code></td><td><code>tutum-registry-secret</code></td><td>Name of the image pull Secret</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 class="mt-4">Usage Examples</h4>
+
+                        <h5 class="mt-3">Using tutum_init (generates inventory with registry config)</h5>
+<pre class="bg-body-secondary p-3 rounded"><code># Generate inventory with private registry credentials
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_init \
+  -e k8s_tutum_init_distribution=standard \
+  -e k8s_tutum_init_injection_mode=operator \
+  -e k8s_tutum_init_registry_url=registry.example.com \
+  -e k8s_tutum_init_registry_username=admin \
+  -e k8s_tutum_init_registry_password=secret123</code></pre>
+
+                        <h5 class="mt-3">Using tutum_manifests (static manifests with imagePullSecrets)</h5>
+<pre class="bg-body-secondary p-3 rounded"><code># Generate manifests for private registry
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_manifests \
+  -e k8s_tutum_manifests_output_path=./manifests \
+  -e k8s_tutum_registry_url=harbor.corp.local/tutum \
+  -e k8s_tutum_registry_username=deploy-user \
+  -e k8s_tutum_registry_password=deploy-secret</code></pre>
+
+                        <h5 class="mt-3">Using tutum_offline_bundle (air-gapped deployment)</h5>
+<pre class="bg-body-secondary p-3 rounded"><code># Create bundle with credentials for source registries (pulling)
+# and target internal registry (for sample-inventory.ini)
+ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_offline_bundle \
+  -e k8s_tutum_offline_output_path=./tutum-bundle \
+  -e k8s_tutum_offline_internal_registry=registry.airgap.local \
+  -e k8s_tutum_offline_dockerhub_username=myuser \
+  -e k8s_tutum_offline_dockerhub_password=mytoken \
+  -e k8s_tutum_offline_target_registry_username=admin \
+  -e k8s_tutum_offline_target_registry_password=admin123</code></pre>
+
+                        <h4 class="mt-4">Generated Resources</h4>
+                        <p>When registry credentials are configured, the following resources are created:</p>
+                        <ul>
+                            <li><strong>Secret</strong> (<code>kubernetes.io/dockerconfigjson</code>) - contains encoded registry authentication</li>
+                            <li><strong>imagePullSecrets</strong> - added to all Pod specs (Deployments, DaemonSets, CNPG Cluster)</li>
+                        </ul>
+
+<pre class="bg-body-secondary p-3 rounded"><code># Example generated Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tutum-registry-secret
+  namespace: tutum-system
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: &lt;base64-encoded-credentials&gt;
+
+# Example Deployment spec with imagePullSecrets
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: tutum-registry-secret
+      containers:
+        - name: tutum-engine
+          image: registry.example.com/tutum/tutum-engine:5.1.5</code></pre>
+
+                        <div class="alert alert-warning mt-4">
+                            <h6><span class="material-symbols-outlined align-middle">warning</span> Security Best Practices</h6>
+                            <ul class="mb-0">
+                                <li>Always use <strong>Ansible Vault</strong> to encrypt registry passwords</li>
+                                <li>Create dedicated <strong>service accounts</strong> with read-only access for pulling images</li>
+                                <li>Use <strong>robot accounts</strong> (Harbor) or <strong>deploy tokens</strong> (GitLab) instead of personal credentials</li>
+                                <li>Rotate registry credentials periodically</li>
                             </ul>
                         </div>
                     </div>

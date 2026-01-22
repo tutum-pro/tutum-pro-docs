@@ -1189,7 +1189,8 @@ ansible localhost -m include_role -a name=tutum_pro.cicd.k8s.tutum_offline_bundl
                                         <tbody>
                                             <tr><td><code>k8s_tutum_offline_output_path</code></td><td><code>./tutum-offline-bundle</code></td><td>Output directory for bundle</td></tr>
                                             <tr><td><code>k8s_tutum_offline_db_mode</code></td><td><code>embedded</code></td><td>Database mode: <code>embedded</code>, <code>cnpg</code>, <code>external</code></td></tr>
-                                            <tr><td><code>k8s_tutum_offline_injection_mode</code></td><td><code>csi</code></td><td>Injection mode: <code>csi</code> or <code>operator</code></td></tr>
+                                            <tr><td><code>k8s_tutum_offline_injection_mode</code></td><td><code>operator</code></td><td>Injection mode: <code>csi</code> or <code>operator</code></td></tr>
+                                            <tr><td><code>k8s_tutum_offline_platform</code></td><td><code>linux/amd64</code></td><td>Target platform/architecture for images: <code>linux/amd64</code> or <code>linux/arm64</code></td></tr>
                                             <tr><td><code>k8s_tutum_offline_inventory_path</code></td><td><code>""</code></td><td>Read versions from existing inventory file</td></tr>
                                             <tr><td><code>k8s_tutum_offline_internal_registry</code></td><td><code>""</code></td><td>Internal registry address for retagging</td></tr>
                                             <tr><td><code>k8s_tutum_offline_internal_prefix</code></td><td><code>tutum</code></td><td>Prefix for internal registry images</td></tr>

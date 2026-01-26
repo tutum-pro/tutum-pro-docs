@@ -528,6 +528,29 @@ ansible-playbook playbooks/install-tutum-k8s.yml \
 ansible-playbook playbooks/install-tutum-k8s.yml \
   -e k8s_distribution=openshift
 
+# With custom storage class (v1.8.8+)
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_tutum_postgres_storage_class=fast-ssd \
+  -e k8s_tutum_postgres_storage_size=50Gi
+
+# With private registry (v1.8.8+)
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_tutum_registry_url=registry.example.com \
+  -e k8s_tutum_registry_username=admin \
+  -e k8s_tutum_registry_password=secret123 \
+  -e k8s_tutum_postgres_image=registry.example.com/postgres \
+  -e k8s_tutum_postgres_version=15-alpine
+
+# Production example: Private registry + custom storage + HA (v1.8.8+)
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_tutum_registry_url=harbor.corp.local \
+  -e k8s_tutum_registry_username=robot-account \
+  -e k8s_tutum_registry_password=@vault/registry-secrets.yml \
+  -e k8s_tutum_postgres_image=harbor.corp.local/tutum/postgres \
+  -e k8s_tutum_postgres_storage_class=ceph-rbd \
+  -e k8s_tutum_postgres_storage_size=100Gi \
+  -e k8s_distribution=openshift
+
 # Uninstall from Kubernetes (keeps PostgreSQL data)
 ansible-playbook playbooks/uninstall-tutum-k8s.yml
 
@@ -807,6 +830,49 @@ EOF</code></pre>
                             <div class="tab-pane fade" id="k8s-roles" role="tabpanel">
                                 <p class="text-muted">Kubernetes roles use <code>k8s_tutum_*</code> variable prefix. Located in <code>roles/k8s/</code>.</p>
 
+                        <!-- Common Variables for Kubernetes Roles -->
+                        <div class="card mt-4 border-info">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Common Variables (All K8s Roles)</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>These variables are shared across multiple Kubernetes roles and should be defined in playbook or inventory.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead class="table-light">
+                                            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td colspan="3" class="table-secondary"><strong>Database Mode Configuration</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_db_mode</code></td><td><code>embedded</code></td><td>Database deployment mode: <code>embedded</code> (PostgreSQL via tutum_postgres role), <code>cnpg</code> (CloudNativePG), <code>external</code> (external PostgreSQL)</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Global Configuration</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace for all Tutum components</td></tr>
+                                            <tr><td><code>k8s_distribution</code></td><td><code>standard</code></td><td>Kubernetes distribution: <code>standard</code>, <code>microk8s</code>, <code>k3s</code>, <code>rke2</code>, <code>openshift</code> (affects kubelet paths and RBAC)</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Private Registry (v1.8.8+)</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_registry_url</code></td><td><code>""</code></td><td>Private registry URL (e.g., <code>registry.example.com</code>). Empty = public DockerHub. Applies to all images (tutum-engine, tutum-postgres, tutum-csi)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_username</code></td><td><code>""</code></td><td>Registry username (use ansible-vault in production!)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_password</code></td><td><code>""</code></td><td>Registry password (use ansible-vault in production!)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_email</code></td><td><code>""</code></td><td>Registry email (optional)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_secret_name</code></td><td><code>tutum-registry-secret</code></td><td>Name of the Kubernetes imagePullSecret (created once in playbook pre_tasks, shared by all pods)</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Engine Connection</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_engine_url</code></td><td><code>tutum-engine.tutum-system.svc.cluster.local:9090</code></td><td>Tutum Engine gRPC URL (used by CSI Driver and Operator to connect to Engine)</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <h6><span class="material-symbols-outlined align-middle">info</span> Variable Precedence</h6>
+                                    <p class="mb-0">
+                                        Common variables can be defined in: command line (<code>-e</code>), inventory file (<code>k8s.ini [k8s_cluster:vars]</code>),
+                                        <code>group_vars/all.yml</code>, <code>host_vars/{hostname}.yml</code>, playbook <code>vars</code>, or external vars files (<code>-e @file.yml</code>).
+                                        See <a href="#variable-definition-locations">Variable Definition Locations</a> for complete list.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- k8s_tutum_postgres -->
                         <div class="card mt-4 border-primary">
                             <div class="card-header bg-primary text-white">
@@ -820,14 +886,39 @@ EOF</code></pre>
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
+                                            <tr><td colspan="3" class="table-secondary"><strong>Image Configuration</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_image</code></td><td><code>postgres</code></td><td>PostgreSQL image name (e.g., <code>my-registry.com/postgres</code> for private registry)</td></tr>
                                             <tr><td><code>k8s_tutum_postgres_version</code></td><td><code>15-alpine</code></td><td>PostgreSQL image tag</td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_image_pull_policy</code></td><td><code>IfNotPresent</code></td><td>Image pull policy: <code>IfNotPresent</code>, <code>Always</code>, <code>Never</code></td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Deployment Configuration</strong></td></tr>
                                             <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_replicas</code></td><td><code>1</code></td><td>Number of replicas (always 1 for StatefulSet)</td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_service_type</code></td><td><code>ClusterIP</code></td><td>Service type: <code>ClusterIP</code>, <code>NodePort</code>, <code>LoadBalancer</code></td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Database Configuration</strong></td></tr>
                                             <tr><td><code>k8s_tutum_db_name</code></td><td><code>tutum</code></td><td>Database name</td></tr>
                                             <tr><td><code>k8s_tutum_db_user</code></td><td><code>tutum</code></td><td>Database user</td></tr>
-                                            <tr><td><code>k8s_tutum_db_password</code></td><td><code>tutum</code></td><td>Database password (use ansible-vault!)</td></tr>
-                                            <tr><td><code>k8s_tutum_postgres_storage_size</code></td><td><code>5Gi</code></td><td>PVC storage size</td></tr>
+                                            <tr><td><code>k8s_tutum_db_password</code></td><td><code>tutum</code></td><td>Database password (use ansible-vault in production!)</td></tr>
+                                            <tr><td><code>k8s_tutum_db_port</code></td><td><code>5432</code></td><td>PostgreSQL port</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Storage Configuration</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_storage_class</code></td><td><code>""</code></td><td>StorageClass for PVC (empty = cluster default, e.g., <code>gp3</code>, <code>fast-ssd</code>, <code>local-path</code>)</td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_storage_size</code></td><td><code>5Gi</code></td><td>PVC storage size (e.g., <code>10Gi</code>, <code>50Gi</code>, <code>100Gi</code>)</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Resource Limits</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_resources</code></td><td>(see defaults)</td><td>CPU/memory requests and limits. Default: requests (cpu: 100m, memory: 256Mi), limits (cpu: 500m, memory: 512Mi)</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Private Registry Configuration</strong> (v1.8.8+)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_url</code></td><td><code>""</code></td><td>Private registry URL (e.g., <code>registry.example.com</code>, <code>harbor.local</code>). Empty = public DockerHub</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_username</code></td><td><code>""</code></td><td>Registry username (use ansible-vault!)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_password</code></td><td><code>""</code></td><td>Registry password (use ansible-vault!)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_email</code></td><td><code>""</code></td><td>Registry email (optional)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_secret_name</code></td><td><code>tutum-registry-secret</code></td><td>Name of the Kubernetes imagePullSecret</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>State Management</strong></td></tr>
                                             <tr><td><code>k8s_tutum_postgres_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
-                                            <tr><td><code>k8s_tutum_postgres_remove_data</code></td><td><code>false</code></td><td>Remove PVC on uninstall (data loss!)</td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_remove_data</code></td><td><code>false</code></td><td>Remove PVC on uninstall (CAUTION: data loss!)</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -854,18 +945,45 @@ EOF</code></pre>
                                             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><code>k8s_tutum_engine_version</code></td><td><code>5.1.5</code></td><td>Tutum Engine version</td></tr>
+                                            <tr><td colspan="3" class="table-secondary"><strong>Image Configuration</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_engine_image</code></td><td><code>tutumpro/tutum-engine</code></td><td>Tutum Engine image name (e.g., <code>my-registry.com/tutum-engine</code> for private registry)</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_version</code></td><td><code>5.1.5</code></td><td>Tutum Engine image tag</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_image_pull_policy</code></td><td><code>Always</code></td><td>Image pull policy: <code>IfNotPresent</code>, <code>Always</code>, <code>Never</code></td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Deployment Configuration</strong></td></tr>
                                             <tr><td><code>k8s_tutum_namespace</code></td><td><code>tutum-system</code></td><td>Kubernetes namespace</td></tr>
-                                            <tr><td><code>k8s_tutum_external_db_url</code></td><td><code>""</code></td><td>Full database URL (alternative to individual settings)</td></tr>
-                                            <tr><td><code>k8s_tutum_postgres_host</code></td><td><code>""</code></td><td>External PostgreSQL host (if not using embedded)</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_replicas</code></td><td><code>1</code></td><td>Number of replicas</td></tr>
+                                            <tr><td><code>k8s_tutum_engine_service_type</code></td><td><code>ClusterIP</code></td><td>Service type: <code>ClusterIP</code>, <code>NodePort</code>, <code>LoadBalancer</code></td></tr>
+                                            <tr><td><code>k8s_distribution</code></td><td><code>standard</code></td><td>K8s distribution: <code>standard</code>, <code>microk8s</code>, <code>k3s</code>, <code>rke2</code>, <code>openshift</code></td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Database Configuration</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_external_db_url</code></td><td><code>""</code></td><td>Full database URL (alternative to individual settings). Format: <code>postgres://user:pass@host:port/db?sslmode=disable</code></td></tr>
+                                            <tr><td><code>k8s_tutum_postgres_host</code></td><td><code>""</code></td><td>External PostgreSQL host (if not using embedded, e.g., <code>postgres.example.com</code>). If empty and no external_db_url, uses embedded PostgreSQL</td></tr>
                                             <tr><td><code>k8s_tutum_postgres_port</code></td><td><code>5432</code></td><td>PostgreSQL port</td></tr>
                                             <tr><td><code>k8s_tutum_db_name</code></td><td><code>tutum</code></td><td>Database name</td></tr>
                                             <tr><td><code>k8s_tutum_db_user</code></td><td><code>tutum</code></td><td>Database user</td></tr>
-                                            <tr><td><code>k8s_tutum_db_password</code></td><td><code>tutum</code></td><td>Database password</td></tr>
-                                            <tr><td><code>k8s_tutum_master_key</code></td><td>(generated)</td><td>32-char AES-256 encryption key</td></tr>
-                                            <tr><td><code>k8s_tutum_jwt_secret</code></td><td>(generated)</td><td>32-char JWT secret</td></tr>
-                                            <tr><td><code>k8s_tutum_log_level</code></td><td><code>info</code></td><td>Log level</td></tr>
-                                            <tr><td><code>k8s_tutum_engine_replicas</code></td><td><code>1</code></td><td>Number of replicas</td></tr>
+                                            <tr><td><code>k8s_tutum_db_password</code></td><td><code>tutum</code></td><td>Database password (use ansible-vault in production!)</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Security Configuration</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_master_key</code></td><td>(auto-generated)</td><td>32-char AES-256 encryption key (MUST be 32 characters exactly!)</td></tr>
+                                            <tr><td><code>k8s_tutum_jwt_secret</code></td><td>(auto-generated)</td><td>32-char JWT secret (MUST be 32 characters exactly!)</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Application Configuration</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_log_level</code></td><td><code>info</code></td><td>Log level: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code></td></tr>
+                                            <tr><td><code>k8s_tutum_rest_base_path</code></td><td><code>""</code></td><td>REST API base path for multi-instance deployments (e.g., <code>/api</code>, <code>/instance1/api</code>)</td></tr>
+                                            <tr><td><code>k8s_tutum_webhook_enabled</code></td><td><code>true</code></td><td>Enable webhook notifications for tutum-operator integration</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Resource Limits</strong></td></tr>
+                                            <tr><td><code>k8s_tutum_engine_resources</code></td><td>(see defaults)</td><td>CPU/memory requests and limits. Default: requests (cpu: 100m, memory: 128Mi), limits (cpu: 500m, memory: 512Mi)</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>Private Registry Configuration</strong> (v1.8.8+)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_url</code></td><td><code>""</code></td><td>Private registry URL (e.g., <code>registry.example.com</code>, <code>harbor.local</code>). Empty = public DockerHub</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_username</code></td><td><code>""</code></td><td>Registry username (use ansible-vault!)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_password</code></td><td><code>""</code></td><td>Registry password (use ansible-vault!)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_email</code></td><td><code>""</code></td><td>Registry email (optional)</td></tr>
+                                            <tr><td><code>k8s_tutum_registry_secret_name</code></td><td><code>tutum-registry-secret</code></td><td>Name of the Kubernetes imagePullSecret (shared with all components)</td></tr>
+
+                                            <tr><td colspan="3" class="table-secondary"><strong>State Management</strong></td></tr>
                                             <tr><td><code>k8s_tutum_engine_state</code></td><td><code>present</code></td><td><code>present</code> or <code>absent</code></td></tr>
                                         </tbody>
                                     </table>

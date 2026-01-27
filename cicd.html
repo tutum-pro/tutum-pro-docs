@@ -146,6 +146,225 @@
                 </div>
             </section>
 
+            <!-- What's New in 1.8.9 -->
+            <section class="mb-5">
+                <div class="card shadow-sm border-success">
+                    <div class="card-body">
+                        <h2 class="card-title text-success">
+                            <span class="material-symbols-outlined align-middle">new_releases</span>
+                            What's New in Version 1.8.9
+                        </h2>
+                        <p class="text-muted"><small><strong>Release Date:</strong> 2026-01-27 | <strong>Type:</strong> Minor Release (New Features + Bug Fixes)</small></p>
+
+                        <div class="alert alert-success" role="alert">
+                            <h5 class="alert-heading"><span class="material-symbols-outlined align-middle">celebration</span> Enhanced OpenShift & Enterprise Kubernetes Support</h5>
+                            <p class="mb-0">Version 1.8.9 significantly improves OpenShift and enterprise Kubernetes deployments with critical PostgreSQL fixes, Podman support, kubectl wrapper functionality, and flexible CRD installation.</p>
+                        </div>
+
+                        <h4 class="mt-4"><span class="material-symbols-outlined align-middle text-danger">bug_report</span> Critical Bug Fix</h4>
+                        <div class="card border-danger mb-3">
+                            <div class="card-header bg-danger text-white">
+                                <strong>Fixed:</strong> PostgreSQL CrashLoopBackOff on OpenShift
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Problem:</strong> Standard <code>postgres</code> image crashed immediately on OpenShift with restricted-v2 Security Context Constraints due to arbitrary UID assignment.</p>
+                                <p><strong>Solution:</strong></p>
+                                <ul>
+                                    <li>Auto-detection of OpenShift environments</li>
+                                    <li>Automatic selection of OpenShift-compatible image: <code>quay.io/sclorg/postgresql-16-c9s</code></li>
+                                    <li>Conditional environment variables: <code>POSTGRES_*</code> → <code>POSTGRESQL_*</code></li>
+                                    <li>Proper data paths and probe timings</li>
+                                </ul>
+                                <p><strong>Impact:</strong> ✅ PostgreSQL embedded mode now works correctly on OpenShift</p>
+                            </div>
+                        </div>
+
+                        <h4 class="mt-4"><span class="material-symbols-outlined align-middle text-primary">star</span> New Features</h4>
+
+                        <div class="accordion" id="newFeaturesAccordion">
+                            <!-- OpenShift PostgreSQL Support -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#feature1">
+                                        1. OpenShift PostgreSQL Support
+                                    </button>
+                                </h2>
+                                <div id="feature1" class="accordion-collapse collapse show" data-bs-parent="#newFeaturesAccordion">
+                                    <div class="accordion-body">
+                                        <p>Native support for OpenShift-compatible PostgreSQL images with automatic configuration:</p>
+                                        <ul>
+                                            <li>Auto-detection based on <code>k8s_distribution=openshift</code></li>
+                                            <li>OpenShift image: <code>quay.io/sclorg/postgresql-16-c9s</code></li>
+                                            <li>Standard image: <code>postgres:15-alpine</code></li>
+                                            <li>Conditional environment variables and volume paths</li>
+                                        </ul>
+                                        <pre class="bg-body-secondary p-3 rounded"><code># OpenShift deployment with embedded PostgreSQL (now works!)
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_distribution=openshift \
+  -e k8s_kubectl_command=oc \
+  -e k8s_tutum_db_mode=embedded</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Podman Support -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature2">
+                                        2. Podman Support for Offline Bundles
+                                    </button>
+                                </h2>
+                                <div id="feature2" class="accordion-collapse collapse" data-bs-parent="#newFeaturesAccordion">
+                                    <div class="accordion-body">
+                                        <p>Full support for Podman container runtime in offline bundle creation:</p>
+                                        <ul>
+                                            <li>Essential for RHEL, Oracle Linux, Rocky Linux, AlmaLinux</li>
+                                            <li>Auto-detection with Docker fallback</li>
+                                            <li>Perfect for air-gapped corporate environments</li>
+                                        </ul>
+                                        <pre class="bg-body-secondary p-3 rounded"><code># Use Podman for offline bundle
+ansible-playbook playbooks/create-offline-bundle.yml \
+  -e k8s_tutum_offline_container_runtime=podman
+
+# Or auto-detect (prefers Podman if available)
+ansible-playbook playbooks/create-offline-bundle.yml \
+  -e k8s_tutum_offline_container_runtime=auto</code></pre>
+                                        <p class="mt-2"><strong>Configuration:</strong></p>
+                                        <ul>
+                                            <li><code>k8s_tutum_offline_container_runtime: docker</code> (default)</li>
+                                            <li><code>k8s_tutum_offline_container_runtime: podman</code> (explicit)</li>
+                                            <li><code>k8s_tutum_offline_container_runtime: auto</code> (auto-detect)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Kubectl Wrapper Support -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature3">
+                                        3. Kubectl Wrapper Support
+                                    </button>
+                                </h2>
+                                <div id="feature3" class="accordion-collapse collapse" data-bs-parent="#newFeaturesAccordion">
+                                    <div class="accordion-body">
+                                        <p>Native support for distribution-specific kubectl wrappers:</p>
+                                        <ul>
+                                            <li><code>oc</code> - OpenShift CLI</li>
+                                            <li><code>microk8s kubectl</code> - MicroK8s wrapper</li>
+                                            <li><code>k3s kubectl</code> - k3s lightweight Kubernetes</li>
+                                            <li>Custom wrappers with full path support</li>
+                                            <li>KUBECONFIG environment variable handling</li>
+                                        </ul>
+                                        <pre class="bg-body-secondary p-3 rounded"><code># OpenShift with oc
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e k8s_kubectl_command=oc
+
+# MicroK8s
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e 'k8s_kubectl_command="microk8s kubectl"'
+
+# k3s with custom KUBECONFIG
+ansible-playbook playbooks/install-tutum-k8s.yml \
+  -e 'k8s_kubectl_command="k3s kubectl"' \
+  -e k8s_kubectl_kubeconfig=/etc/rancher/k3s/k3s.yaml</code></pre>
+                                        <p class="mt-2"><strong>Affected Roles:</strong> All k8s.* roles (tutum_engine, tutum_csi, tutum_operator, tutum_cnpg, tutum_postgres, tutum_certificate, tutum_manifests, tutum_init)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Manual CRD Installation -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature4">
+                                        4. Manual CRD Installation Support
+                                    </button>
+                                </h2>
+                                <div id="feature4" class="accordion-collapse collapse" data-bs-parent="#newFeaturesAccordion">
+                                    <div class="accordion-body">
+                                        <p>Deploy tutum-operator without cluster-admin permissions in restricted environments:</p>
+                                        <ul>
+                                            <li>Generate CRD manifest for admin installation</li>
+                                            <li>Deploy operator with namespace-scoped permissions</li>
+                                            <li>Multi-namespace watch support</li>
+                                        </ul>
+                                        <pre class="bg-body-secondary p-3 rounded"><code># Generate CRD manifest (no cluster-admin needed)
+ansible-playbook playbooks/install-tutum-operator.yml \
+  -e k8s_tutum_operator_skip_crd_install=true \
+  -e k8s_tutum_operator_crd_manifest_path=./crd-for-admin.yml \
+  -e k8s_tutum_operator_watch_namespaces="production,staging"
+
+# Admin installs CRD separately
+kubectl apply -f crd-for-admin.yml</code></pre>
+                                        <p class="mt-2"><strong>Use Case:</strong> Enterprise environments where users lack cluster-admin permissions for CustomResourceDefinition installation.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Webhook Integration -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature5">
+                                        5. Webhook Integration (Documented)
+                                    </button>
+                                </h2>
+                                <div id="feature5" class="accordion-collapse collapse" data-bs-parent="#newFeaturesAccordion">
+                                    <div class="accordion-body">
+                                        <p>Real-time certificate change notifications from tutum-engine to tutum-operator:</p>
+                                        <ul>
+                                            <li>Webhook endpoint: <code>/webhook/certificate-change</code> (port 8082)</li>
+                                            <li>Service: <code>tutum-operator-webhook</code> in tutum-system namespace</li>
+                                            <li>Configurable via <code>WEBHOOK_ENDPOINTS</code> in tutum-engine ConfigMap</li>
+                                            <li>POST method for certificate change notifications</li>
+                                        </ul>
+                                        <p class="mt-2"><strong>Benefit:</strong> Immediate notification when certificates change, reducing sync latency vs periodic polling.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="mt-4"><span class="material-symbols-outlined align-middle text-info">info</span> Backward Compatibility</h4>
+                        <div class="alert alert-info" role="alert">
+                            <h5 class="alert-heading">✅ 100% Backward Compatible</h5>
+                            <ul class="mb-0">
+                                <li>Existing playbooks work without modifications</li>
+                                <li>Default behavior unchanged (standard postgres, docker, kubectl)</li>
+                                <li>All new features are opt-in via configuration variables</li>
+                                <li>No breaking changes to roles or playbooks</li>
+                            </ul>
+                        </div>
+
+                        <h4 class="mt-4"><span class="material-symbols-outlined align-middle text-success">upgrade</span> Upgrade Instructions</h4>
+                        <pre class="bg-body-secondary p-3 rounded"><code># Install or upgrade to 1.8.9
+ansible-galaxy collection install tutum_pro.cicd:1.8.9 --force
+
+# Verify installation
+ansible-galaxy collection list | grep tutum_pro.cicd
+# Expected: tutum_pro.cicd  1.8.9</code></pre>
+
+                        <div class="mt-3">
+                            <p><strong>Recommended Configuration Updates:</strong></p>
+                            <ul>
+                                <li><strong>OpenShift users:</strong> Add <code>k8s_distribution=openshift</code> and <code>k8s_kubectl_command=oc</code></li>
+                                <li><strong>RHEL/Podman users:</strong> Add <code>k8s_tutum_offline_container_runtime=auto</code> or <code>podman</code></li>
+                                <li><strong>MicroK8s/k3s users:</strong> Configure appropriate kubectl wrapper</li>
+                                <li><strong>Restricted environments:</strong> Use manual CRD installation workflow</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-3">
+                            <p><strong>Documentation:</strong></p>
+                            <ul>
+                                <li>Complete release notes available in collection repository</li>
+                                <li>Kubectl wrapper guide with examples</li>
+                                <li>Migration guide for developers</li>
+                                <li>Updated role README files</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Deployment Architecture -->
             <section class="mb-5">
                 <div class="card shadow-sm">
@@ -307,7 +526,7 @@ graph LR
                         <pre class="bg-body-secondary p-3 rounded"><code># requirements.yml
 collections:
   - name: tutum_pro.cicd
-    version: ">=1.8.6"</code></pre>
+    version: ">=1.8.9"</code></pre>
                         <pre class="bg-body-secondary p-3 rounded"><code>ansible-galaxy collection install -r requirements.yml</code></pre>
 
                         <h4 class="mt-4">From Git</h4>
@@ -316,10 +535,10 @@ collections:
                         <h4 class="mt-4">From Local Archive (Offline Installation)</h4>
                         <p>Download the collection archive from <a href="https://galaxy.ansible.com/ui/repo/published/tutum_pro/cicd/" target="_blank">Ansible Galaxy</a> and install locally:</p>
                         <pre class="bg-body-secondary p-3 rounded"><code># Install from downloaded tar.gz archive
-ansible-galaxy collection install tutum_pro-cicd-1.8.6.tar.gz
+ansible-galaxy collection install tutum_pro-cicd-1.8.9.tar.gz
 
 # Or specify custom installation path
-ansible-galaxy collection install tutum_pro-cicd-1.8.6.tar.gz -p ./collections</code></pre>
+ansible-galaxy collection install tutum_pro-cicd-1.8.9.tar.gz -p ./collections</code></pre>
                     </div>
                 </div>
             </section>

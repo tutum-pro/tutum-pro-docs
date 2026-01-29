@@ -253,7 +253,7 @@
                                         </h5>
                                         <ul class="list-unstyled mb-0">
                                             <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Automatic certificate validity checking and status updates</li>
-                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Automatic pod restart on certificate updates (K8s)</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Automatic Secret sync (Operator) or pod restart (CSI)</li>
                                             <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Certificate versioning with full history tracking</li>
                                             <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Expiry notifications and proactive alerting</li>
                                             <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Zero-downtime rolling deployments</li>
@@ -269,7 +269,8 @@
                                             Seamless Integration
                                         </h5>
                                         <ul class="list-unstyled mb-0">
-                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Native Kubernetes CSI driver for ephemeral volumes</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Kubernetes Operator with CRD (rootless, recommended)</li>
+                                            <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Kubernetes CSI driver for ephemeral volumes (legacy)</li>
                                             <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> Docker Volume Plugin for standalone deployments</li>
                                             <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> REST API for administrative operations</li>
                                             <li><span class="material-symbols-outlined text-success" style="font-size: 16px;">check_circle</span> gRPC API for high-performance certificate retrieval</li>
@@ -298,7 +299,18 @@
                         </div>
 
                         <h3 class="h5 mt-4">Solution Structure</h3>
-                        <p>The platform consists of interconnected components working together to provide end-to-end certificate management. Administrators interact via REST API or CLI, while applications consume certificates through CSI drivers:</p>
+                        <p>The platform consists of interconnected components working together to provide end-to-end certificate management. Administrators interact via REST API or CLI. For certificate distribution, Kubernetes supports <strong>two modes</strong>: <span class="badge bg-warning text-dark">CSI Driver</span> (volume-based) and <span class="badge bg-success">Operator</span> (CRD-based). Docker uses CSI Driver only.</p>
+
+                        <div class="alert alert-warning d-flex align-items-start" role="alert">
+                            <span class="material-symbols-outlined me-2">info</span>
+                            <div>
+                                <strong>Kubernetes Injection Modes:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li><strong>CSI Driver Mode:</strong> Mounts certificates as ephemeral volumes (requires privileged containers)</li>
+                                    <li><strong>Operator Mode:</strong> Syncs certificates to Kubernetes Secrets via TutumCertificate CRD (rootless, recommended)</li>
+                                </ul>
+                            </div>
+                        </div>
 
                         <div class="architecture-diagram">
                             <div class="mermaid">
@@ -309,16 +321,36 @@ graph TD
         ADMIN_CLI["⌨️ tutum-admin-cli<br/>(Interactive CLI)"]
     end
 
-    subgraph containers["Container Orchestration Layer"]
-        direction LR
-        K8S["Kubernetes Pods"]
-        DOCKER["Docker Engine Containers"]
+    subgraph k8s_layer["Kubernetes - Two Certificate Injection Modes"]
+        direction TB
+
+        subgraph operator_mode["🎯 Operator Mode (Recommended - Rootless)"]
+            direction TB
+            K8S_PODS_OP["K8s Pods<br/>(mount Secrets as volumes)"]
+            K8S_SECRETS["Kubernetes Secrets<br/>(tls.crt, tls.key, ca.crt)"]
+            CRD["TutumCertificate CRD<br/>(User creates resources)"]
+            OPERATOR["tutum-operator-k8s<br/>(watches CRD, syncs to Secrets)"]
+
+            CRD -->|"watches"| OPERATOR
+            OPERATOR -->|"creates/updates"| K8S_SECRETS
+            K8S_SECRETS -->|"mounted as volumes"| K8S_PODS_OP
+        end
+
+        subgraph csi_mode["⚠️ CSI Driver Mode (Legacy - Privileged)"]
+            direction TB
+            K8S_PODS_CSI["K8s Pods<br/>(CSI ephemeral volumes)"]
+            K8S_DRIVER["tutum-csi-driver-k8s<br/>(DaemonSet)"]
+
+            K8S_PODS_CSI -->|"volume mount"| K8S_DRIVER
+        end
     end
 
-    subgraph drivers["CSI Driver Layer"]
-        direction LR
-        K8S_DRIVER["tutum-csi-driver-k8s"]
-        DOCKER_DRIVER["tutum-csi-driver-docker"]
+    subgraph docker_layer["Docker Engine"]
+        direction TB
+        DOCKER["Docker Containers<br/>(volume driver)"]
+        DOCKER_DRIVER["tutum-csi-driver-docker<br/>(Volume Plugin)"]
+
+        DOCKER --> DOCKER_DRIVER
     end
 
     subgraph netlib["Client Library Layer"]
@@ -347,36 +379,80 @@ graph TD
         BL --> DB
     end
 
-    REST_CLIENTS -->|HTTP/JSON| REST
-    ADMIN_CLI -->|gRPC/mTLS| GRPC
+    REST_CLIENTS -->|"HTTP/JSON"| REST
+    ADMIN_CLI -->|"gRPC/mTLS"| GRPC
 
-    K8S --> K8S_DRIVER
-    DOCKER --> DOCKER_DRIVER
+    OPERATOR -->|"gRPC"| GRPC
     K8S_DRIVER --> NETLIB
     DOCKER_DRIVER --> NETLIB
-    NETLIB -->|gRPC/mTLS| GRPC
+    NETLIB -->|"gRPC/mTLS"| GRPC
 
     style admin_layer fill:#dbeafe,stroke:#3b82f6,stroke-width:2px
     style REST_CLIENTS fill:#93c5fd,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
     style ADMIN_CLI fill:#93c5fd,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
 
-    style containers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
-    style drivers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+    style k8s_layer fill:#f0f9ff,stroke:#0284c7,stroke-width:3px
+    style operator_mode fill:#d1fae5,stroke:#059669,stroke-width:2px
+    style csi_mode fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
+    style docker_layer fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+
+    style CRD fill:#10b981,stroke:#047857,stroke-width:3px,color:#fff
+    style OPERATOR fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style K8S_SECRETS fill:#34d399,stroke:#059669,stroke-width:2px,color:#1e3a5f
+    style K8S_PODS_OP fill:#6ee7b7,stroke:#059669,stroke-width:2px,color:#1e3a5f
+
+    style K8S_PODS_CSI fill:#fbbf24,stroke:#d97706,stroke-width:2px,color:#1e3a5f
+    style K8S_DRIVER fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+
+    style DOCKER fill:#4299e1,stroke:#2c5282,stroke-width:2px,color:#fff
+    style DOCKER_DRIVER fill:#3182ce,stroke:#2c5282,stroke-width:2px,color:#fff
+
     style netlib fill:#fff5e6,stroke:#ed8936,stroke-width:2px
+    style NETLIB fill:#ed8936,stroke:#c05621,stroke-width:2px,color:#fff
+
     style engine fill:#e6ffe6,stroke:#48bb78,stroke-width:3px
     style apis fill:#f0fff4,stroke:#48bb78,stroke-width:2px
     style logic fill:#f0fff4,stroke:#48bb78,stroke-width:2px
     style data fill:#f0fff4,stroke:#48bb78,stroke-width:2px
-
-    style K8S fill:#4299e1,stroke:#2c5282,stroke-width:2px,color:#fff
-    style DOCKER fill:#4299e1,stroke:#2c5282,stroke-width:2px,color:#fff
-    style K8S_DRIVER fill:#3182ce,stroke:#2c5282,stroke-width:2px,color:#fff
-    style DOCKER_DRIVER fill:#3182ce,stroke:#2c5282,stroke-width:2px,color:#fff
-    style NETLIB fill:#ed8936,stroke:#c05621,stroke-width:2px,color:#fff
     style REST fill:#48bb78,stroke:#2f855a,stroke-width:2px,color:#fff
     style GRPC fill:#48bb78,stroke:#2f855a,stroke-width:2px,color:#fff
     style BL fill:#38a169,stroke:#2f855a,stroke-width:2px,color:#fff
     style DB fill:#2c5282,stroke:#1a365d,stroke-width:3px,color:#fff
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <strong>🎯 Operator Mode (Recommended)</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li><strong>Rootless:</strong> No privileged containers</li>
+                                            <li><strong>Native:</strong> Uses Kubernetes Secrets</li>
+                                            <li><strong>Declarative:</strong> TutumCertificate CRD</li>
+                                            <li><strong>Auto-sync:</strong> Kubelet updates volumes automatically</li>
+                                            <li><strong>OpenShift:</strong> Compatible with restricted SCCs</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <strong>⚠️ CSI Driver Mode (Legacy)</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li><strong>Privileged:</strong> Requires escalated permissions</li>
+                                            <li><strong>Direct mount:</strong> CSI ephemeral volumes</li>
+                                            <li><strong>Pod restart:</strong> Required for cert updates</li>
+                                            <li><strong>DaemonSet:</strong> Runs on every node</li>
+                                            <li><strong>Use case:</strong> Legacy deployments</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -739,7 +815,12 @@ make db-up
 make db-migrate
 make run
 
-# In another terminal - Deploy Kubernetes CSI Driver
+# In another terminal - Deploy Kubernetes Operator (Recommended)
+cd tutum-operator-k8s
+kubectl apply -f deploy/crd.yaml
+kubectl apply -f deploy/operator.yaml
+
+# Or deploy CSI Driver (Legacy)
 cd tutum-csi-driver-k8s
 make docker-build
 kubectl apply -f deploy/

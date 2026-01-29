@@ -110,7 +110,18 @@
                             <span class="material-symbols-outlined align-middle">account_tree</span>
                             High-Level Architecture
                         </h2>
-                        <p>The Tutum Platform follows a layered microservices architecture with clear separation of concerns:</p>
+                        <p>The Tutum Platform follows a layered microservices architecture with clear separation of concerns. For Kubernetes certificate distribution, the platform supports <strong>two modes</strong>: <span class="badge bg-success">Operator</span> (CRD-based, rootless, recommended) and <span class="badge bg-warning text-dark">CSI Driver</span> (volume-based, legacy, privileged).</p>
+
+                        <div class="alert alert-info d-flex align-items-start mb-3" role="alert">
+                            <span class="material-symbols-outlined me-2">info</span>
+                            <div>
+                                <strong>Kubernetes Injection Modes:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li><strong>Operator Mode (Recommended):</strong> Syncs certificates to Kubernetes Secrets via TutumCertificate CRD. Rootless, OpenShift-compatible (restricted-v2 SCC).</li>
+                                    <li><strong>CSI Driver Mode (Legacy):</strong> Mounts certificates as CSI ephemeral volumes. Requires privileged containers (DaemonSet).</li>
+                                </ul>
+                            </div>
+                        </div>
 
                         <div class="architecture-diagram">
                             <div class="mermaid">
@@ -121,16 +132,36 @@ graph TD
         ADMIN_CLI["⌨️ tutum-admin-cli<br/>(Interactive CLI)"]
     end
 
-    subgraph containers["Container Orchestration Layer"]
-        direction LR
-        K8S["Kubernetes Pods"]
-        DOCKER["Docker Engine Containers"]
+    subgraph k8s_layer["Kubernetes - Two Certificate Injection Modes"]
+        direction TB
+
+        subgraph operator_mode["🎯 Operator Mode (Recommended - Rootless)"]
+            direction TB
+            K8S_PODS_OP["K8s Pods<br/>(mount Secrets as volumes)"]
+            K8S_SECRETS["Kubernetes Secrets<br/>(tls.crt, tls.key, ca.crt)"]
+            CRD["TutumCertificate CRD<br/>(User creates resources)"]
+            OPERATOR["tutum-operator-k8s<br/>(watches CRD, syncs to Secrets)"]
+
+            CRD -->|"watches"| OPERATOR
+            OPERATOR -->|"creates/updates"| K8S_SECRETS
+            K8S_SECRETS -->|"mounted as volumes"| K8S_PODS_OP
+        end
+
+        subgraph csi_mode["⚠️ CSI Driver Mode (Legacy - Privileged)"]
+            direction TB
+            K8S_PODS_CSI["K8s Pods<br/>(CSI ephemeral volumes)"]
+            K8S_DRIVER["tutum-csi-driver-k8s<br/>(DaemonSet)"]
+
+            K8S_PODS_CSI -->|"volume mount"| K8S_DRIVER
+        end
     end
 
-    subgraph drivers["CSI Driver Layer"]
-        direction LR
-        K8S_DRIVER["tutum-csi-driver-k8s"]
-        DOCKER_DRIVER["tutum-csi-driver-docker"]
+    subgraph docker_layer["Docker Engine"]
+        direction TB
+        DOCKER["Docker Containers<br/>(volume driver)"]
+        DOCKER_DRIVER["tutum-csi-driver-docker<br/>(Volume Plugin)"]
+
+        DOCKER --> DOCKER_DRIVER
     end
 
     subgraph netlib["Client Library Layer"]
@@ -159,26 +190,82 @@ graph TD
         BL --> DB
     end
 
-    REST_CLIENTS -->|HTTP/JSON| REST
-    ADMIN_CLI -->|gRPC/mTLS| GRPC
+    REST_CLIENTS -->|"HTTP/JSON"| REST
+    ADMIN_CLI -->|"gRPC/mTLS"| GRPC
 
-    K8S --> K8S_DRIVER
-    DOCKER --> DOCKER_DRIVER
+    OPERATOR -->|"gRPC"| GRPC
     K8S_DRIVER --> NETLIB
     DOCKER_DRIVER --> NETLIB
-    NETLIB -->|gRPC/mTLS| GRPC
+    NETLIB -->|"gRPC/mTLS"| GRPC
 
     style admin_layer fill:#dbeafe,stroke:#3b82f6,stroke-width:2px
     style REST_CLIENTS fill:#93c5fd,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
     style ADMIN_CLI fill:#93c5fd,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
 
-    style containers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
-    style drivers fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+    style k8s_layer fill:#f0f9ff,stroke:#0284c7,stroke-width:3px
+    style operator_mode fill:#d1fae5,stroke:#059669,stroke-width:2px
+    style csi_mode fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
+    style docker_layer fill:#e6f2ff,stroke:#3182ce,stroke-width:2px
+
+    style CRD fill:#10b981,stroke:#047857,stroke-width:3px,color:#fff
+    style OPERATOR fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style K8S_SECRETS fill:#34d399,stroke:#059669,stroke-width:2px,color:#1e3a5f
+    style K8S_PODS_OP fill:#6ee7b7,stroke:#059669,stroke-width:2px,color:#1e3a5f
+
+    style K8S_PODS_CSI fill:#fbbf24,stroke:#d97706,stroke-width:2px,color:#1e3a5f
+    style K8S_DRIVER fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+
+    style DOCKER fill:#4299e1,stroke:#2c5282,stroke-width:2px,color:#fff
+    style DOCKER_DRIVER fill:#3182ce,stroke:#2c5282,stroke-width:2px,color:#fff
+
     style netlib fill:#fff5e6,stroke:#ed8936,stroke-width:2px
+    style NETLIB fill:#ed8936,stroke:#c05621,stroke-width:2px,color:#fff
+
     style engine fill:#e6ffe6,stroke:#48bb78,stroke-width:3px
     style apis fill:#f0fff4,stroke:#48bb78,stroke-width:2px
     style logic fill:#f0fff4,stroke:#48bb78,stroke-width:2px
     style data fill:#f0fff4,stroke:#48bb78,stroke-width:2px
+    style REST fill:#48bb78,stroke:#2f855a,stroke-width:2px,color:#fff
+    style GRPC fill:#48bb78,stroke:#2f855a,stroke-width:2px,color:#fff
+    style BL fill:#38a169,stroke:#2f855a,stroke-width:2px,color:#fff
+    style DB fill:#2c5282,stroke:#1a365d,stroke-width:3px,color:#fff
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <strong>🎯 Operator Mode (Recommended)</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li><strong>Rootless:</strong> No privileged containers required</li>
+                                            <li><strong>Native:</strong> Uses standard Kubernetes Secrets</li>
+                                            <li><strong>Declarative:</strong> TutumCertificate CRD</li>
+                                            <li><strong>Auto-sync:</strong> Kubelet updates volumes automatically (~60s)</li>
+                                            <li><strong>OpenShift:</strong> Compatible with restricted-v2 SCC</li>
+                                            <li><strong>Lightweight:</strong> Single deployment (not per-node)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <strong>⚠️ CSI Driver Mode (Legacy)</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li><strong>Privileged:</strong> Requires escalated permissions</li>
+                                            <li><strong>Direct mount:</strong> CSI ephemeral volumes</li>
+                                            <li><strong>Pod restart:</strong> Required for certificate updates</li>
+                                            <li><strong>DaemonSet:</strong> Runs on every cluster node</li>
+                                            <li><strong>Use case:</strong> Legacy deployments only</li>
+                                            <li><strong>OpenShift:</strong> Requires privileged SCC</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
